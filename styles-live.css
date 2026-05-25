@@ -1554,7 +1554,7 @@ body.light-mode .widgets-list::-webkit-scrollbar-thumb:hover {
   border-color: rgba(255, 255, 255, 0.12);
 }
 
-.notifications-panel {
+#widget-center .widget-card {
   box-shadow: none !important;
 }
 
