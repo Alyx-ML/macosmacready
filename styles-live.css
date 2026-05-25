@@ -7846,9 +7846,6 @@ body.light-mode #passkey-prompt {
   flex-direction: column;
   align-items: center;
 }
-.passkey-icon-container {
-  margin-bottom: 12px;
-}
 .passkey-title {
   font-size: 15px;
   font-weight: 600;
