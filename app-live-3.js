@@ -7610,6 +7610,7 @@ function initSettingsWindow() {
     if (settingsWin) {
       settingsWin.classList.remove("hidden-window");
       settingsWin.classList.remove("minimized");
+      bringWindowToFront(settingsWin);
       playGlassChime();
       
       // Add active-dot under the Settings dock icon
@@ -7650,6 +7651,9 @@ function initSettingsWindow() {
 
         if (isHidden || isMinimized) {
           openSettings();
+        } else if (settingsWin !== getTopVisibleWindow()) {
+          bringWindowToFront(settingsWin);
+          playGlassChime();
         } else {
           // If already open and active, toggle minimize
           settingsWin.classList.add("minimized");
@@ -7807,6 +7811,17 @@ const MAX_WINDOW_Z_INDEX = 7900;
 function bringWindowToFront(windowEl) {
   maxZIndex = Math.min(maxZIndex + 1, MAX_WINDOW_Z_INDEX);
   windowEl.style.zIndex = maxZIndex;
+}
+
+function getTopVisibleWindow() {
+  const visibleWindows = [...document.querySelectorAll("#app-window, #settings-window, #calculator-window, #textedit-window, .utility-window")]
+    .filter(win => !win.classList.contains("hidden-window") && !win.classList.contains("minimized"));
+
+  return visibleWindows.reduce((topWindow, win) => {
+    const winZ = Number.parseInt(getComputedStyle(win).zIndex, 10) || 0;
+    const topZ = topWindow ? Number.parseInt(getComputedStyle(topWindow).zIndex, 10) || 0 : -1;
+    return winZ > topZ ? win : topWindow;
+  }, null);
 }
 
 function makeWindowDraggable(windowEl) {
