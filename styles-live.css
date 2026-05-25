@@ -808,6 +808,12 @@ body.light-mode .window-sidebar {
   transition: none !important;
 }
 
+.dragging-window {
+  transform: none !important;
+  rotate: 0deg !important;
+  scale: 1 !important;
+}
+
 .sidebar-section {
   margin-bottom: 24px;
 }
