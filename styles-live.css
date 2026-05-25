@@ -934,7 +934,7 @@ body.light-mode .window-sidebar {
 .dot-category.science { background-color: var(--cat-science); }
 .dot-category.culture { background-color: var(--cat-culture); }
 
-.category-news-icon {
+.category-symbol-icon {
   width: 14px;
   height: 14px;
   color: rgba(255, 255, 255, 0.9);
