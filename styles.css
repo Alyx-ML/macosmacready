@@ -6178,8 +6178,7 @@ body.light-mode #steamdb-details-modal .steamdb-detail-card {
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.16) !important;
 }
 
-#steamdb-detail-body .steamdb-side-col,
-#steamdb-detail-body .steamdb-about-compact {
+#steamdb-detail-body .steamdb-side-col {
   background: rgba(255, 255, 255, 0.05) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
@@ -6188,9 +6187,18 @@ body.light-mode #steamdb-details-modal .steamdb-detail-card {
   padding: 16px !important;
 }
 
-body.light-mode #steamdb-detail-body .steamdb-side-col,
-body.light-mode #steamdb-detail-body .steamdb-about-compact {
+body.light-mode #steamdb-detail-body .steamdb-side-col {
   background: rgba(0, 0, 0, 0.03) !important;
+}
+
+#steamdb-detail-body .steamdb-about-compact {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
 }
 
 #steamdb-detail-body .steamdb-requirement-card {
