@@ -9146,12 +9146,8 @@ function updateAppHeader() {
 }
 
 function syncAccountDetailsToWindow() {
-  const dispName = document.getElementById("account-display-name");
-  const dispEmail = document.getElementById("account-display-email");
   const detailUser = document.getElementById("profile-detail-username");
   
-  if (dispName) dispName.textContent = currentUsername === "Guest" ? "Guest User" : currentUsername;
-  if (dispEmail) dispEmail.textContent = currentUserEmail || "Not signed in";
   if (detailUser) detailUser.textContent = currentUsername;
 
   // Query hardware profile from SQLite
