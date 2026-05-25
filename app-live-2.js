@@ -21,7 +21,37 @@ function fetchDevProxy(url) {
 }
 
 function fetchAppleJson(url) {
-  return fetch(url);
+  return new Promise((resolve, reject) => {
+    const callbackName = `macreadyAppleJson${Date.now()}${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement("script");
+    const cleanup = () => {
+      delete window[callbackName];
+      script.remove();
+    };
+    const timer = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Apple App Store request timed out"));
+    }, 15000);
+
+    window[callbackName] = data => {
+      window.clearTimeout(timer);
+      cleanup();
+      resolve({
+        ok: true,
+        json: async () => data
+      });
+    };
+
+    const requestUrl = new URL(url);
+    requestUrl.searchParams.set("callback", callbackName);
+    script.onerror = () => {
+      window.clearTimeout(timer);
+      cleanup();
+      reject(new Error("Apple App Store request failed"));
+    };
+    script.src = requestUrl.toString();
+    document.head.appendChild(script);
+  });
 }
 
 function fetchRSSJson(url) {
