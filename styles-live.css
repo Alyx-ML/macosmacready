@@ -6426,6 +6426,10 @@ body.light-mode #steamdb-detail-body .steamdb-feature-grid span {
   display: flex;
   flex-direction: column;
   border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  background-clip: padding-box;
   z-index: 100;
   box-shadow: var(--shadow-window);
   opacity: 1;
@@ -6435,6 +6439,24 @@ body.light-mode #steamdb-detail-body .steamdb-feature-grid span {
     width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
     height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   visibility: visible;
+}
+
+body.light-mode #settings-window {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+#settings-window > .window-titlebar {
+  flex: 0 0 52px;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+}
+
+#settings-window > .window-body {
+  min-height: 0;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  overflow: hidden;
 }
 
 #settings-window.hidden-window,
@@ -6553,6 +6575,7 @@ body.light-mode #steamdb-detail-body .steamdb-feature-grid span {
   flex-shrink: 0;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   padding: 14px 8px !important;
+  border-bottom-left-radius: 15px;
 }
 
 body.light-mode .settings-sidebar {
@@ -6576,6 +6599,7 @@ body.light-mode .settings-sidebar {
   overflow-y: auto;
   background: rgba(18, 18, 24, 0.25);
   backdrop-filter: blur(2px);
+  border-bottom-left-radius: 0;
   border-bottom-right-radius: 15px;
 }
 
