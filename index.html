@@ -7,7 +7,7 @@
   <title>MacReady</title>
   <link rel="icon" type="image/webp" href="public/assets/imgs/finderfavicon.webp">
   <link rel="preload" as="image" href="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" imagesrcset="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp 960w, public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
-  <link rel="stylesheet" href="styles-live.css?v=category-icons">
+  <link rel="stylesheet" href="styles-live.css?v=signin-titlebar">
   <!-- Google Fonts for gorgeous typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,7 +35,7 @@
         <button class="menu-item menu-trigger" data-menu="apple-menu" aria-label="Apple menu">
           <span class="apple-logo" aria-hidden="true">&#63743;</span>
         </button>
-        <button class="menu-item font-semibold menu-trigger" data-menu="app-menu">MacReady</button>
+        <button class="menu-item font-semibold menu-trigger" data-menu="app-menu" id="menu-user-btn">Guest</button>
       </div>
 
       <!-- Right side items -->
@@ -70,13 +70,8 @@
         <a href="#" class="dropdown-item" id="menu-lock-screen">Lock Screen <span class="shortcut">^⌘Q</span></a>
       </div>
 
-      <!-- App Menu -->
-      <div class="dropdown-menu" id="app-menu">
-        <a href="#" class="dropdown-item">About MacReady</a>
-        <div class="dropdown-divider"></div>
-        <a href="#" class="dropdown-item" id="menu-preferences">Preferences... <span class="shortcut">⌘,</span></a>
-      </div>
-
+      <!-- App Menu / Guest Sign In Panel Dropdown Placeholder -->
+      <div class="dropdown-menu" id="app-menu" style="display: none !important;"></div>
     </header>
 
     <!-- Main macOS News Application Window -->
@@ -1461,12 +1456,246 @@
         </div>
         <div class="window-title" id="textedit-window-title" style="color: #fff; font-size: 11px; font-weight: 500; flex: 1; text-align: center; margin-right: 50px;">Notes &mdash; Untitled.txt</div>
       </div>
-      <div class="window-body textedit-body">
-        <textarea id="textedit-textarea" placeholder="Start typing your notes..."></textarea>
-        <div class="textedit-footer">
-          <span id="textedit-char-count">0 characters</span>
-          <button class="btn btn-primary" id="textedit-save-btn">Save Changes</button>
+      </div>
+    </div>
+
+    <!-- Centered macOS Sign In Window Backdrop -->
+    <div id="signin-backdrop" class="signin-backdrop hidden-window"></div>
+
+    <!-- Centered macOS Sign In Window -->
+    <div id="signin-window" class="liquid-glass hidden-window">
+      <!-- Traffic Light Controls -->
+      <div class="signin-titlebar">
+        <div class="traffic-lights signin-traffic-lights">
+          <button class="traffic-light red" id="signin-close" title="Close" style="background: #ff5f56 !important; width: 12px !important; height: 12px !important; border-radius: 50% !important; border: none !important; opacity: 1 !important; cursor: pointer !important;"></button>
+          <button class="traffic-light yellow" title="Minimize" style="background: #ffbd2e !important; width: 12px !important; height: 12px !important; border-radius: 50% !important; border: none !important; opacity: 0.5 !important; cursor: default !important; pointer-events: none !important;"></button>
+          <button class="traffic-light green" title="Maximize" style="background: #27c93f !important; width: 12px !important; height: 12px !important; border-radius: 50% !important; border: none !important; opacity: 0.5 !important; cursor: default !important; pointer-events: none !important;"></button>
         </div>
+      </div>
+
+      <div class="signin-header" style="margin-bottom: 20px; text-align: center; margin-top: 8px;">
+        <div class="signin-title" style="font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 4px;">Sign In to MacReady</div>
+        <div class="signin-subtitle" style="font-size: 12px; opacity: 0.6; color: #ccc;">Use secure Apple Passkey or Email</div>
+      </div>
+
+      <div class="signin-form" style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="signin-input-group" style="display: flex; flex-direction: column; gap: 8px;">
+          <input type="text" id="signin-username" placeholder="Username" class="tahoe-input" autocomplete="username" style="user-select: text !important; -webkit-user-select: text !important;">
+          <input type="email" id="signin-email" placeholder="Email Address" class="tahoe-input" autocomplete="email" style="user-select: text !important; -webkit-user-select: text !important;">
+        </div>
+
+        <button class="btn" id="btn-passkey-signin">
+          <svg class="touchid-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="flex-shrink: 0; color: #fff;">
+            <path d="M12 10a2 2 0 0 0-2 2"></path>
+            <path d="M14 12a2 2 0 0 0-2-2"></path>
+            <path d="M12 14a2 2 0 0 0 2-2"></path>
+            <path d="M10 12a2 2 0 0 0 2 2"></path>
+            <path d="M8 12a4 4 0 0 1 8 0"></path>
+            <path d="M12 8a4 4 0 0 0-4 4"></path>
+            <path d="M16 12a4 4 0 0 0-4-4"></path>
+            <path d="M12 16a4 4 0 0 0 4-4"></path>
+            <path d="M6 12a6 6 0 0 1 12 0"></path>
+            <path d="M12 6a6 6 0 0 0-6 6"></path>
+            <path d="M18 12a6 6 0 0 0-6-6"></path>
+            <path d="M12 18a6 6 0 0 0 6-6"></path>
+          </svg>
+          <span>Touch ID or Passkey</span>
+        </button>
+        
+        <button class="btn btn-secondary" id="btn-standard-signin" style="font-size: 13px; padding: 10px 16px; font-weight: 500; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.06); color: #fff;">Sign In</button>
+      </div>
+    </div>
+
+    <!-- Simulated macOS Apple Passkey / Touch ID Prompt -->
+    <div id="passkey-prompt" class="liquid-glass hidden-window">
+      <div class="passkey-header">
+        <div class="passkey-icon-container">
+          <!-- Finder Mac Icon SVG -->
+          <svg viewBox="0 0 48 48" width="40" height="40" style="filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));">
+            <rect x="2" y="2" width="44" height="44" rx="10" ry="10" fill="#29b6f6"/>
+            <path d="M24 2a22 22 0 0 1 22 22v14a8 8 0 0 1-8 8H24V2z" fill="#0288d1"/>
+            <path d="M24 8v16h10c2 0 4 2 4 4s-2 4-4 4H20a2 2 0 0 1-2-2V14c0-2-2-4-4-4H8V8h16z" fill="#ffffff"/>
+            <circle cx="15" cy="17" r="3" fill="#0288d1"/>
+            <circle cx="33" cy="17" r="3" fill="#ffffff"/>
+            <path d="M14 34c2 4 8 4 10 0" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none"/>
+            <path d="M24 34c2 4 8 4 10 0" stroke="#0288d1" stroke-width="3" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <div class="passkey-title">Passkey Verification</div>
+        <div class="passkey-subtitle">MacReady wants to sign in using a secure Passkey.</div>
+      </div>
+      
+      <div class="passkey-body">
+        <div class="touchid-ring-container">
+          <div class="touchid-ripple ripple-1"></div>
+          <div class="touchid-ripple ripple-2"></div>
+          <div class="touchid-sensor" id="passkey-sensor-btn">
+            <!-- Gorgeous Fingerprint SVG -->
+            <svg class="touchid-fingerprint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 10a2 2 0 0 0-2 2"></path>
+              <path d="M14 12a2 2 0 0 0-2-2"></path>
+              <path d="M12 14a2 2 0 0 0 2-2"></path>
+              <path d="M10 12a2 2 0 0 0 2 2"></path>
+              <path d="M8 12a4 4 0 0 1 8 0"></path>
+              <path d="M12 8a4 4 0 0 0-4 4"></path>
+              <path d="M16 12a4 4 0 0 0-4-4"></path>
+              <path d="M12 16a4 4 0 0 0 4-4"></path>
+              <path d="M6 12a6 6 0 0 1 12 0"></path>
+              <path d="M12 6a6 6 0 0 0-6 6"></path>
+              <path d="M18 12a6 6 0 0 0-6-6"></path>
+              <path d="M12 18a6 6 0 0 0 6-6"></path>
+            </svg>
+            <svg class="touchid-checkmark hidden" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+        <div class="touchid-hint" id="passkey-status-text">Touch the ID sensor to authenticate</div>
+      </div>
+      
+      <div class="passkey-footer">
+        <button class="btn btn-secondary" id="btn-passkey-cancel" style="padding: 6px 16px; font-size: 12px; font-weight: 500;">Cancel</button>
+      </div>
+    </div>
+
+    <!-- macOS System Account & Hardware Profile Window -->
+    <div id="account-window" class="liquid-glass hidden-window">
+      <!-- Traffic Light Controls & Title -->
+      <div class="window-titlebar">
+        <div class="traffic-lights">
+          <button class="traffic-light red" id="account-close" title="Close"></button>
+          <button class="traffic-light yellow" id="account-minimize" title="Minimize"></button>
+          <button class="traffic-light green" id="account-maximize" title="Maximize"></button>
+        </div>
+        <div class="window-title">User Account</div>
+      </div>
+      
+      <div class="window-body">
+        <!-- Account Sidebar -->
+        <aside class="window-sidebar account-sidebar" style="width: 200px; padding: 20px 10px;">
+          <ul class="sidebar-menu">
+            <li class="sidebar-item active" data-account-tab="info">
+              <svg class="sidebar-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span class="sidebar-text">Account Info</span>
+            </li>
+            <li class="sidebar-item" data-account-tab="hardware">
+              <svg class="sidebar-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              <span class="sidebar-text">Hardware Profile</span>
+            </li>
+            <li class="sidebar-item" data-account-tab="security">
+              <svg class="sidebar-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span class="sidebar-text">Security & Keys</span>
+            </li>
+          </ul>
+        </aside>
+        
+        <!-- Account Content -->
+        <main class="account-content" style="flex: 1; padding: 24px; overflow-y: auto;">
+          
+          <!-- Tab: Account Info -->
+          <div class="account-pane active" id="pane-account-info">
+            <div class="user-profile-card" style="display: flex; align-items: center; gap: 20px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+              <div class="user-avatar-wrapper" style="position: relative;">
+                <!-- Memoji profile placeholder -->
+                <div class="user-avatar" style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #af52de 0%, #007aff 100%); display: flex; align-items: center; justify-content: center; font-size: 32px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));">
+                  👨‍💻
+                </div>
+                <span class="user-status-dot" style="position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; background: #22c55e; border: 2px solid #1a1a24;"></span>
+              </div>
+              <div class="user-meta">
+                <h2 class="user-display-name" id="account-display-name" style="font-size: 18px; font-weight: 600; margin: 0; color: inherit;">Guest User</h2>
+                <p class="user-email" id="account-display-email" style="font-size: 12px; opacity: 0.5; margin: 4px 0 0 0;">Not signed in</p>
+              </div>
+            </div>
+            
+            <div class="profile-details-group" style="display: flex; flex-direction: column; gap: 12px;">
+              <div class="profile-detail-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                <span class="detail-label" style="font-size: 13px; opacity: 0.6;">Username</span>
+                <span class="detail-value" id="profile-detail-username" style="font-size: 13px; font-weight: 500;">Guest</span>
+              </div>
+              <div class="profile-detail-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                <span class="detail-label" style="font-size: 13px; opacity: 0.6;">Biometric Security</span>
+                <span class="detail-value" style="font-size: 13px; font-weight: 500; color: #22c55e;">Passkey (Apple Touch ID Enabled)</span>
+              </div>
+            </div>
+            
+            <button class="btn btn-secondary" id="btn-account-signout" style="margin-top: 32px; width: 100%; font-size: 13px; padding: 8px 16px; font-weight: 500;">Sign Out of Account</button>
+          </div>
+          
+          <!-- Tab: Hardware Profile -->
+          <div class="account-pane" id="pane-account-hardware" style="display: none;">
+          <!-- Tab: Hardware Profile -->
+          <div class="account-pane" id="pane-account-hardware" style="display: none;">
+            <div class="hardware-header" style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; margin-bottom: 28px;">
+              <!-- MacBook Pro Vector Graphic -->
+              <svg viewBox="0 0 64 64" width="72" height="72" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-color); filter: drop-shadow(0 4px 12px var(--accent-glow));">
+                <rect x="12" y="8" width="40" height="26" rx="3" ry="3" stroke-width="2.5"></rect>
+                <path d="M4 42h56v2a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-2z" fill="rgba(255,255,255,0.05)" stroke-width="2.5"></path>
+                <line x1="28" y1="42" x2="36" y2="42" stroke-width="3"></line>
+                <line x1="16" y1="20" x2="48" y2="20" stroke-dasharray="1 3"></line>
+              </svg>
+              <div>
+                <h3 id="account-hw-model" style="font-size: 16px; font-weight: 600; margin: 0; color: inherit;">MacBook Pro</h3>
+                <p id="account-hw-sub" style="font-size: 11px; opacity: 0.5; margin: 2px 0 0 0;">16-inch, M4 Max, 2026</p>
+              </div>
+            </div>
+            
+            <div class="specs-list" style="display: flex; flex-direction: column; gap: 14px; background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 16px;">
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="font-size: 10px; font-weight: 600; opacity: 0.4; text-transform: uppercase;">Apple Silicon Chip</div>
+                <div id="account-hw-chip" style="font-size: 13px; font-weight: 500; color: inherit;">Apple M4 Max</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                <div style="font-size: 10px; font-weight: 600; opacity: 0.4; text-transform: uppercase;">Memory</div>
+                <div id="account-hw-ram" style="font-size: 13px; font-weight: 500; color: inherit;">64 GB Unified Memory</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                <div style="font-size: 10px; font-weight: 600; opacity: 0.4; text-transform: uppercase;">macOS Version</div>
+                <div id="account-hw-macos" style="font-size: 13px; font-weight: 500; color: inherit;">macOS Tahoe 26.0</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                <div style="font-size: 10px; font-weight: 600; opacity: 0.4; text-transform: uppercase;">CrossOver Compatibility</div>
+                <div id="account-hw-crossover" style="font-size: 13px; font-weight: 500; color: inherit;">Installed</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Tab: Security & Keys -->
+          <div class="account-pane" id="pane-account-security" style="display: none;">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: inherit;">Passkeys & Biometric Security</h3>
+            <p style="font-size: 12px; opacity: 0.6; line-height: 1.5; margin-bottom: 20px;">
+              This workstation utilizes hardware-protected passkeys via the Apple Secure Enclave coprocessor. Biometric verification is securely processed inside the Secure Enclave.
+            </p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+              <div id="account-passkey-card" style="display: flex; align-items: center; gap: 12px; border-radius: 8px; padding: 12px; transition: all 0.3s;">
+                <!-- Content will be dynamically populated in app.js -->
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <div>
+                  <div style="font-size: 12px; font-weight: 600; color: inherit;">Hardware Security</div>
+                  <div style="font-size: 11px; opacity: 0.5; margin-top: 2px;">Secure Enclave Cryptographic Co-processor Status: ACTIVE</div>
+                </div>
+              </div>
+            </div>
+            
+            <button class="btn btn-primary" id="btn-reauthenticate" style="font-size: 12px; padding: 6px 14px; font-weight: 500;">Re-authenticate Touch ID</button>
+          </div>
+        </main>
       </div>
     </div>
 

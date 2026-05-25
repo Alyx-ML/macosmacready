@@ -37,6 +37,12 @@ const PRESET_INFO = {
 };
 
 // --- 2. State Management & Navigation ---
+let currentUsername = localStorage.getItem("macready_username") || "Guest";
+if (currentUsername === "MacReady") {
+  currentUsername = "Guest";
+  localStorage.removeItem("macready_username");
+}
+let currentUserEmail = localStorage.getItem("macready_email") || "";
 let articles = [];
 let currentCategory = "all"; // "all" or specific categories
 let currentLibrary = "today"; // "today", "bookmarks", "queue", "custom"
@@ -889,7 +895,30 @@ let previousVolume = 70;
 
 // Helper: Synthesize beautiful macOS-style glass chime via Web Audio API
 function playGlassChime() {
-  // Silent - sounds disabled
+  if (dndActive) return;
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime); // High pitch A5
+    osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.04); // Pitch slide up
+    osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.15); // Resolve to E6
+    
+    gain.gain.setValueAtTime(0.18 * (systemVolume / 100), ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35); // Fast decay
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.36);
+  } catch (e) {
+    console.error("Audio error", e);
+  }
 }
 
 
@@ -953,7 +982,7 @@ function renderBookmarksWidget() {
 }
 
 // Helper: Push dynamic alert to Widget list
-function pushNotification(title, message) {
+function pushNotification(title, message, options = {}) {
   const wrapper = document.getElementById("notifications-items-wrapper");
   if (!wrapper) return;
 
@@ -977,7 +1006,7 @@ function pushNotification(title, message) {
   wrapper.insertBefore(alertItem, wrapper.firstChild);
 
   // Play chime and flash topbar clock indicator if DND is disabled
-  if (!dndActive) {
+  if (!dndActive && !options.silent) {
     playGlassChime();
     const dateTimeBtn = document.getElementById("date-time-toggle");
     if (dateTimeBtn) {
@@ -5235,8 +5264,19 @@ function bindEvents() {
     trigger.addEventListener("click", (e) => {
       e.stopPropagation();
       const menuId = trigger.getAttribute("data-menu");
-      const menuEl = document.getElementById(menuId);
       
+      // Direct Interceptor for App Menu (Username/Guest Button)
+      if (menuId === "app-menu") {
+        closeAllDropdowns();
+        if (currentUsername === "Guest") {
+          openSignInWindow();
+        } else {
+          openAccountWindow();
+        }
+        return;
+      }
+      
+      const menuEl = document.getElementById(menuId);
       const isAlreadyOpen = menuEl.classList.contains("show");
       
       // Close all dropdowns first
@@ -5256,6 +5296,13 @@ function bindEvents() {
       const activeDropdown = Array.from(dropdowns).find(d => d.classList.contains("show"));
       if (activeDropdown) {
         const menuId = trigger.getAttribute("data-menu");
+        
+        // Hovering Username/Guest button should just close active dropdowns, not trigger a dropdown
+        if (menuId === "app-menu") {
+          closeAllDropdowns();
+          return;
+        }
+        
         const targetMenu = document.getElementById(menuId);
         
         if (activeDropdown !== targetMenu && targetMenu) {
@@ -6366,6 +6413,7 @@ function initHardwareProfileUI() {
 
       // Re-render games feed since hardware profile affects tested badges & filtering
       renderGamesView();
+      syncAccountDetailsToWindow();
     }, 250);
   }
 
@@ -6687,6 +6735,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initData();
   initDockMagnification();
   bindEvents();
+  initAccountSystem();
+  updateAppHeader();
   
   // Games & other apps events binding
   const gamesNavItems = document.querySelectorAll("#games-nav-menu .sidebar-item");
@@ -7299,7 +7349,7 @@ function applyLanguage(lang) {
 
   // Specific header replacements
   const appHeader = document.querySelector('button[data-menu="app-menu"]');
-  if (appHeader) appHeader.textContent = dict["app"] || "MacReady";
+  if (appHeader) appHeader.textContent = currentUsername;
 
   const fileHeader = document.querySelector('button[data-menu="file-menu"]');
   if (fileHeader) fileHeader.textContent = dict["file"] || "File";
@@ -8325,5 +8375,408 @@ function initUtilityApps() {
   if (settingsWin) {
     makeWindowDraggable(settingsWin);
     settingsWin.addEventListener("mousedown", () => bringWindowToFront(settingsWin));
+  }
+}
+
+// --- macOS Tahoe 26 User Account & Passkey Simulator ---
+function initAccountSystem() {
+  // A. Elements & State Bindings
+  const passkeySensor = document.getElementById("passkey-sensor-btn");
+  const passkeyPrompt = document.getElementById("passkey-prompt");
+  const passkeyStatusText = document.getElementById("passkey-status-text");
+  const btnPasskeySignin = document.getElementById("btn-passkey-signin");
+  const btnStandardSignin = document.getElementById("btn-standard-signin");
+  const btnPasskeyCancel = document.getElementById("btn-passkey-cancel");
+  const btnAccountSignout = document.getElementById("btn-account-signout");
+  const btnReauthenticate = document.getElementById("btn-reauthenticate");
+  const accountWin = document.getElementById("account-window");
+  
+  // Make sign-in window draggable & focusable, bind close & backdrop clicks
+  const signinWin = document.getElementById("signin-window");
+  if (signinWin) {
+    makeWindowDraggable(signinWin);
+    
+    // Close button (traffic light red)
+    const signinClose = document.getElementById("signin-close");
+    if (signinClose) {
+      signinClose.addEventListener("click", () => {
+        closeSignInWindow();
+      });
+    }
+  }
+  
+  const signinBackdrop = document.getElementById("signin-backdrop");
+  if (signinBackdrop) {
+    signinBackdrop.addEventListener("click", () => {
+      closeSignInWindow();
+    });
+  }
+  
+  // Make account window draggable & focusable
+  if (accountWin) {
+    makeWindowDraggable(accountWin);
+    accountWin.addEventListener("mousedown", () => bringWindowToFront(accountWin));
+    
+    // Close button
+    const accClose = document.getElementById("account-close");
+    if (accClose) {
+      accClose.addEventListener("click", () => {
+        accountWin.classList.add("hidden-window");
+      });
+    }
+    
+    // Minimize button
+    const accMin = document.getElementById("account-minimize");
+    if (accMin) {
+      accMin.addEventListener("click", () => {
+        accountWin.classList.add("minimized");
+      });
+    }
+
+    // Maximize button
+    const accMax = document.getElementById("account-maximize");
+    if (accMax) {
+      accMax.addEventListener("click", () => {
+        accountWin.classList.toggle("maximized");
+      });
+    }
+
+    // Sidebar Tab Switching
+    const accSidebarItems = document.querySelectorAll(".account-sidebar .sidebar-item");
+    accSidebarItems.forEach(item => {
+      item.addEventListener("click", () => {
+        accSidebarItems.forEach(i => i.classList.remove("active"));
+        item.classList.add("active");
+        
+        const tab = item.getAttribute("data-account-tab");
+        document.querySelectorAll(".account-content .account-pane").forEach(pane => {
+          pane.style.display = "none";
+          pane.classList.remove("active");
+        });
+        
+        const targetPane = document.getElementById(`pane-account-${tab}`);
+        if (targetPane) {
+          targetPane.style.display = "block";
+          targetPane.classList.add("active");
+        }
+      });
+    });
+  }
+
+  // B. Standard Sign In Callback
+  if (btnStandardSignin) {
+    btnStandardSignin.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const usernameInput = document.getElementById("signin-username");
+      const emailInput = document.getElementById("signin-email");
+      
+      const username = usernameInput ? usernameInput.value.trim() : "";
+      const email = emailInput ? emailInput.value.trim() : "";
+      
+      if (!username || !email) {
+        pushNotification("Sign In Error", "Please enter both a username and email address.", { silent: true });
+        return;
+      }
+      
+      performSignIn(username, email, "standard");
+    });
+  }
+
+  // C. Passkey Simulation flows
+  if (btnPasskeySignin) {
+    btnPasskeySignin.addEventListener("click", (e) => {
+      e.stopPropagation();
+      // Close dropdown
+      const dropdowns = document.querySelectorAll(".dropdown-menu");
+      dropdowns.forEach(d => d.classList.remove("show"));
+      
+      const usernameInput = document.getElementById("signin-username");
+      const emailInput = document.getElementById("signin-email");
+      
+      const username = (usernameInput && usernameInput.value.trim()) || "Apple Developer";
+      const email = (emailInput && emailInput.value.trim()) || "developer@apple.com";
+      
+      openPasskeyPrompt(username, email);
+    });
+  }
+
+  // D. Cancel Passkey Prompt
+  if (btnPasskeyCancel) {
+    btnPasskeyCancel.addEventListener("click", () => {
+      if (passkeyPrompt) passkeyPrompt.classList.add("hidden-window");
+      resetPasskeySensorState();
+    });
+  }
+
+  // E. Touch ID Sensor Scan listener
+  if (passkeySensor) {
+    passkeySensor.addEventListener("click", () => {
+      if (passkeySensor.classList.contains("scanning") || passkeySensor.classList.contains("success")) return;
+      
+      startPasskeyVerification();
+    });
+  }
+
+  // F. Sign Out Flow
+  if (btnAccountSignout) {
+    btnAccountSignout.addEventListener("click", () => {
+      performSignOut();
+    });
+  }
+
+  // G. Re-authenticate button
+  if (btnReauthenticate) {
+    btnReauthenticate.addEventListener("click", () => {
+      openPasskeyPrompt(currentUsername, currentUserEmail, true);
+    });
+  }
+}
+
+// Helpers
+let activeAuthSession = null;
+
+function openPasskeyPrompt(username, email, isReauth = false) {
+  const prompt = document.getElementById("passkey-prompt");
+  if (!prompt) return;
+  
+  // Set active session details
+  activeAuthSession = { username, email, isReauth };
+  
+  // Reset prompt visual state
+  resetPasskeySensorState();
+  
+  // Set context description text
+  const subtitle = prompt.querySelector(".passkey-subtitle");
+  if (subtitle) {
+    subtitle.textContent = `MacReady wants to sign in "${username}" (${email}) using a secure Passkey.`;
+  }
+  
+  prompt.classList.remove("hidden-window");
+  
+  // Start ripple animations on biometrics scanner
+  const ripples = prompt.querySelectorAll(".touchid-ripple");
+  ripples.forEach(r => r.classList.add("pulse"));
+}
+
+function resetPasskeySensorState() {
+  const sensor = document.getElementById("passkey-sensor-btn");
+  const status = document.getElementById("passkey-status-text");
+  const prompt = document.getElementById("passkey-prompt");
+  
+  if (sensor) {
+    sensor.classList.remove("scanning", "success");
+    const fingerprint = sensor.querySelector(".touchid-fingerprint");
+    const checkmark = sensor.querySelector(".touchid-checkmark");
+    if (fingerprint) fingerprint.classList.remove("hidden");
+    if (checkmark) checkmark.classList.add("hidden");
+  }
+  
+  if (status) {
+    status.textContent = "Touch the ID sensor to authenticate";
+    status.style.color = "";
+  }
+  
+  if (prompt) {
+    const ripples = prompt.querySelectorAll(".touchid-ripple");
+    ripples.forEach(r => r.classList.remove("pulse"));
+  }
+}
+
+function startPasskeyVerification() {
+  const sensor = document.getElementById("passkey-sensor-btn");
+  const status = document.getElementById("passkey-status-text");
+  
+  if (sensor) sensor.classList.add("scanning");
+  if (status) status.textContent = "Verifying Passkey...";
+  
+  // Simulate Touch ID scan processing
+  setTimeout(() => {
+    if (!sensor || !activeAuthSession) return;
+    
+    sensor.classList.remove("scanning");
+    sensor.classList.add("success");
+    
+    const fingerprint = sensor.querySelector(".touchid-fingerprint");
+    const checkmark = sensor.querySelector(".touchid-checkmark");
+    if (fingerprint) fingerprint.classList.add("hidden");
+    if (checkmark) checkmark.classList.remove("hidden");
+    
+    if (status) {
+      status.textContent = "Passkey Verified!";
+      status.style.color = "#22c55e";
+    }
+    
+    // Finalize authentication session
+    setTimeout(() => {
+      const prompt = document.getElementById("passkey-prompt");
+      if (prompt) prompt.classList.add("hidden-window");
+      
+      if (activeAuthSession.isReauth) {
+        pushNotification("Re-authenticated", "Security profile verified successfully.", { silent: true });
+      } else {
+        performSignIn(activeAuthSession.username, activeAuthSession.email, "passkey");
+      }
+      activeAuthSession = null;
+    }, 800);
+    
+  }, 1800);
+}
+
+function playTouchIDSuccessBeep() {
+  // Sign-in and account flows stay silent.
+}
+
+window.openSignInWindow = openSignInWindow;
+window.closeSignInWindow = closeSignInWindow;
+
+function openSignInWindow() {
+  const signinWin = document.getElementById("signin-window");
+  const backdrop = document.getElementById("signin-backdrop");
+  if (signinWin && backdrop) {
+    backdrop.classList.remove("hidden-window");
+    signinWin.classList.remove("hidden-window");
+    // Force a reflow
+    void signinWin.offsetWidth;
+    backdrop.classList.add("show");
+    signinWin.classList.add("show");
+    
+    // Reset inputs
+    const usernameInput = document.getElementById("signin-username");
+    const emailInput = document.getElementById("signin-email");
+    if (usernameInput) usernameInput.value = "";
+    if (emailInput) emailInput.value = "";
+    
+    // Focus first input
+    setTimeout(() => {
+      if (usernameInput) usernameInput.focus();
+    }, 100);
+  }
+}
+
+function closeSignInWindow() {
+  const signinWin = document.getElementById("signin-window");
+  const backdrop = document.getElementById("signin-backdrop");
+  if (signinWin && backdrop) {
+    backdrop.classList.remove("show");
+    signinWin.classList.remove("show");
+    setTimeout(() => {
+      backdrop.classList.add("hidden-window");
+      signinWin.classList.add("hidden-window");
+    }, 300);
+  }
+}
+
+function performSignIn(username, email, authType = "standard") {
+  currentUsername = username;
+  currentUserEmail = email;
+  localStorage.setItem("macready_username", username);
+  localStorage.setItem("macready_email", email);
+  localStorage.setItem("macready_auth_type", authType);
+  
+  updateAppHeader();
+  syncAccountDetailsToWindow();
+  
+  pushNotification("Signed In", `Welcome back, ${username}!`, { silent: true });
+  
+  closeSignInWindow();
+  
+  // Close dropdown
+  const dropdowns = document.querySelectorAll(".dropdown-menu");
+  dropdowns.forEach(d => d.classList.remove("show"));
+}
+
+function performSignOut() {
+  pushNotification("Signed Out", `Browsing session for "${currentUsername}" ended.`, { silent: true });
+  
+  currentUsername = "Guest";
+  currentUserEmail = "";
+  localStorage.removeItem("macready_username");
+  localStorage.removeItem("macready_email");
+  localStorage.removeItem("macready_auth_type");
+  
+  updateAppHeader();
+  syncAccountDetailsToWindow();
+  
+  const accWin = document.getElementById("account-window");
+  if (accWin) accWin.classList.add("hidden-window");
+}
+
+function updateAppHeader() {
+  const appHeader = document.querySelector('button[data-menu="app-menu"]');
+  if (appHeader) {
+    appHeader.textContent = currentUsername;
+  }
+}
+
+function syncAccountDetailsToWindow() {
+  const dispName = document.getElementById("account-display-name");
+  const dispEmail = document.getElementById("account-display-email");
+  const detailUser = document.getElementById("profile-detail-username");
+  
+  if (dispName) dispName.textContent = currentUsername === "Guest" ? "Guest User" : currentUsername;
+  if (dispEmail) dispEmail.textContent = currentUserEmail || "Not signed in";
+  if (detailUser) detailUser.textContent = currentUsername;
+
+  // Query hardware profile from SQLite
+  const profileRow = db.query("SELECT * FROM hardware_profile");
+  if (profileRow && profileRow.length > 0) {
+    const p = profileRow[0];
+    const hwModel = document.getElementById("account-hw-model");
+    const hwSub = document.getElementById("account-hw-sub");
+    const hwChip = document.getElementById("account-hw-chip");
+    const hwRam = document.getElementById("account-hw-ram");
+    const hwMacos = document.getElementById("account-hw-macos");
+    const hwCrossover = document.getElementById("account-hw-crossover");
+
+    if (hwModel) hwModel.textContent = p.macModel || "Select Model...";
+    if (hwSub) hwSub.textContent = p.macModel ? `${p.macModel} Specifications` : "No specifications input";
+    if (hwChip) hwChip.textContent = p.chip ? `Apple Silicon ${p.chip}` : "Not Configured";
+    if (hwRam) hwRam.textContent = p.ram ? `${p.ram} Unified Memory` : "Not Configured";
+    if (hwMacos) hwMacos.textContent = p.macosVersion || "Not Configured";
+    if (hwCrossover) hwCrossover.textContent = p.crossoverInstalled ? "Installed" : "Not Installed";
+  }
+
+  // Passkey Status Card
+  const authType = localStorage.getItem("macready_auth_type") || "standard";
+  const passkeyCard = document.getElementById("account-passkey-card");
+  if (passkeyCard) {
+    if (authType === "passkey") {
+      passkeyCard.style.background = "rgba(34, 197, 94, 0.1)";
+      passkeyCard.style.border = "1px solid rgba(34, 197, 94, 0.2)";
+      passkeyCard.innerHTML = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <div>
+          <div style="font-size: 12px; font-weight: 600; color: #22c55e;">Passkey Registered & Active</div>
+          <div style="font-size: 11px; opacity: 0.7; margin-top: 2px;">Authenticated securely via Touch ID / Passkey.</div>
+        </div>
+      `;
+    } else {
+      passkeyCard.style.background = "rgba(255, 149, 0, 0.1)";
+      passkeyCard.style.border = "1px solid rgba(255, 149, Orange, 0.2)";
+      passkeyCard.innerHTML = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ff9500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <div>
+          <div style="font-size: 12px; font-weight: 600; color: #ff9500;">Passkey Not Registered</div>
+          <div style="font-size: 11px; opacity: 0.7; margin-top: 2px;">Signed in using standard credentials. Register a passkey for faster biometric login.</div>
+        </div>
+      `;
+    }
+  }
+}
+
+function openAccountWindow() {
+  const win = document.getElementById("account-window");
+  if (win) {
+    win.classList.remove("hidden-window");
+    win.classList.remove("minimized");
+    syncAccountDetailsToWindow();
+    bringWindowToFront(win);
   }
 }
