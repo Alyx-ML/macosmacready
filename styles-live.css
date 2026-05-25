@@ -1365,6 +1365,11 @@ body.light-mode .card-source {
   display: none;
 }
 
+#widget-center.liquid-glass {
+  border-top: 0 !important;
+  box-shadow: none !important;
+}
+
 #widget-center > * {
   position: relative;
   z-index: 1;
@@ -1548,6 +1553,11 @@ body.light-mode .widgets-list::-webkit-scrollbar-thumb:hover {
 .widget-card:hover {
   border-color: rgba(255, 255, 255, 0.12);
 }
+
+.notifications-panel {
+  box-shadow: none !important;
+}
+
 body.light-mode .widget-card {
   background: rgba(255, 255, 255, 0.64);
   backdrop-filter: blur(22px) saturate(180%);
