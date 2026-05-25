@@ -1,0 +1,23 @@
+{
+  "name": "macos-tahoe-newsreader",
+  "version": "1.0.0",
+  "description": "Premium dark themed macOS Tahoe designed news site with liquid glass visual styling.",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "macos",
+    "tahoe",
+    "glassmorphism",
+    "liquidglass",
+    "newsreader"
+  ],
+  "author": "Antigravity Pair Programmer",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

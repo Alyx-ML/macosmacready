@@ -1,0 +1,2026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="MacReady is a macOS-style hub for Apple news, Mac games, app discovery, reviews, and desktop utilities.">
+  <title>MacReady</title>
+  <link rel="icon" type="image/webp" href="/assets/imgs/finderfavicon.webp">
+  <link rel="preload" as="image" href="/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" imagesrcset="/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp 960w, /assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Google Fonts for gorgeous typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://photos5.appleinsider.com">
+  <link rel="preconnect" href="https://images.macrumors.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="theme-blue">
+
+  <!-- Immersive Desktop Container -->
+  <div id="desktop">
+    
+    <!-- Night Light Amber Glass Screen Filter (Functional Eye Care) -->
+    <div id="night-light-overlay"></div>
+    
+    <!-- Floating Ambient Glows (dynamic liquid effect background) -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+
+    <!-- macOS Menu Bar -->
+    <header id="menu-bar">
+      <!-- Left side items -->
+      <div class="menu-left">
+        <button class="menu-item menu-trigger" data-menu="apple-menu" aria-label="Apple menu">
+          <span class="apple-logo" aria-hidden="true">&#63743;</span>
+        </button>
+        <button class="menu-item font-semibold menu-trigger" data-menu="app-menu">MacReady</button>
+        <button class="menu-item menu-trigger" data-menu="file-menu">File</button>
+        <button class="menu-item menu-trigger" data-menu="edit-menu">Edit</button>
+        <button class="menu-item menu-trigger" data-menu="view-menu">View</button>
+        <button class="menu-item menu-trigger" data-menu="tools-menu">Tools</button>
+        <button class="menu-item menu-trigger" data-menu="help-menu">Help</button>
+      </div>
+
+      <!-- Right side items -->
+      <div class="menu-right">
+        <!-- Control Center Button -->
+        <button class="menu-icon" id="control-center-toggle" title="Control Center">
+          <img src="/assets/imgs/control-centre.svg" alt="Control Center" class="menu-icon-img">
+        </button>
+        <!-- Search icon -->
+        <button class="menu-icon" id="menu-search-toggle" title="Spotlight Search">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+        <!-- Time and Date (Clickable to open Notifications / Widgets) -->
+        <button class="menu-item" id="date-time-toggle" aria-live="polite"></button>
+      </div>
+
+      <!-- Dropdown Menus (Rendered Absolutely on Activation) -->
+      <!-- Apple Menu -->
+      <div class="dropdown-menu" id="apple-menu">
+        <a href="#" class="dropdown-item" id="menu-about-mac">About This Mac</a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" id="menu-system-settings">System Settings...</a>
+        <a href="#" class="dropdown-item">App Store...</a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item">Sleep</a>
+        <a href="#" class="dropdown-item">Restart...</a>
+        <a href="#" class="dropdown-item">Shut Down...</a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" id="menu-lock-screen">Lock Screen <span class="shortcut">^⌘Q</span></a>
+      </div>
+
+      <!-- App Menu -->
+      <div class="dropdown-menu" id="app-menu">
+        <a href="#" class="dropdown-item">About MacReady</a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" id="menu-preferences">Preferences... <span class="shortcut">⌘,</span></a>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item">Quit MacReady <span class="shortcut">⌘Q</span></a>
+      </div>
+
+      <!-- File Menu -->
+      <div class="dropdown-menu" id="file-menu">
+        <a href="#" class="dropdown-item" id="menu-new-story">New Story... <span class="shortcut">⌥N</span></a>
+        <a href="#" class="dropdown-item">Open Story URL... <span class="shortcut">⌘O</span></a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item">Close Window <span class="shortcut">⌘W</span></a>
+        <a href="#" class="dropdown-item">Save Article PDF <span class="shortcut">⌘S</span></a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" id="menu-bookmark-toggle">Bookmark Selected <span class="shortcut">⌥B</span></a>
+      </div>
+
+      <!-- Edit Menu -->
+      <div class="dropdown-menu" id="edit-menu">
+        <a href="#" class="dropdown-item">Undo <span class="shortcut">⌘Z</span></a>
+        <a href="#" class="dropdown-item">Redo <span class="shortcut">⇧⌘Z</span></a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item">Cut <span class="shortcut">⌘X</span></a>
+        <a href="#" class="dropdown-item">Copy <span class="shortcut">⌘C</span></a>
+        <a href="#" class="dropdown-item">Paste <span class="shortcut">⌘V</span></a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item">Select All <span class="shortcut">⌘A</span></a>
+      </div>
+
+      <!-- View Menu -->
+      <div class="dropdown-menu" id="view-menu">
+        <a href="#" class="dropdown-item" id="menu-view-grid">Grid Layout</a>
+        <a href="#" class="dropdown-item" id="menu-view-list">List Layout</a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" id="menu-toggle-sidebar">Toggle Sidebar <span class="shortcut">⌥⌘S</span></a>
+        <a href="#" class="dropdown-item" id="menu-enter-fullscreen">Enter Full Screen <span class="shortcut">^⌘F</span></a>
+      </div>
+
+      <!-- Tools Menu -->
+      <div class="dropdown-menu" id="tools-menu">
+        <a href="#" class="dropdown-item" id="menu-clear-custom">Delete Custom Stories</a>
+        <a href="#" class="dropdown-item" id="menu-reset-app">Reset Application Data</a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item">Diagnostics Log</a>
+      </div>
+
+      <!-- Help Menu -->
+      <div class="dropdown-menu" id="help-menu">
+        <a href="#" class="dropdown-item">MacReady Help</a>
+        <a href="#" class="dropdown-item">Tahoe Visual Guide</a>
+        <div class="dropdown-divider"></div>
+        <a href="https://github.com" target="_blank" class="dropdown-item">GitHub Repository</a>
+      </div>
+    </header>
+
+    <!-- Main macOS News Application Window -->
+    <main id="app-window" class="liquid-glass">
+      
+      <!-- Window Title Bar / Toolbar -->
+      <div class="window-titlebar">
+        <!-- Traffic Light System Controls -->
+        <div class="traffic-lights">
+          <button class="traffic-light red" id="window-close" title="Close"></button>
+          <button class="traffic-light yellow" id="window-minimize" title="Minimize"></button>
+          <button class="traffic-light green" id="window-maximize" title="Maximize"></button>
+        </div>
+
+        <!-- Window Toolbar Items -->
+        <div class="window-toolbar">
+          <!-- Navigation arrows -->
+          <div class="nav-controls">
+            <button class="toolbar-btn" id="nav-back" title="Go Back">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="toolbar-btn disabled" id="nav-forward" title="Go Forward">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Application Title -->
+          <div class="app-title font-semibold">Today's Stories</div>
+
+          <!-- Action buttons and search -->
+          <div class="toolbar-actions">
+            <!-- Search bar -->
+            <div class="search-container">
+              <svg class="search-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="story-search" placeholder="Search" autocomplete="off">
+              <button id="search-clear-btn" class="hidden">&times;</button>
+            </div>
+
+            <!-- View Segment Control -->
+            <div class="segment-control">
+              <button class="segment-btn active" id="btn-grid" title="Grid View">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+              </button>
+              <button class="segment-btn" id="btn-list" title="List View">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="6" x2="3.01" y2="6" stroke-width="3"></line>
+                  <line x1="3" y1="12" x2="3.01" y2="12" stroke-width="3"></line>
+                  <line x1="3" y1="18" x2="3.01" y2="18" stroke-width="3"></line>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Write Custom Article Button -->
+            <button class="toolbar-btn accent-tint" id="btn-new-story" title="Write New Article">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Split Layout: Sidebar & Content -->
+      <!-- Main Split Layout: Sidebar & Content -->
+      <div class="window-body">
+        
+        <!-- =================== 1. NEWS & REVIEWS APP VIEW =================== -->
+        <div id="news-app-view" class="app-view-container">
+          <!-- Sidebar Navigation (Glassy Panel) -->
+          <aside class="window-sidebar" id="sidebar">
+            <div class="sidebar-section">
+              <h4 class="sidebar-title">Library</h4>
+              <ul class="sidebar-menu">
+                <li class="sidebar-item active" data-nav="today">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  Today
+                </li>
+                <li class="sidebar-item" data-nav="bookmarks">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                  Bookmarks
+                  <span class="badge" id="bookmark-count">0</span>
+                </li>
+                <li class="sidebar-item" data-nav="queue">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 6h13"></path>
+                    <path d="M8 12h13"></path>
+                    <path d="M8 18h13"></path>
+                    <path d="M3 6h.01"></path>
+                    <path d="M3 12h.01"></path>
+                    <path d="M3 18h.01"></path>
+                  </svg>
+                  Reading Queue
+                  <span class="badge" id="queue-count">0</span>
+                </li>
+                <li class="sidebar-item" data-nav="custom">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                  My Stories
+                  <span class="badge" id="custom-count">0</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="sidebar-section">
+              <h4 class="sidebar-title">Categories</h4>
+              <ul class="sidebar-menu">
+                <li class="sidebar-item" data-category="technology">
+                  <span class="dot-category tech"></span>
+                  News
+                </li>
+                <li class="sidebar-item" data-category="design">
+                  <span class="dot-category design"></span>
+                  Games
+                </li>
+                <li class="sidebar-item" data-category="science">
+                  <span class="dot-category science"></span>
+                  Reviews
+                </li>
+                <li class="sidebar-item" data-category="culture">
+                  <span class="dot-category culture"></span>
+                  Apps
+                </li>
+              </ul>
+            </div>
+
+          </aside>
+
+          <!-- Main Feed Window Context -->
+          <div class="feed-viewport-wrapper">
+            <div class="window-feed-container" id="feed-container">
+              <!-- Feed Grid (Renders list of glass cards dynamically) -->
+              <div class="news-grid" id="news-grid">
+                <!-- Dynamic items rendered via app.js -->
+              </div>
+
+              <!-- Empty State (Fallback for searches or filters with 0 results) -->
+              <div class="empty-state hidden" id="empty-state">
+                <div class="empty-state-icon">
+                  <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </div>
+                <h3>No Articles Found</h3>
+                <p>Try searching something else, changing categories, or create a custom article!</p>
+                <button class="btn btn-primary" id="btn-empty-reset">View All Stories</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================== 2. CROSSOVER APP VIEW =================== -->
+        <div id="crossover-app-view" class="app-view-container hidden-app">
+          <div class="crossover-hero">
+            <div class="crossover-hero-glow"></div>
+            <img src="/assets/imgs/optimized/Crossoverlogo.png" alt="CrossOver Logo" class="crossover-hero-logo" width="72" height="72">
+            <div class="crossover-hero-text">
+              <h2 class="font-bold text-2xl font-outfit">CrossOver for macOS</h2>
+              <p class="text-sm opacity-80"> Run your favourite games and applications on MacOS</p>
+              <div class="crossover-version-row mt-3">
+                <span class="badge-pill">v26.1.0 Stable</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="crossover-body">
+            <div class="crossover-column">
+              <h3 class="crossover-sec-title">Latest CrossOver for macOS Changelog</h3>
+              <div class="crossover-changelog-list" id="crossover-changelog-container">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+            <div class="crossover-column">
+              <h3 class="crossover-sec-title">Latest Blog Posts</h3>
+              <div class="crossover-blog-list" id="crossover-blog-container">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================== 2.5. macOS RELEASE NOTES VIEW =================== -->
+        <div id="macos-app-view" class="app-view-container hidden-app">
+          <div class="macos-hero">
+            <div class="macos-hero-glow"></div>
+            <img src="/assets/imgs/MacOSIcon.webp" alt="macOS Logo" class="macos-hero-logo" width="72" height="72">
+            <div class="macos-hero-text">
+              <h2 class="font-bold text-2xl font-outfit">macOS Release Notes</h2>
+              <p class="text-sm opacity-80">Explore developer SDK changes, known issues, fixes, and framework APIs</p>
+              <div class="macos-version-row mt-3">
+                <span class="badge-pill">macOS 26 Tahoe Stable</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="macos-body">
+            <div class="crossover-column">
+              <h3 class="crossover-sec-title">macOS Tahoe Active Changelog</h3>
+              <div class="crossover-changelog-list" id="macos-changelog-container">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+            <div class="crossover-column">
+              <h3 class="crossover-sec-title">Developer Resources & Tooling</h3>
+              <!-- macOS Developer Resources & Tooling Panel -->
+              <div class="macos-env-panel">
+                <p style="font-size: 11.5px; opacity: 0.7; margin-bottom: 16px; line-height: 1.45;">Access local compiler tools, performance profiling applications, official documentation, and framework reference files.</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                  <!-- Resource Card 1 -->
+                  <a href="https://developer.apple.com/documentation" target="_blank" class="macos-resource-link" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; text-decoration: none; color: inherit; transition: background 0.2s, border-color 0.2s;">
+                    <svg style="width: 18px; height: 18px; opacity: 0.8; color: var(--accent-color);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    <div>
+                      <strong style="display: block; font-size: 12.5px; color: #fff; margin-bottom: 1px;">SDK Reference Documentation</strong>
+                      <span style="display: block; font-size: 10.5px; opacity: 0.55;">Official API documentation for Metal 4, AppKit, and system layers.</span>
+                    </div>
+                  </a>
+
+                  <!-- Resource Card 2 -->
+                  <a href="https://developer.apple.com/xcode" target="_blank" class="macos-resource-link" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; text-decoration: none; color: inherit; transition: background 0.2s, border-color 0.2s;">
+                    <svg style="width: 18px; height: 18px; opacity: 0.8; color: var(--accent-color);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="16 18 22 12 16 6"></polyline>
+                      <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                    <div>
+                      <strong style="display: block; font-size: 12.5px; color: #fff; margin-bottom: 1px;">Xcode Toolchains</strong>
+                      <span style="display: block; font-size: 10.5px; opacity: 0.55;">Compiler suites, Instruments performance profiling, and Simulator engines.</span>
+                    </div>
+                  </a>
+
+                  <!-- Resource Card 3 -->
+                  <a href="https://developer.apple.com/forums" target="_blank" class="macos-resource-link" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; text-decoration: none; color: inherit; transition: background 0.2s, border-color 0.2s;">
+                    <svg style="width: 18px; height: 18px; opacity: 0.8; color: var(--accent-color);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <div>
+                      <strong style="display: block; font-size: 12.5px; color: #fff; margin-bottom: 1px;">Apple Developer Forums</strong>
+                      <span style="display: block; font-size: 10.5px; opacity: 0.55;">Connect with engineering support and discuss platform architecture.</span>
+                    </div>
+                  </a>
+                </div>
+              </div>
+
+              <h3 class="crossover-sec-title">Developer SDK & Historical Releases</h3>
+              <div class="crossover-changelog-list" id="macos-historical-container">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================== 3. GAMES APP VIEW =================== -->
+        <div id="games-app-view" class="app-view-container hidden-app">
+          <aside class="window-sidebar games-sidebar">
+            <div class="sidebar-section">
+              <h4 class="sidebar-title">Games</h4>
+              <ul class="sidebar-menu" id="games-nav-menu">
+                <li class="sidebar-item active" data-game-filter="trending">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                    <polyline points="17 6 23 6 23 12"></polyline>
+                  </svg>
+                  Trending Now
+                </li>
+                <li class="sidebar-item" data-game-filter="popular">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                  Most Played
+                </li>
+                <li class="sidebar-item" data-game-filter="top-rated">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  Top Rated
+                </li>
+              </ul>
+            </div>
+            <div class="sidebar-section collapsible-section">
+              <h4 class="sidebar-title collapsible">
+                <span>Compatibility</span>
+                <svg class="chevron-icon" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </h4>
+              <ul class="sidebar-menu" id="games-compat-menu">
+                <li class="sidebar-item active" data-game-compat="all">
+                  <span class="dot-category design"></span>
+                  All Games
+                </li>
+                <li class="sidebar-item" data-game-compat="native">
+                  <span class="dot-category tech"></span>
+                  Native
+                </li>
+                <li class="sidebar-item" data-game-compat="perfect">
+                  <span class="dot-category science"></span>
+                  Perfect
+                </li>
+                <li class="sidebar-item" data-game-compat="playable">
+                  <span class="dot-category culture"></span>
+                  Playable
+                </li>
+              </ul>
+            </div>
+
+            <div class="sidebar-section collapsible-section">
+              <h4 class="sidebar-title collapsible">
+                <span>Genres</span>
+                <svg class="chevron-icon" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </h4>
+              <ul class="sidebar-menu" id="games-genre-menu">
+                <li class="sidebar-item active" data-game-genre="all">
+                  <span class="dot-category design" style="background-color: var(--accent-color);"></span>
+                  All Genres
+                </li>
+                <li class="sidebar-item" data-game-genre="Action">
+                  <span class="dot-category tech" style="background-color: #ff2d55;"></span>
+                  Action
+                </li>
+                <li class="sidebar-item" data-game-genre="RPG">
+                  <span class="dot-category culture" style="background-color: #ff9500;"></span>
+                  RPG
+                </li>
+                <li class="sidebar-item" data-game-genre="Adventure">
+                  <span class="dot-category science" style="background-color: #5856d6;"></span>
+                  Adventure
+                </li>
+                <li class="sidebar-item" data-game-genre="Strategy">
+                  <span class="dot-category design" style="background-color: #007aff;"></span>
+                  Strategy
+                </li>
+                <li class="sidebar-item" data-game-genre="Simulation">
+                  <span class="dot-category build" style="background-color: #ffcc00;"></span>
+                  Simulation
+                </li>
+                <li class="sidebar-item" data-game-genre="Sports">
+                  <span class="dot-category sport" style="background-color: #4cd964;"></span>
+                  Sports
+                </li>
+              </ul>
+            </div>
+            
+            <div class="sidebar-section hardware-profile-section" style="margin-top: 15px; padding-top: 15px;">
+              <h4 class="sidebar-title">My Mac</h4>
+              <div class="hardware-profile-card liquid-glass" style="padding: 12px; border-radius: 10px; font-size: 11px; display: flex; flex-direction: column; gap: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); margin: 0 4px;">
+                <div style="display: flex; flex-direction: column; gap: 3px;">
+                  <label style="opacity: 0.6; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 500;">Mac Model</label>
+                  <select id="profile-mac-model" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 4px 6px; border-radius: 6px; font-size: 11px; outline: none; width: 100%;">
+                    <option value="" disabled selected>Select Model...</option>
+                    <option value="MacBook Pro">MacBook Pro</option>
+                    <option value="MacBook Air">MacBook Air</option>
+                    <option value="MacBook Neo">MacBook Neo</option>
+                    <option value="Mac Studio">Mac Studio</option>
+                    <option value="Mac mini">Mac mini</option>
+                    <option value="Mac Pro">Mac Pro</option>
+                    <option value="iMac">iMac</option>
+                  </select>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 3px;">
+                  <label style="opacity: 0.6; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 500;">Apple Silicon Chip</label>
+                  <select id="profile-chip" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 4px 6px; border-radius: 6px; font-size: 11px; outline: none; width: 100%;">
+                    <option value="" disabled selected>Select Chip...</option>
+                    <option value="M1">M1</option>
+                    <option value="M1 Pro">M1 Pro</option>
+                    <option value="M1 Max">M1 Max</option>
+                    <option value="M1 Ultra">M1 Ultra</option>
+                    <option value="M2">M2</option>
+                    <option value="M2 Pro">M2 Pro</option>
+                    <option value="M2 Max">M2 Max</option>
+                    <option value="M2 Ultra">M2 Ultra</option>
+                    <option value="M3">M3</option>
+                    <option value="M3 Pro">M3 Pro</option>
+                    <option value="M3 Max">M3 Max</option>
+                    <option value="M4">M4</option>
+                    <option value="M4 Pro">M4 Pro</option>
+                    <option value="M4 Max">M4 Max</option>
+                    <option value="M5">M5</option>
+                    <option value="M5 Pro">M5 Pro</option>
+                    <option value="M5 Max">M5 Max</option>
+                  </select>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 3px;">
+                  <label style="opacity: 0.6; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 500;">System RAM</label>
+                  <select id="profile-ram" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 4px 6px; border-radius: 6px; font-size: 11px; outline: none; width: 100%;">
+                    <option value="" disabled selected>Select RAM...</option>
+                    <option value="8GB">8GB</option>
+                    <option value="16GB">16GB</option>
+                    <option value="18GB">18GB</option>
+                    <option value="24GB">24GB</option>
+                    <option value="32GB">32GB</option>
+                    <option value="36GB">36GB</option>
+                    <option value="48GB">48GB</option>
+                    <option value="64GB">64GB</option>
+                    <option value="96GB">96GB</option>
+                    <option value="128GB">128GB</option>
+                  </select>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 3px;">
+                  <label style="opacity: 0.6; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 500;">macOS Version</label>
+                  <select id="profile-macos" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 4px 6px; border-radius: 6px; font-size: 11px; outline: none; width: 100%;">
+                    <option value="" disabled selected>Select macOS...</option>
+                    <option value="macOS 26 Tahoe">macOS 26 Tahoe</option>
+                    <option value="macOS 15 Sequoia">macOS 15 Sequoia</option>
+                    <option value="macOS 14 Sonoma">macOS 14 Sonoma</option>
+                    <option value="macOS 13 Ventura">macOS 13 Ventura</option>
+                    <option value="macOS 12 Monterey">macOS 12 Monterey</option>
+                    <option value="macOS 11 Big Sur">macOS 11 Big Sur</option>
+                  </select>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.06);">
+                  <label for="profile-crossover" style="opacity: 0.8; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                    <input type="checkbox" id="profile-crossover" style="cursor: pointer; accent-color: var(--accent-color);">
+                    <span>CrossOver Installed</span>
+                  </label>
+                </div>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.06);">
+                  <label for="filter-by-specs" style="opacity: 0.8; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 600; color: #fff;">
+                    <input type="checkbox" id="filter-by-specs" style="cursor: pointer; accent-color: #ffd042;">
+                    <span>Filter by Spec</span>
+                  </label>
+                </div>
+
+                <div id="profile-status" style="font-size: 9px; opacity: 0.45; text-align: center; margin-top: 2px; transition: opacity 0.3s ease;">
+                  Profile inactive
+                </div>
+              </div>
+            </div>
+          </aside>
+          
+          <div class="window-feed-container games-feed-container">
+            <!-- Carousel of recent steam titles -->
+            <div id="games-carousel-wrapper"></div>
+
+            <div class="games-grid-container" id="games-grid">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- =================== 4. APP STORE APP VIEW =================== -->
+        <div id="app-store-app-view" class="app-view-container hidden-app">
+          <aside class="window-sidebar appstore-sidebar">
+            <div class="sidebar-section">
+              <h4 class="sidebar-title">App Store</h4>
+              <ul class="sidebar-menu" id="appstore-nav-menu">
+                <li class="sidebar-item active" data-store-tab="discover">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                  </svg>
+                  Discover
+                </li>
+                <li class="sidebar-item" data-store-tab="installed">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Installed
+                </li>
+                <li class="sidebar-item" data-store-tab="updates">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 2v6h-6"></path>
+                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                    <path d="M3 22v-6h6"></path>
+                    <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                  </svg>
+                  Updates
+                </li>
+                <li class="sidebar-item" data-store-tab="arcade">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                    <path d="M6 12h4m-2-2v4m7-2h.01M19 12h.01"></path>
+                  </svg>
+                  Arcade
+                </li>
+                <li class="sidebar-item" data-store-tab="create">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                  Create
+                </li>
+                <li class="sidebar-item" data-store-tab="productivity">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="9" y1="9" x2="15" y2="9"></line>
+                    <line x1="9" y1="13" x2="15" y2="13"></line>
+                    <line x1="9" y1="17" x2="15" y2="17"></line>
+                  </svg>
+                  Productivity
+                </li>
+                <li class="sidebar-item" data-store-tab="work">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path>
+                  </svg>
+                  Work
+                </li>
+                <li class="sidebar-item" data-store-tab="developer">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                  </svg>
+                  Developer Tools
+                </li>
+                <li class="sidebar-item" data-store-tab="education">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                  </svg>
+                  Education
+                </li>
+                <li class="sidebar-item" data-store-tab="social">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                  Social
+                </li>
+                <li class="sidebar-item" data-store-tab="utilities">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"></path>
+                  </svg>
+                  Utilities
+                </li>
+                <li class="sidebar-item" data-store-tab="finance">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  </svg>
+                  Finance
+                </li>
+                <li class="sidebar-item" data-store-tab="health">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                  </svg>
+                  Health &amp; Fitness
+                </li>
+              </ul>
+            </div>
+          </aside>
+          
+          <div class="window-feed-container appstore-feed-container" id="appstore-feed">
+            <!-- Featured Card Banner -->
+            <div class="store-featured-banner" id="store-hero-banner">
+              <!-- Rendered dynamically -->
+            </div>
+ 
+            <!-- Store categories row -->
+            <div class="store-row-container">
+              <h3 class="store-row-title" id="store-free-title">Top Free Apps</h3>
+              <div class="store-carousel animate-fade-in" id="store-carousel-apps">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+ 
+            <div class="store-row-container mt-6">
+              <h3 class="store-row-title" id="store-paid-title">Top Paid Apps</h3>
+              <div class="store-carousel animate-fade-in" id="store-carousel-utilities">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================== 5. FINDER APP VIEW =================== -->
+        <div id="finder-app-view" class="app-view-container hidden-app">
+          <aside class="window-sidebar finder-sidebar">
+            <div class="sidebar-section">
+              <h4 class="sidebar-title">Favorites</h4>
+              <ul class="sidebar-menu" id="finder-nav-menu">
+                <li class="sidebar-item active" data-finder-dir="recents">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  Recents
+                </li>
+                <li class="sidebar-item" data-finder-dir="desktop">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                  Desktop
+                </li>
+                <li class="sidebar-item" data-finder-dir="documents">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                  Documents
+                </li>
+                <li class="sidebar-item" data-finder-dir="downloads">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Downloads
+                </li>
+                <li class="sidebar-item" data-finder-dir="applications">
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                  </svg>
+                  Applications
+                </li>
+              </ul>
+            </div>
+          </aside>
+
+          <div class="window-feed-container finder-feed-container">
+            <!-- Finder Browser Panel -->
+            <div class="finder-browser" id="finder-browser-grid">
+              <!-- Loaded dynamically as Grid or List View -->
+            </div>
+            
+            <!-- Finder Path and Status Bar -->
+            <div class="finder-status-bar">
+              <div class="finder-breadcrumbs" id="finder-breadcrumbs">
+                <span>Macintosh HD</span> &rsaquo; <span>Users</span> &rsaquo; <span>wallsendcc</span> &rsaquo; <span>Documents</span>
+              </div>
+              <div class="finder-disk-info" id="finder-disk-info">
+                8 items, 321.4 GB available
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- macOS Right Side Notification / Widget Center Drawer -->
+    <aside id="widget-center" class="liquid-glass">
+      <!-- Scrollable List of Panes -->
+      <div class="widgets-list">
+        
+        <!-- Pane 1: Notifications -->
+        <div id="pane-notifications" class="tahoe-pane">
+
+
+          <!-- Dynamic Notifications list -->
+          <div class="widget-card notifications-panel mt-2">
+            <div class="panel-header mb-2">
+              <h4 class="font-semibold text-xs uppercase opacity-60">Today's Alerts</h4>
+              <button id="clear-notifications-btn" class="widget-header-btn clear-btn">Clear All</button>
+            </div>
+            
+            <div id="notifications-items-wrapper">
+              <div class="empty-state-placeholder" style="padding: 18px 8px; text-align: center; opacity: 0.55; font-size: 11px;">No alerts</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pane 2: Widgets -->
+        <div id="pane-widgets" class="tahoe-pane active">
+          <!-- Quick Control Panel -->
+          <div class="widget-card widget-control-panel">
+            <div class="quick-settings-grid">
+              
+              <!-- Dark Mode (Untouched ID and class compatibility) -->
+              <button class="qs-btn active" title="Dark Mode" id="qs-darkmode">
+                <div class="qs-icon-circle">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M12 3a9 9 0 1 0 9 9 9 9 0 0 0-9-9zm0 16a7 7 0 1 1 7-7 7 7 0 0 1-7 7z"/>
+                  </svg>
+                </div>
+                <div class="qs-details">
+                  <span class="qs-title">Dark Mode</span>
+                  <span class="qs-subtitle" id="darkmode-status">On</span>
+                </div>
+              </button>
+
+              <!-- Night Light Control (Actual Website Feature) -->
+              <button class="qs-btn" title="Toggle Night Light Filter" id="qs-nightlight">
+                <div class="qs-icon-circle">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M12 2.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75zM6.16 4.39a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.06L6.16 5.45a.75.75 0 0 1 0-1.06zm10.62 0a.75.75 0 0 1 0 1.06l-1.06 1.06a.75.75 0 1 1-1.06-1.06l1.06-1.06a.75.75 0 0 1 1.06 0zM12 6a6 6 0 1 0 6 6 6 6 0 0 0-6-6zm0 10.5a4.5 4.5 0 1 1 4.5-4.5 4.5 4.5 0 0 1-4.5 4.5zM3 11.25a.75.75 0 0 1 .75.75h1.5a.75.75 0 0 1 0 1.5H3.75a.75.75 0 0 1-.75-.75zm15 0a.75.75 0 0 1 .75.75h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75zM6.16 17.49a.75.75 0 0 1 0 1.06l-1.06 1.06a.75.75 0 1 1-1.06-1.06l1.06-1.06a.75.75 0 0 1 1.06 0zm10.62 0a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.06l-1.06-1.06a.75.75 0 0 1 0-1.06zM12 18.75a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V19.5a.75.75 0 0 1 .75-.75z"/>
+                  </svg>
+                </div>
+                <div class="qs-details">
+                  <span class="qs-title">Night Light</span>
+                  <span class="qs-subtitle" id="nightlight-status">Off</span>
+                </div>
+              </button>
+
+              <!-- Accent Theme Control (Actual Website Feature) -->
+              <button class="qs-btn active" title="Cycle Accent Color" id="qs-accent">
+                <div class="qs-icon-circle">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.25 0 2.26-1.01 2.26-2.26 0-.53-.18-1.02-.49-1.42-.31-.4-.49-.91-.49-1.47 0-1.25 1.01-2.26 2.26-2.26H18c2.21 0 4-1.79 4-4 0-4.97-4.49-9-10-9zm-6.5 9c-.83 0-1.5-.67-1.5-1.5S4.67 8 5.5 8 7 8.67 7 9.5 6.33 11 5.5 11zm3-3C7.67 8 7 7.33 7 6.5S7.67 5 8.5 5 10 5.67 10 6.5 9.33 8 8.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S12.67 5 13.5 5s1.5.67 1.5 1.5S14.33 8 13.5 8zm4.5 3c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                  </svg>
+                </div>
+                <div class="qs-details">
+                  <span class="qs-title">Accent Theme</span>
+                  <span class="qs-subtitle" id="accent-status">Blue</span>
+                </div>
+              </button>
+
+              <!-- View Mode Layout Toggle (Actual Website Feature) -->
+              <button class="qs-btn active" title="Toggle Layout View" id="qs-layout">
+                <div class="qs-icon-circle">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                    <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                    <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                    <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                  </svg>
+                </div>
+                <div class="qs-details">
+                  <span class="qs-title">View Mode</span>
+                  <span class="qs-subtitle" id="layout-status">Grid</span>
+                </div>
+              </button>
+
+            </div>
+            
+            <!-- System Sliders (Brightness untouched, Audio added) -->
+            <div class="system-sliders mt-3">
+              <!-- Brightness slider (Untouched ID) -->
+              <div class="slider-row">
+                <span class="slider-icon" title="Display Brightness">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0-5a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1zm0 17a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1zM5.64 5.64a1 1 0 0 1 1.41 0l1.42 1.42a1 1 0 0 1-1.42 1.42L5.64 7.05a1 1 0 0 1 0-1.41zm11.31 11.31a1 1 0 0 1 1.41 0l1.42 1.42a1 1 0 0 1-1.42 1.42l-1.42-1.42a1 1 0 0 1 0-1.41zM2 12a1 1 0 0 1 1-1h2a1 1 0 0 1 0 2H3a1 1 0 0 1-1-1zm17 0a1 1 0 0 1 1-1h2a1 1 0 0 1 0 2h-2a1 1 0 0 1-1-1zM5.64 18.36a1 1 0 0 1 0-1.41l1.42-1.42a1 1 0 1 1 1.42 1.42l-1.42 1.42a1 1 0 0 1-1.41 0zm11.31-11.31a1 1 0 0 1 0-1.41l1.42-1.42a1 1 0 1 1 1.42 1.42l-1.42 1.42a1 1 0 0 1-1.42 0z"/>
+                  </svg>
+                </span>
+                <input type="range" class="system-slider" min="10" max="100" value="100" title="Display Brightness" id="brightness-slider">
+              </div>
+
+
+            </div>
+          </div>
+
+          <!-- Apple Events Calendar Widget (Tahoe Overhauled) -->
+          <div class="widget-card apple-events-widget">
+            <div class="events-widget-header">
+              <h4>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                Apple Events
+              </h4>
+            </div>
+
+            <!-- Visual Countdown Banner -->
+            <div class="events-countdown-banner">
+              <div class="countdown-text-group">
+                <span class="countdown-label">WWDC26 Countdown</span>
+                <span class="countdown-value" id="wwdc-countdown-text">17 days remaining</span>
+              </div>
+            </div>
+
+
+            <div class="events-list">
+              <!-- WWDC Keynote -->
+              <div class="event-row">
+                <div class="event-date-card">
+                  <div class="event-date-month">JUN</div>
+                  <div class="event-date-day">08</div>
+                </div>
+                <div class="event-details">
+                  <p class="event-title">WWDC 2026 Keynote</p>
+                  <p class="event-desc">iOS 20, macOS 17 & Siri AI</p>
+                </div>
+                <button class="event-btn" data-event="WWDC 2026 Keynote" id="btn-event-wwdc">Notify</button>
+              </div>
+
+              <!-- iPhone Keynote -->
+              <div class="event-row">
+                <div class="event-date-card">
+                  <div class="event-date-month violet">SEP</div>
+                  <div class="event-date-day">08</div>
+                </div>
+                <div class="event-details">
+                  <p class="event-title">iPhone 18 Keynote</p>
+                  <p class="event-desc">A20 Ultra, Cam-Button 2</p>
+                </div>
+                <button class="event-btn" data-event="iPhone 18 Keynote" id="btn-event-iphone">Notify</button>
+              </div>
+
+              <!-- Silicon Event -->
+              <div class="event-row">
+                <div class="event-date-card">
+                  <div class="event-date-month blue">OCT</div>
+                  <div class="event-date-day">13</div>
+                </div>
+                <div class="event-details">
+                  <p class="event-title">Mac & iPad Special</p>
+                  <p class="event-desc">M6 Ultra Chip Family</p>
+                </div>
+                <button class="event-btn" data-event="Mac & iPad Special Event" id="btn-event-mac">Notify</button>
+              </div>
+            </div>
+          </div>
+
+
+
+
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- macOS Quick Look Full Article Reader Overlay -->
+    <div id="reader-overlay" class="hidden">
+      <!-- Dark backdrop blurring background -->
+      <div class="reader-backdrop"></div>
+      
+      <!-- Navigation Proximity Chevrons -->
+      <button class="reader-proximity-btn left" id="reader-prev-btn" title="Previous Story">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <button class="reader-proximity-btn right" id="reader-next-btn" title="Next Story">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+      
+      <!-- Fluid glass reader card -->
+      <article class="reader-card liquid-glass" id="reader-article">
+        
+        <!-- Reader Toolbar -->
+        <header class="reader-toolbar">
+          <div class="reader-toolbar-left">
+            <button class="reader-btn close-reader-btn" id="reader-close" title="Close Reader (Esc)">&times;</button>
+          </div>
+          
+          <div class="reader-toolbar-center font-semibold text-sm truncate" id="reader-toolbar-title">
+            Article Title
+          </div>
+
+          <div class="reader-toolbar-right" style="position: relative;">
+            <button class="reader-tool-btn" id="reader-options-btn" title="Reader Options" aria-label="Reader Options" aria-haspopup="true" aria-expanded="false" style="display: flex; align-items: center; justify-content: center; gap: 4px; padding: 4px 6px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="reader-options-icon" style="display: block; flex-shrink: 0; pointer-events: none;">
+                <!-- Small 'a' -->
+                <path d="M3 16l3.5-9 3.5 9M4.2 13h5.6" stroke-width="2.2"></path>
+                <!-- Large 'A' -->
+                <path d="M12 16l3-8 3 8M13 13.5h4" stroke-width="2.8"></path>
+                <!-- Tiny Dropdown Chevron -->
+                <polyline points="19 11 21 13 23 11" stroke-width="2.2"></polyline>
+              </svg>
+            </button>
+
+            <!-- Floating glassmorphic popover panel -->
+            <div class="reader-options-dropdown hidden" id="reader-options-dropdown" role="menu">
+              <!-- Text Size Row -->
+              <div class="dropdown-row size-row" role="none">
+                <button class="font-scale-btn" id="font-decrease" title="Decrease Text Size" role="menuitem">A</button>
+                <span class="font-scale-percent" id="font-percentage">100%</span>
+                <button class="font-scale-btn" id="font-increase" title="Increase Text Size" role="menuitem">A</button>
+              </div>
+              
+              <div class="dropdown-divider"></div>
+              
+              <!-- Contrast Theme Row -->
+              <div class="dropdown-row theme-row" role="none">
+                <button class="theme-circle-btn classic active" data-theme="classic" title="Classic Light" role="menuitemradio" aria-checked="true">
+                  <span class="theme-circle classic-circle"></span>
+                  <span class="theme-circle-label">Classic</span>
+                </button>
+                <button class="theme-circle-btn paper" data-theme="paper" title="Parchment Paper" role="menuitemradio" aria-checked="false">
+                  <span class="theme-circle paper-circle"></span>
+                  <span class="theme-circle-label">Paper</span>
+                </button>
+                <button class="theme-circle-btn velvet" data-theme="velvet" title="Velvet Night" role="menuitemradio" aria-checked="false">
+                  <span class="theme-circle velvet-circle"></span>
+                  <span class="theme-circle-label">Velvet</span>
+                </button>
+              </div>
+
+              <div class="dropdown-divider"></div>
+
+              <!-- Action Items List -->
+              <div class="dropdown-actions-list" role="none">
+                <button class="dropdown-action-item" id="reader-bookmark-btn" role="menuitem">
+                  <svg class="action-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                  <span class="action-text">Bookmark Article</span>
+                </button>
+                <a class="dropdown-action-item" id="reader-open-original" title="Open Original Source" target="_blank" rel="noopener" role="menuitem">
+                  <svg class="action-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                  <span class="action-text">Original Source</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Dynamic Reading Progress Line -->
+        <div class="reading-progress-container">
+          <div class="reading-progress-bar" id="reader-progress"></div>
+        </div>
+
+        <!-- Article Contents Pane -->
+        <div class="reader-content-body" id="reader-body">
+          
+          <!-- Hero Section -->
+          <div class="reader-hero">
+            <img src="" alt="Hero Cover" id="reader-cover-img">
+            <div class="reader-hero-gradient"></div>
+            <div class="reader-meta-title-block">
+              <h1 class="reader-title font-editorial" id="reader-title">The Future of Dynamic Fluid Visuals in Desktop Operating Systems</h1>
+              <p class="reader-subtitle" id="reader-subtitle">An exploration of depth, transparency, and glass architecture in modern user environments.</p>
+              <div class="reader-editorial-meta" id="reader-editorial-meta"></div>
+            </div>
+          </div>
+
+          <!-- Core Rich Text Body -->
+          <div class="reader-richtext font-editorial" id="reader-text">
+            <!-- Written dynamically -->
+          </div>
+
+          <!-- Metadata row -->
+          <div class="reader-meta-row">
+            <div class="reader-author-block">
+              <div class="reader-author-avatar" id="reader-avatar">T</div>
+              <div>
+                <p class="reader-author-name" id="reader-author">Tahoe Staff Writer</p>
+                <p class="reader-publish-date" id="reader-date">May 21, 2026</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Up Next Footer -->
+          <div class="reader-next-divider" id="reader-next-divider"></div>
+
+        </div>
+
+      </article>
+    </div>
+
+    <!-- macOS Spotlight Search Overlay -->
+    <div id="spotlight-overlay" class="hidden">
+      <div class="spotlight-backdrop"></div>
+      
+      <div class="spotlight-container">
+        <!-- Spotlight Bar Row -->
+        <div class="spotlight-bar-row">
+          <!-- Search Input Pill -->
+          <div class="spotlight-search-pill liquid-glass">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="spotlight-search-icon">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="spotlight-input" placeholder="Spotlight Search" autocomplete="off" spellcheck="false">
+          </div>
+          
+          <!-- Action Buttons Row -->
+          <div class="spotlight-actions-row">
+            <!-- App Store Toggle -->
+            <button class="spotlight-action-circle liquid-glass" id="spotlight-action-appstore" title="App Store">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 4l-9 15M9 4l9 15M5 15h14"></path>
+              </svg>
+            </button>
+            <!-- Finder Toggle -->
+            <button class="spotlight-action-circle liquid-glass" id="spotlight-action-finder" title="Finder">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </button>
+            <!-- Layout Mode Toggle -->
+            <button class="spotlight-action-circle liquid-glass" id="spotlight-action-layout" title="Toggle Stage Manager View">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+            </button>
+            <!-- Write Custom Story Toggle -->
+            <button class="spotlight-action-circle liquid-glass" id="spotlight-action-editor" title="Write Custom Story">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9"></path>
+                <path d="M18 6h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Spotlight Dropdown Results Card -->
+        <div class="spotlight-dropdown-card liquid-glass hidden" id="spotlight-results-wrapper"></div>
+      </div>
+    </div>
+
+    <!-- Create Custom Story Builder Form Sheet (macOS Modal) -->
+    <div id="editor-modal" class="hidden">
+      <div class="modal-backdrop"></div>
+      
+      <div class="modal-card liquid-glass">
+        <header class="modal-header">
+          <h3 class="font-bold text-lg">Write Custom Story</h3>
+          <button class="modal-close-btn" id="editor-close">&times;</button>
+        </header>
+
+        <form id="editor-form" class="modal-form">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="form-title">Story Title</label>
+              <input type="text" id="form-title" placeholder="e.g. Navigating the Liquid Typography Grid" required autocomplete="off">
+            </div>
+            <div class="form-group w-1/3">
+              <label for="form-category">Category</label>
+              <select id="form-category" required>
+                <option value="technology">Technology</option>
+                <option value="design" selected>Design</option>
+                <option value="science">Science</option>
+                <option value="culture">Culture</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="form-subtitle">Subtitle or Summary</label>
+            <input type="text" id="form-subtitle" placeholder="A concise, enticing snippet summarizing the topic." required autocomplete="off">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="form-author">Author Name</label>
+              <input type="text" id="form-author" placeholder="e.g. Alexandra Vance" required autocomplete="off">
+            </div>
+            <div class="form-group w-1/4">
+              <label for="form-readtime">Read Time</label>
+              <input type="text" id="form-readtime" placeholder="e.g. 4 min" required autocomplete="off">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="form-cover">Cover Image Preset or URL</label>
+            <select id="form-cover-presets">
+              <option value="preset-1">Glass Crystals (Deep Blue & Violet)</option>
+              <option value="preset-2">Neon Aurora (Cyan & Green)</option>
+              <option value="preset-3">Magma Wave (Orange & Pink)</option>
+              <option value="preset-4">Monolithic Silver (Slate & Quartz)</option>
+              <option value="custom">Custom Image Link...</option>
+            </select>
+            <input type="url" id="form-cover-custom" class="hidden mt-2" placeholder="https://images.unsplash.com/photo-..." autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label for="form-content">Story Body Content (Markdown supported)</label>
+            <textarea id="form-content" rows="8" placeholder="Type your narrative here... Use markdown or plain paragraphs for styling." required></textarea>
+          </div>
+
+          <div class="modal-footer mt-4">
+            <button type="button" class="btn btn-secondary" id="editor-cancel">Cancel</button>
+            <button type="submit" class="btn btn-primary">Publish Story</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- iOS App Store Detail Modal Sheet -->
+    <div id="app-store-details-modal" class="hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-card appstore-detail-card liquid-glass animate-scale-up">
+        <header class="modal-header appstore-detail-header">
+          <button class="modal-close-btn" id="appstore-detail-close">&times;</button>
+        </header>
+        <div class="appstore-detail-body" id="appstore-detail-body">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SteamDB Game Detail Modal Sheet -->
+    <div id="steamdb-details-modal" class="hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-card steamdb-detail-card liquid-glass animate-scale-up">
+        <header class="modal-header appstore-detail-header">
+          <button class="modal-close-btn" id="steamdb-detail-close">&times;</button>
+        </header>
+        <div class="steamdb-detail-body" id="steamdb-detail-body">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SteamDB Compatibility Report Submission Modal Sheet -->
+    <div id="steamdb-report-modal" class="hidden" style="z-index: 10000; position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;">
+      <div class="modal-backdrop" id="steamdb-report-backdrop" style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"></div>
+      <div class="modal-card steamdb-report-card liquid-glass animate-scale-up" style="position: relative; z-index: 1; max-width: 520px; width: 90%; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; background: rgba(30, 30, 30, 0.75); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+        <header class="modal-header" style="padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.15);">
+          <h3 class="modal-title" style="font-family: var(--font-title); font-size: 16px; color: #fff; margin: 0;">Submit macOS Report</h3>
+          <button class="modal-close-btn" id="steamdb-report-close" style="background: none; border: none; font-size: 20px; color: #fff; opacity: 0.6; cursor: pointer; line-height: 1;">&times;</button>
+        </header>
+        <form id="steamdb-report-form" style="padding: 18px; display: flex; flex-direction: column; gap: 14px; max-height: 75vh; overflow-y: auto; background: rgba(0,0,0,0.05);">
+          
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-weight: 500; font-size: 11px; opacity: 0.8;">Steam Game</label>
+            <select id="report-game-select" required style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 6px; border-radius: 8px; font-size: 12px; outline: none; width: 100%;">
+              <!-- Populated dynamically from gamesCache -->
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-weight: 500; font-size: 11px; opacity: 0.8;">Mac Model</label>
+              <select id="report-mac-model" required style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 6px; border-radius: 8px; font-size: 12px; outline: none; width: 100%;">
+                <option value="MacBook Pro">MacBook Pro</option>
+                <option value="MacBook Air">MacBook Air</option>
+                <option value="MacBook Neo">MacBook Neo</option>
+                <option value="Mac Studio">Mac Studio</option>
+                <option value="Mac mini">Mac mini</option>
+                <option value="Mac Pro">Mac Pro</option>
+                <option value="iMac">iMac</option>
+              </select>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-weight: 500; font-size: 11px; opacity: 0.8;">Apple Silicon Chip</label>
+              <select id="report-chip" required style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 6px; border-radius: 8px; font-size: 12px; outline: none; width: 100%;">
+                <option value="M1">M1</option>
+                <option value="M1 Pro">M1 Pro</option>
+                <option value="M1 Max">M1 Max</option>
+                <option value="M1 Ultra">M1 Ultra</option>
+                <option value="M2">M2</option>
+                <option value="M2 Pro">M2 Pro</option>
+                <option value="M2 Max">M2 Max</option>
+                <option value="M2 Ultra">M2 Ultra</option>
+                <option value="M3">M3</option>
+                <option value="M3 Pro">M3 Pro</option>
+                <option value="M3 Max">M3 Max</option>
+                <option value="M4">M4</option>
+                <option value="M4 Pro">M4 Pro</option>
+                <option value="M4 Max">M4 Max</option>
+                <option value="M5">M5</option>
+                <option value="M5 Pro">M5 Pro</option>
+                <option value="M5 Max">M5 Max</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-weight: 500; font-size: 11px; opacity: 0.8;">System RAM</label>
+              <select id="report-ram" required style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 6px; border-radius: 8px; font-size: 12px; outline: none; width: 100%;">
+                <option value="8GB">8GB</option>
+                <option value="16GB">16GB</option>
+                <option value="18GB">18GB</option>
+                <option value="24GB">24GB</option>
+                <option value="32GB">32GB</option>
+                <option value="36GB">36GB</option>
+                <option value="48GB">48GB</option>
+                <option value="64GB">64GB</option>
+                <option value="96GB">96GB</option>
+                <option value="128GB">128GB</option>
+              </select>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-weight: 500; font-size: 11px; opacity: 0.8;">macOS Version</label>
+              <select id="report-macos" required style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 6px; border-radius: 8px; font-size: 12px; outline: none; width: 100%;">
+                <option value="macOS 26 Tahoe">macOS 26 Tahoe</option>
+                <option value="macOS 15 Sequoia">macOS 15 Sequoia</option>
+                <option value="macOS 14 Sonoma">macOS 14 Sonoma</option>
+                <option value="macOS 13 Ventura">macOS 13 Ventura</option>
+                <option value="macOS 12 Monterey">macOS 12 Monterey</option>
+                <option value="macOS 11 Big Sur">macOS 11 Big Sur</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-weight: 500; font-size: 11px; opacity: 0.8;">Launch Method</label>
+              <select id="report-launch-method" required style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 6px; border-radius: 8px; font-size: 12px; outline: none; width: 100%;">
+                <option value="Native">Native</option>
+                <option value="Rosetta 2">Rosetta 2</option>
+                <option value="CrossOver">CrossOver</option>
+                <option value="Wine">Wine</option>
+                <option value="GPTK">GPTK</option>
+                <option value="Cloud">Cloud</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+
+            <div id="report-crossover-ver-container" style="display: none; flex-direction: column; gap: 4px;">
+              <label style="font-weight: 500; font-size: 11px; opacity: 0.8;">CrossOver Version</label>
+              <input type="text" id="report-crossover-ver" placeholder="e.g. 24.0.1" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 5px 8px; border-radius: 8px; font-size: 12px; outline: none;">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-weight: 500; font-size: 11px; opacity: 0.8;">FPS / Performance Notes</label>
+              <input type="text" id="report-fps" placeholder="e.g. 45-60 FPS, Medium settings" required style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 5px 8px; border-radius: 8px; font-size: 12px; outline: none;">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-weight: 500; font-size: 11px; opacity: 0.8;">Rating Tier</label>
+              <select id="report-rating" required style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 6px; border-radius: 8px; font-size: 12px; outline: none; width: 100%;">
+                <option value="Native">Native</option>
+                <option value="Excellent">Excellent</option>
+                <option value="Playable">Playable</option>
+                <option value="Limited">Limited</option>
+                <option value="Broken">Broken</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-weight: 500; font-size: 11px; opacity: 0.8;">Issues / Notes</label>
+            <textarea id="report-issues" placeholder="e.g. Minor audio stutter, had to override DXVK settings..." rows="3" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 6px 8px; border-radius: 8px; font-size: 12px; outline: none; resize: none;"></textarea>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+            <button type="button" id="report-cancel-btn" class="btn-liquid-glass" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1);">Cancel</button>
+            <button type="submit" class="btn-liquid-glass" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; background: var(--accent-color); color: #fff; border: none; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);">Submit Report</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- macOS Finder Quick Look Visual overlay -->
+    <div id="finder-quick-look" class="hidden">
+      <div class="quick-look-backdrop"></div>
+      <div class="quick-look-card liquid-glass animate-scale-up">
+        <header class="quick-look-header">
+          <div class="quick-look-title-bar">
+            <span class="quick-look-icon">👁</span>
+            <span class="quick-look-title" id="quick-look-title">Preview File</span>
+          </div>
+          <button class="quick-look-close-btn" id="quick-look-close">&times;</button>
+        </header>
+        <div class="quick-look-body" id="quick-look-body">
+          <!-- Rendered dynamically -->
+        </div>
+        <footer class="quick-look-footer">
+          <span class="quick-look-footer-info" id="quick-look-footer-info">index.html (26.9 KB)</span>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Simulated macOS Terminal Window -->
+    <div id="terminal-window" class="liquid-glass hidden-window utility-window" style="width: 580px; height: 360px; position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); display: flex; flex-direction: column; border-radius: 12px; z-index: 95; overflow: hidden;">
+      <div class="window-titlebar" style="background: rgba(20, 20, 25, 0.6); display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+        <div class="traffic-lights" style="display: flex; gap: 8px;">
+          <button class="traffic-light red" id="terminal-close" title="Close" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff453a; cursor: pointer;"></button>
+          <button class="traffic-light yellow" id="terminal-minimize" title="Minimize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff9f0a; opacity: 0.5; pointer-events: none;"></button>
+          <button class="traffic-light green" id="terminal-maximize" title="Maximize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #30d158; opacity: 0.5; pointer-events: none;"></button>
+        </div>
+        <div class="window-title" style="color: #fff; font-size: 11px; font-weight: 500; font-family: monospace; flex: 1; text-align: center; margin-right: 50px;">wallsendcc &mdash; sh &mdash; 80&times;24</div>
+      </div>
+      <div class="window-body terminal-body" id="terminal-body" style="flex: 1; background: rgba(10, 10, 14, 0.85); color: #30d158; font-family: monospace; font-size: 12px; padding: 12px; overflow-y: auto; text-align: left;">
+        <div id="terminal-output">
+          Welcome to macOS sh terminal simulation (v26 Tahoe)<br>
+          Type 'help' for a list of available commands.<br><br>
+        </div>
+        <div class="terminal-input-line" style="display: flex; align-items: center; gap: 6px;">
+          <span style="color: #30d158;">tahoe-mac:~ wallsendcc$</span>
+          <input type="text" id="terminal-input" style="flex: 1; background: transparent; border: none; outline: none; color: #fff; font-family: monospace; font-size: 12px; padding: 0;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Simulated macOS Calculator Window -->
+    <div id="calculator-window" class="liquid-glass hidden-window utility-window" style="position: absolute; left: 55%; top: 43%; transform: translate(-50%, -50%);">
+      <div class="window-titlebar" style="background: transparent; display: flex; align-items: center; padding: 10px 16px; border-bottom: none;">
+        <div class="traffic-lights" style="display: flex; gap: 8px;">
+          <button class="traffic-light red" id="calculator-close" title="Close" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff453a; cursor: pointer;"></button>
+          <button class="traffic-light yellow" id="calculator-minimize" title="Minimize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff9f0a; opacity: 0.5; pointer-events: none;"></button>
+          <button class="traffic-light green" id="calculator-maximize" title="Maximize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #30d158; opacity: 0.5; pointer-events: none;"></button>
+        </div>
+      </div>
+      <div class="window-body calculator-body">
+        <input type="text" id="calc-display" readonly value="0">
+        <div class="calc-buttons-grid">
+          <button class="calc-btn fn" id="calc-btn-ac">AC</button>
+          <button class="calc-btn fn" id="calc-btn-sign">±</button>
+          <button class="calc-btn fn" id="calc-btn-pct">%</button>
+          <button class="calc-btn op" id="calc-btn-div">÷</button>
+          
+          <button class="calc-btn" id="calc-btn-7">7</button>
+          <button class="calc-btn" id="calc-btn-8">8</button>
+          <button class="calc-btn" id="calc-btn-9">9</button>
+          <button class="calc-btn op" id="calc-btn-mul">&times;</button>
+          
+          <button class="calc-btn" id="calc-btn-4">4</button>
+          <button class="calc-btn" id="calc-btn-5">5</button>
+          <button class="calc-btn" id="calc-btn-6">6</button>
+          <button class="calc-btn op" id="calc-btn-sub">&minus;</button>
+          
+          <button class="calc-btn" id="calc-btn-1">1</button>
+          <button class="calc-btn" id="calc-btn-2">2</button>
+          <button class="calc-btn" id="calc-btn-3">3</button>
+          <button class="calc-btn op" id="calc-btn-add">+</button>
+          
+          <button class="calc-btn" id="calc-btn-0">0</button>
+          <button class="calc-btn" id="calc-btn-dot">.</button>
+          <button class="calc-btn op" id="calc-btn-eq">=</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simulated macOS TextEdit Window -->
+    <div id="textedit-window" class="liquid-glass hidden-window utility-window" style="width: 480px; height: 380px; position: absolute; left: 45%; top: 48%; transform: translate(-50%, -50%); display: flex; flex-direction: column; border-radius: 12px; z-index: 95; overflow: hidden;">
+      <div class="window-titlebar" style="background: rgba(30, 30, 40, 0.4); display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+        <div class="traffic-lights" style="display: flex; gap: 8px;">
+          <button class="traffic-light red" id="textedit-close" title="Close" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff453a; cursor: pointer;"></button>
+          <button class="traffic-light yellow" id="textedit-minimize" title="Minimize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff9f0a; opacity: 0.5; pointer-events: none;"></button>
+          <button class="traffic-light green" id="textedit-maximize" title="Maximize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #30d158; opacity: 0.5; pointer-events: none;"></button>
+        </div>
+        <div class="window-title" id="textedit-window-title" style="color: #fff; font-size: 11px; font-weight: 500; flex: 1; text-align: center; margin-right: 50px;">Notes &mdash; Untitled.txt</div>
+      </div>
+      <div class="window-body textedit-body">
+        <textarea id="textedit-textarea" placeholder="Start typing your notes..."></textarea>
+        <div class="textedit-footer">
+          <span id="textedit-char-count">0 characters</span>
+          <button class="btn btn-primary" id="textedit-save-btn">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- macOS System Settings / Preferences Window -->
+    <div id="settings-window" class="liquid-glass hidden-window">
+      <!-- Traffic Light Controls & Title -->
+      <div class="window-titlebar">
+        <div class="traffic-lights">
+          <button class="traffic-light red" id="settings-close" title="Close"></button>
+          <button class="traffic-light yellow" id="settings-minimize" title="Minimize"></button>
+          <button class="traffic-light green" id="settings-maximize" title="Maximize"></button>
+        </div>
+        <div class="window-title" id="settings-title">System Settings</div>
+      </div>
+      
+      <div class="window-body">
+        <!-- Settings Sidebar -->
+        <aside class="window-sidebar settings-sidebar">
+          <ul class="sidebar-menu">
+            <li class="sidebar-item active" data-settings-tab="wallpaper">
+              <svg class="sidebar-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+              <span class="sidebar-text" data-i18n="settings_wallpaper">Wallpaper</span>
+            </li>
+            <li class="sidebar-item" data-settings-tab="general">
+              <svg class="sidebar-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span class="sidebar-text" data-i18n="settings_general">General</span>
+            </li>
+            <li class="sidebar-item" data-settings-tab="accessibility">
+              <svg class="sidebar-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 8v8"></path>
+                <path d="M8 12h8"></path>
+              </svg>
+              <span class="sidebar-text" data-i18n="settings_accessibility">Accessibility</span>
+            </li>
+          </ul>
+        </aside>
+        
+        <!-- Settings Content -->
+        <main class="settings-content">
+          <!-- Wallpaper Pane -->
+          <div class="settings-pane active" id="pane-wallpaper">
+            <!-- System Landscapes Section -->
+            <div class="wallpaper-section">
+              <h3 class="wallpaper-section-title" data-i18n="wallpaper_section_landscapes">System Landscapes</h3>
+              <div class="wallpaper-grid">
+                <!-- Default Tahoe -->
+                <div class="wallpaper-card active" data-wallpaper="tahoe-liquid">
+                  <div class="wallpaper-preview wallpaper-preview-tahoe"></div>
+                  <div class="wallpaper-label">Tahoe Liquid</div>
+                </div>
+                <!-- Tahoe Beach Dawn -->
+                <div class="wallpaper-card" data-wallpaper="tahoe-beach-dawn">
+                  <div class="wallpaper-preview wallpaper-preview-tahoe-beach"></div>
+                  <div class="wallpaper-label">Tahoe Beach Dawn</div>
+                </div>
+                <!-- Tahoe Beach Dusk -->
+                <div class="wallpaper-card" data-wallpaper="tahoe-beach-dusk">
+                  <div class="wallpaper-preview wallpaper-preview-tahoe-beach-dusk"></div>
+                  <div class="wallpaper-label">Tahoe Beach Dusk</div>
+                </div>
+                <!-- Tahoe Dark -->
+                <div class="wallpaper-card" data-wallpaper="tahoe-dark">
+                  <div class="wallpaper-preview wallpaper-preview-tahoe-dark"></div>
+                  <div class="wallpaper-label">Tahoe Dark</div>
+                </div>
+                <!-- Sequoia Sunrise -->
+                <div class="wallpaper-card" data-wallpaper="sequoia-sunrise">
+                  <div class="wallpaper-preview wallpaper-preview-sequoia"></div>
+                  <div class="wallpaper-label">Sequoia Sunrise</div>
+                </div>
+                <!-- Big Sur Night -->
+                <div class="wallpaper-card" data-wallpaper="big-sur-night">
+                  <div class="wallpaper-preview wallpaper-preview-big-sur"></div>
+                  <div class="wallpaper-label">Big Sur Night</div>
+                </div>
+                <!-- Big Sur Night (Dark) -->
+                <div class="wallpaper-card" data-wallpaper="big-sur-night-dark">
+                  <div class="wallpaper-preview wallpaper-preview-big-sur-night-dark"></div>
+                  <div class="wallpaper-label">Big Sur Night (Dark)</div>
+                </div>
+                <!-- Mojave Night -->
+                <div class="wallpaper-card" data-wallpaper="mojave-night">
+                  <div class="wallpaper-preview wallpaper-preview-mojave-night"></div>
+                  <div class="wallpaper-label">Mojave Night</div>
+                </div>
+                <!-- Monterey Dark -->
+                <div class="wallpaper-card" data-wallpaper="monterey-dark">
+                  <div class="wallpaper-preview wallpaper-preview-monterey-dark"></div>
+                  <div class="wallpaper-label">Monterey Dark</div>
+                </div>
+                <!-- Ventura Dark -->
+                <div class="wallpaper-card" data-wallpaper="ventura-dark">
+                  <div class="wallpaper-preview wallpaper-preview-ventura-dark"></div>
+                  <div class="wallpaper-label">Ventura Dark</div>
+                </div>
+                <!-- MacBook Neo Blue -->
+                <div class="wallpaper-card" data-wallpaper="macbook-neo-blue">
+                  <div class="wallpaper-preview wallpaper-preview-macbook-neo-blue"></div>
+                  <div class="wallpaper-label">MacBook Neo Blue</div>
+                </div>
+                <!-- MacBook Neo Purple -->
+                <div class="wallpaper-card" data-wallpaper="macbook-neo-purple">
+                  <div class="wallpaper-preview wallpaper-preview-macbook-neo-purple"></div>
+                  <div class="wallpaper-label">MacBook Neo Purple</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- macOS Heritage Section -->
+            <div class="wallpaper-section" style="margin-top: 18px;">
+              <h3 class="wallpaper-section-title" data-i18n="wallpaper_section_heritage">macOS Heritage</h3>
+              <div class="wallpaper-grid">
+                <!-- OS X Cheetah/Puma -->
+                <div class="wallpaper-card" data-wallpaper="os-x-cheetah-puma">
+                  <div class="wallpaper-preview wallpaper-preview-os-x-cheetah-puma"></div>
+                  <div class="wallpaper-label">OS X Cheetah/Puma</div>
+                </div>
+                <!-- OS X Tiger -->
+                <div class="wallpaper-card" data-wallpaper="os-x-tiger">
+                  <div class="wallpaper-preview wallpaper-preview-os-x-tiger"></div>
+                  <div class="wallpaper-label">OS X Tiger</div>
+                </div>
+                <!-- OS X Snow Leopard -->
+                <div class="wallpaper-card" data-wallpaper="os-x-snow-leopard">
+                  <div class="wallpaper-preview wallpaper-preview-os-x-snow-leopard"></div>
+                  <div class="wallpaper-label">OS X Snow Leopard</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Solid Colors Section -->
+            <div class="wallpaper-section" style="margin-top: 18px;">
+              <h3 class="wallpaper-section-title" data-i18n="wallpaper_section_solid">Solid Colors</h3>
+              <div class="wallpaper-grid">
+                <!-- Black Solid -->
+                <div class="wallpaper-card" data-wallpaper="black-solid">
+                  <div class="wallpaper-preview wallpaper-preview-black"></div>
+                  <div class="wallpaper-label">Black Solid</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Vibrant Gradients Section -->
+            <div class="wallpaper-section" style="margin-top: 18px;">
+              <h3 class="wallpaper-section-title" data-i18n="wallpaper_section_gradients">Vibrant Gradients</h3>
+              <div class="wallpaper-grid">
+                <!-- Sunset -->
+                <div class="wallpaper-card" data-wallpaper="tahoe-sunset">
+                  <div class="wallpaper-preview wallpaper-preview-sunset"></div>
+                  <div class="wallpaper-label">Tahoe Sunset</div>
+                </div>
+                <!-- Aurora -->
+                <div class="wallpaper-card" data-wallpaper="aurora-glow">
+                  <div class="wallpaper-preview wallpaper-preview-aurora"></div>
+                  <div class="wallpaper-label">Aurora Glow</div>
+                </div>
+                <!-- Midnight Teal -->
+                <div class="wallpaper-card" data-wallpaper="midnight-teal">
+                  <div class="wallpaper-preview wallpaper-preview-teal"></div>
+                  <div class="wallpaper-label">Midnight Teal</div>
+                </div>
+                <!-- Neon Dream -->
+                <div class="wallpaper-card" data-wallpaper="neon-dream">
+                  <div class="wallpaper-preview wallpaper-preview-neon"></div>
+                  <div class="wallpaper-label">Neon Dream</div>
+                </div>
+                <!-- Royal Velvet -->
+                <div class="wallpaper-card" data-wallpaper="royal-velvet">
+                  <div class="wallpaper-preview wallpaper-preview-royal"></div>
+                  <div class="wallpaper-label">Royal Velvet</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Pride Gradients Section -->
+            <div class="wallpaper-section" style="margin-top: 18px;">
+              <h3 class="wallpaper-section-title" data-i18n="wallpaper_section_pride">Pride Gradients</h3>
+              <div class="wallpaper-grid">
+                <!-- Rainbow Pride -->
+                <div class="wallpaper-card" data-wallpaper="rainbow-pride">
+                  <div class="wallpaper-preview wallpaper-preview-rainbow"></div>
+                  <div class="wallpaper-label">Rainbow Pride</div>
+                </div>
+                <!-- Trans Pride -->
+                <div class="wallpaper-card" data-wallpaper="trans-pride">
+                  <div class="wallpaper-preview wallpaper-preview-trans"></div>
+                  <div class="wallpaper-label">Trans Pride</div>
+                </div>
+                <!-- Bisexual Pride -->
+                <div class="wallpaper-card" data-wallpaper="bi-pride">
+                  <div class="wallpaper-preview wallpaper-preview-bi"></div>
+                  <div class="wallpaper-label">Bisexual Pride</div>
+                </div>
+                <!-- Lesbian Pride -->
+                <div class="wallpaper-card" data-wallpaper="lesbian-pride">
+                  <div class="wallpaper-preview wallpaper-preview-lesbian"></div>
+                  <div class="wallpaper-label">Lesbian Pride</div>
+                </div>
+                <!-- Nonbinary Pride -->
+                <div class="wallpaper-card" data-wallpaper="nonbinary-pride">
+                  <div class="wallpaper-preview wallpaper-preview-nonbinary"></div>
+                  <div class="wallpaper-label">Nonbinary Pride</div>
+                </div>
+                <!-- Asexual Pride -->
+                <div class="wallpaper-card" data-wallpaper="asexual-pride">
+                  <div class="wallpaper-preview wallpaper-preview-asexual"></div>
+                  <div class="wallpaper-label">Asexual Pride</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- General / Appearance Pane -->
+          <div class="settings-pane" id="pane-general">
+            <h2 class="pane-title" data-i18n="general_title">General Settings</h2>
+            
+            <!-- System Accent Color (Synced) -->
+            <div class="settings-section">
+              <h3 class="section-title" data-i18n="accent_color_title">Accent Color</h3>
+              <div class="accent-picker-row">
+                <button class="settings-accent-circle accent-blue active" data-color="blue" title="Blue"></button>
+                <button class="settings-accent-circle accent-purple" data-color="purple" title="Purple"></button>
+                <button class="settings-accent-circle accent-pink" data-color="pink" title="Pink"></button>
+                <button class="settings-accent-circle accent-amber" data-color="amber" title="Amber"></button>
+                <button class="settings-accent-circle accent-green" data-color="green" title="Green"></button>
+                <button class="settings-accent-circle accent-silver" data-color="silver" title="Silver"></button>
+              </div>
+            </div>
+
+            <!-- macOS Heritage Accent Gradients -->
+            <div class="settings-section" style="margin-top: 18px;">
+              <h3 class="section-title" data-i18n="heritage_accent_title">Heritage Gradients</h3>
+              <div class="accent-picker-row">
+                <button class="settings-accent-circle accent-tiger" data-color="tiger" title="Tiger (Aqua)"></button>
+                <button class="settings-accent-circle accent-panther" data-color="panther" title="Panther (Graphite)"></button>
+                <button class="settings-accent-circle accent-leopard" data-color="leopard" title="Snow Leopard (Steel)"></button>
+                <button class="settings-accent-circle accent-yosemite" data-color="yosemite" title="Yosemite (Sunset)"></button>
+                <button class="settings-accent-circle accent-sequoia" data-color="sequoia" title="Sequoia (Forest)"></button>
+              </div>
+            </div>
+
+            
+            <!-- Appearance cards -->
+            <div class="settings-section">
+              <h3 class="section-title" data-i18n="appearance_title">Appearance</h3>
+              <div class="appearance-picker-row">
+                <div class="appearance-card" id="appearance-dark" title="Dark Mode">
+                  <div class="appearance-mockup appearance-mockup-dark">
+                    <div class="mockup-window"></div>
+                  </div>
+                  <div class="appearance-label" data-i18n="appearance_dark">Dark</div>
+                </div>
+                <div class="appearance-card" id="appearance-light" title="Light Mode">
+                  <div class="appearance-mockup appearance-mockup-light">
+                    <div class="mockup-window"></div>
+                  </div>
+                  <div class="appearance-label" data-i18n="appearance_light">Light</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Site Language dropdown -->
+            <div class="settings-section">
+              <h3 class="section-title" data-i18n="language_title">Site Language</h3>
+              <p class="section-subtitle" data-i18n="language_subtitle">Choose the display language for MacReady Tahoe.</p>
+              <div class="select-wrapper">
+                <select id="settings-language-select" class="system-select">
+                  <option value="en">English (US)</option>
+                  <option value="es">Español (España)</option>
+                  <option value="fr">Français (France)</option>
+                  <option value="de">Deutsch (Deutschland)</option>
+                  <option value="ja">日本語 (日本)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Accessibility Pane -->
+          <div class="settings-pane" id="pane-accessibility">
+            <h2 class="pane-title" data-i18n="accessibility_title">Accessibility</h2>
+            <p class="pane-subtitle" data-i18n="accessibility_subtitle">Customize display options to make Tahoe easier to see and use.</p>
+            
+            <!-- Reduce Transparency toggle -->
+            <div class="accessibility-row">
+              <div class="accessibility-info">
+                <span class="accessibility-label" data-i18n="reduce_transparency">Reduce Transparency</span>
+                <span class="accessibility-desc" data-i18n="reduce_transparency_desc">Remove modern glass blurs for solid, high-opacity windows.</span>
+              </div>
+              <label class="switch-toggle">
+                <input type="checkbox" id="toggle-reduce-transparency">
+                <span class="slider-toggle"></span>
+              </label>
+            </div>
+            
+            <!-- Increase Contrast toggle -->
+            <div class="accessibility-row">
+              <div class="accessibility-info">
+                <span class="accessibility-label" data-i18n="increase_contrast">Increase Contrast</span>
+                <span class="accessibility-desc" data-i18n="increase_contrast_desc">Thicken window outlines and sharpen text contrast.</span>
+              </div>
+              <label class="switch-toggle">
+                <input type="checkbox" id="toggle-increase-contrast">
+                <span class="slider-toggle"></span>
+              </label>
+            </div>
+            
+            <!-- Grayscale Mode toggle -->
+            <div class="accessibility-row">
+              <div class="accessibility-info">
+                <span class="accessibility-label" data-i18n="grayscale_mode">Grayscale Display</span>
+                <span class="accessibility-desc" data-i18n="grayscale_mode_desc">Convert all screen outputs to elegant black-and-white.</span>
+              </div>
+              <label class="switch-toggle">
+                <input type="checkbox" id="toggle-grayscale">
+                <span class="slider-toggle"></span>
+              </label>
+            </div>
+            
+            <!-- Text scale segmented control -->
+            <div class="accessibility-row">
+              <div class="accessibility-info">
+                <span class="accessibility-label" data-i18n="text_size_label">Text Size</span>
+                <span class="accessibility-desc" data-i18n="text_size_desc">Adjust Tahoe font scaling dynamically.</span>
+              </div>
+              <div class="segmented-control" id="text-size-control" style="--active-index: 1;">
+                <div class="segment-slider"></div>
+                <button class="segment-btn" data-scale="small" data-i18n="text_size_small">Small</button>
+                <button class="segment-btn active" data-scale="medium" data-i18n="text_size_medium">Medium</button>
+                <button class="segment-btn" data-scale="large" data-i18n="text_size_large">Large</button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- macOS System Lock Screen Overlay -->
+    <div id="lock-screen" class="hidden-lock">
+      <div class="lock-screen-glass"></div>
+      <div class="lock-screen-content">
+        <!-- Digital Time Clock & Date -->
+        <div class="lock-clock-container">
+          <div id="lock-clock-time">10:48</div>
+          <div id="lock-clock-date">Friday, May 22</div>
+        </div>
+        
+        <!-- User Profile Card -->
+        <div class="lock-user-card">
+          <!-- Circular modern avatar -->
+          <div class="lock-user-avatar">
+            <img class="lock-avatar-image" src="/assets/imgs/wallpaper.webp" alt="User">
+          </div>
+          <!-- Username -->
+          <div class="lock-user-name">User</div>
+          
+          <!-- Passcode entry -->
+          <form id="lock-passcode-form" class="lock-passcode-form">
+            <div class="lock-input-wrapper">
+              <input type="password" id="lock-passcode-input" class="lock-passcode-input" placeholder="Enter Password" autocomplete="off" />
+              <button type="submit" class="lock-submit-btn" aria-label="Unlock">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </button>
+            </div>
+            <div class="lock-hint" id="lock-hint-text" data-i18n="lock_hint">Touch ID or Enter Password</div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- macOS System Dock (Magnified hover effects) -->
+    <nav id="dock-container">
+      <div id="dock" class="liquid-glass">
+        <!-- News App Icon -->
+        <div class="dock-item-wrapper active" data-app="news">
+          <div class="dock-tooltip">News</div>
+          <button class="dock-item">
+            <img src="/assets/imgs/optimized/NewsIcon.png" alt="News" class="dock-icon" width="48" height="48">
+          </button>
+          <span class="dock-indicator active-dot"></span>
+        </div>
+
+        <!-- Crossover App -->
+        <div class="dock-item-wrapper" data-app="crossover">
+          <div class="dock-tooltip">Crossover</div>
+          <button class="dock-item">
+            <img src="/assets/imgs/optimized/Crossoverlogo.png" alt="Crossover" class="dock-icon" width="48" height="48">
+          </button>
+          <span class="dock-indicator"></span>
+        </div>
+
+        <!-- Games App -->
+        <div class="dock-item-wrapper" data-app="games">
+          <div class="dock-tooltip">Games</div>
+          <button class="dock-item">
+            <img src="/assets/imgs/optimized/SteamLogo.png" alt="Games" class="dock-icon" width="48" height="48">
+          </button>
+          <span class="dock-indicator"></span>
+        </div>
+
+        <!-- App Store App -->
+        <div class="dock-item-wrapper" data-app="app-store">
+          <div class="dock-tooltip">App Store</div>
+          <button class="dock-item">
+            <img src="/assets/imgs/optimized/AppStore.png" alt="App Store" class="dock-icon" width="46" height="46">
+          </button>
+          <span class="dock-indicator"></span>
+        </div>
+
+        <!-- macOS App -->
+        <div class="dock-item-wrapper" data-app="macos">
+          <div class="dock-tooltip">macOS</div>
+          <button class="dock-item" id="dock-macos-btn">
+            <img src="/assets/imgs/optimized/MacOSIcon.png" alt="macOS" class="dock-icon" width="48" height="48">
+          </button>
+          <span class="dock-indicator"></span>
+        </div>
+
+        <!-- Applications App -->
+        <div class="dock-item-wrapper" data-app="applications">
+          <div class="dock-tooltip" data-i18n="applications">Applications</div>
+          <button class="dock-item" id="dock-applications-btn">
+            <img src="/assets/imgs/icnsFile_e72069e47fa08a2bf67085cd2597061c_1733175802251.webp" alt="Applications" class="dock-icon" width="48" height="48">
+          </button>
+          <span class="dock-indicator" id="dock-applications-indicator"></span>
+        </div>
+
+        <!-- Settings App -->
+        <div class="dock-item-wrapper" data-app="settings">
+          <div class="dock-tooltip">Settings</div>
+          <button class="dock-item" id="dock-settings-btn">
+            <img src="/assets/imgs/optimized/SettingsGear.png" alt="Settings" class="dock-icon" width="48" height="48">
+          </button>
+          <span class="dock-indicator" id="dock-settings-indicator"></span>
+        </div>
+      </div>
+    </nav>
+    <!-- macOS Launchpad Overlay -->
+    <div id="launchpad-overlay" class="launchpad-overlay hidden-launchpad">
+      <div class="launchpad-search-container">
+        <svg class="launchpad-search-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="launchpad-search-input" placeholder="Search">
+      </div>
+      <div class="launchpad-apps-grid" id="launchpad-apps-grid">
+        <div class="launchpad-app-item" data-app="news">
+          <img src="/assets/imgs/optimized/NewsIcon.png" alt="MacReady" class="launchpad-app-icon">
+          <div class="launchpad-app-name">MacReady</div>
+        </div>
+        <div class="launchpad-app-item" data-app="crossover">
+          <img src="/assets/imgs/optimized/Crossoverlogo.png" alt="CrossOver" class="launchpad-app-icon">
+          <div class="launchpad-app-name">CrossOver</div>
+        </div>
+        <div class="launchpad-app-item" data-app="games">
+          <img src="/assets/imgs/optimized/SteamLogo.png" alt="Steam" class="launchpad-app-icon">
+          <div class="launchpad-app-name">Steam</div>
+        </div>
+        <div class="launchpad-app-item" data-app="app-store">
+          <img src="/assets/imgs/optimized/AppStore.png" alt="App Store" class="launchpad-app-icon">
+          <div class="launchpad-app-name">App Store</div>
+        </div>
+        <div class="launchpad-app-item" data-utility="terminal">
+          <img src="/assets/imgs/Terminal.webp" alt="Terminal" class="launchpad-app-icon">
+          <div class="launchpad-app-name">Terminal</div>
+        </div>
+        <div class="launchpad-app-item" data-utility="calculator">
+          <img src="/assets/imgs/Calculator.webp" alt="Calculator" class="launchpad-app-icon">
+          <div class="launchpad-app-name">Calculator</div>
+        </div>
+        <div class="launchpad-app-item" data-utility="textedit">
+          <img src="/assets/imgs/Notes.webp" alt="Notes" class="launchpad-app-icon">
+          <div class="launchpad-app-name">Notes</div>
+        </div>
+        <div class="launchpad-app-item" data-utility="settings">
+          <img src="/assets/imgs/optimized/SettingsGear.png" alt="Settings" class="launchpad-app-icon">
+          <div class="launchpad-app-name">Settings</div>
+        </div>
+        
+        <!-- Retro macOS Browser Apps -->
+        <div class="launchpad-app-item" data-emulator="macos9">
+          <div class="launchpad-app-icon-wrapper" style="background: transparent; box-shadow: none;">
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='68' height='68'><rect x='2' y='2' width='44' height='44' rx='10' ry='10' fill='#64b5f6'/><path d='M24 2a22 22 0 0 1 22 22v14a8 8 0 0 1-8 8H24V2z' fill='#1976d2'/><path d='M24 8v16h10c2 0 4 2 4 4s-2 4-4 4H20a2 2 0 0 1-2-2V14c0-2-2-4-4-4H8V8h16z' fill='#ffffff'/><circle cx='15' cy='17' r='3' fill='#1976d2'/><circle cx='33' cy='17' r='3' fill='#ffffff'/><path d='M14 34c2 4 8 4 10 0' stroke='#ffffff' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M24 34c2 4 8 4 10 0' stroke='#1976d2' stroke-width='3' stroke-linecap='round' fill='none'/></svg>
+          </div>
+          <div class="launchpad-app-name">Mac OS 9</div>
+        </div>
+        <div class="launchpad-app-item" data-emulator="marathon">
+          <div class="launchpad-app-icon-wrapper" style="background: transparent; box-shadow: none;">
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='68' height='68'><rect x='2' y='2' width='44' height='44' rx='10' ry='10' fill='#111111' stroke='#e65100' stroke-width='1.5'/><circle cx='24' cy='24' r='16' fill='none' stroke='#e65100' stroke-width='3'/><path d='M16 24h16M24 16v16' stroke='#e65100' stroke-width='3'/><circle cx='24' cy='24' r='8' fill='#e65100'/></svg>
+          </div>
+          <div class="launchpad-app-name">Marathon</div>
+        </div>
+        <div class="launchpad-app-item" data-emulator="lisa">
+          <div class="launchpad-app-icon-wrapper" style="background: transparent; box-shadow: none;">
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='68' height='68'><rect x='2' y='2' width='44' height='44' rx='10' ry='10' fill='#e0d8c0' stroke='#bcaaa4' stroke-width='1.5'/><rect x='8' y='8' width='32' height='20' rx='2' ry='2' fill='#3e2723'/><rect x='11' y='11' width='26' height='14' fill='#a1887f'/><rect x='6' y='32' width='36' height='8' fill='#d7ccc8'/><line x1='12' y1='36' x2='36' y2='36' stroke='#8d6e63' stroke-width='2'/></svg>
+          </div>
+          <div class="launchpad-app-name">Apple Lisa</div>
+        </div>
+        <div class="launchpad-app-item" data-emulator="system7">
+          <div class="launchpad-app-icon-wrapper" style="background: transparent; box-shadow: none;">
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='68' height='68'><rect x='2' y='2' width='44' height='44' rx='6' ry='6' fill='#1e88e5'/><rect x='10' y='2' width='28' height='16' fill='#ffffff'/><rect x='30' y='5' width='5' height='10' fill='#1e88e5'/><rect x='8' y='24' width='32' height='22' rx='2' ry='2' fill='#ffffff'/><line x1='12' y1='30' x2='36' y2='30' stroke='#757575' stroke-width='2'/><line x1='12' y1='35' x2='36' y2='35' stroke='#757575' stroke-width='2'/><line x1='12' y1='40' x2='36' y2='40' stroke='#757575' stroke-width='2'/></svg>
+          </div>
+          <div class="launchpad-app-name">System 7</div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Client-side logic loader -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>

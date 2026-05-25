@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1f4f9f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Mac OS 9">
+  <title>Mac OS 9</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./macos9.css">
+</head>
+<body>
+  <main class="classic-shell">
+    <section class="classic-screen" aria-label="Mac OS 9 display">
+      <canvas id="macos9-screen" width="1024" height="768"></canvas>
+      <div class="classic-status" id="macos9-status">
+        <div class="classic-status-card">
+          <div class="classic-face" aria-hidden="true">
+            <span></span>
+            <span></span>
+          </div>
+          <h1>Mac OS 9</h1>
+          <p id="macos9-status-text">Preparing local emulator assets.</p>
+          <div class="classic-progress">
+            <span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./macos9.js"></script>
+</body>
+</html>
