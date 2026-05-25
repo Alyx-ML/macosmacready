@@ -2886,7 +2886,7 @@ body.light-mode .reader-read-more-btn {
 .reader-hero {
   position: relative;
   width: 100%;
-  background: rgba(18, 18, 26, 0.72);
+  background: transparent;
 }
 
 .reader-hero img {
@@ -2906,7 +2906,8 @@ body.light-mode .reader-hero-gradient {
   position: relative;
   z-index: 1;
   padding: 20px 28px 22px;
-  background: linear-gradient(135deg, rgba(13, 18, 34, 0.92), rgba(38, 18, 55, 0.88));
+  background: transparent;
+  background-image: none;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -3122,12 +3123,23 @@ body.light-mode .reader-next-divider::before {
 
 /* 1. Parchment Paper Theme */
 .reader-card.theme-paper {
-  background: #f7f1e3 !important;
+  background-color: #faf5eb !important;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E") !important;
   box-shadow: 0 20px 50px rgba(0,0,0,0.15) !important;
 }
 .reader-card.theme-paper .reader-toolbar {
-  background: rgba(247, 241, 227, 0.9) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  background: #faf5eb !important;
+  background-image: none !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+.reader-card.theme-paper .reader-hero {
+  background: transparent !important;
+  background-image: none !important;
+}
+.reader-card.theme-paper .reader-meta-title-block {
+  background: transparent !important;
+  background-image: none !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
 .reader-card.theme-paper .reader-toolbar-center,
 .reader-card.theme-paper .reader-tool-btn,
@@ -3181,6 +3193,15 @@ body.light-mode .reader-next-divider::before {
 .reader-card.theme-velvet .reader-toolbar {
   background: rgba(24, 24, 28, 0.9) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+.reader-card.theme-velvet .reader-hero {
+  background: transparent !important;
+  background-image: none !important;
+}
+.reader-card.theme-velvet .reader-meta-title-block {
+  background: transparent !important;
+  background-image: none !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 .reader-card.theme-velvet .reader-toolbar-center,
 .reader-card.theme-velvet .reader-tool-btn,
@@ -8102,3 +8123,129 @@ body.light-mode #signin-window {
   pointer-events: none !important;
   visibility: hidden !important;
 }
+
+/* Premium macOS System Toggle Switch */
+.macos-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+.macos-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.macos-switch .switch-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+body.light-mode .macos-switch .switch-slider {
+  background-color: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+.macos-switch .switch-slider::before {
+  content: "";
+  position: absolute;
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  border-radius: 50%;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.macos-switch input:checked + .switch-slider {
+  background-color: var(--accent-color) !important;
+}
+.macos-switch input:checked + .switch-slider::before {
+  transform: translateX(16px);
+}
+
+/* Premium macOS System Dropdown Select */
+.specs-settings-row select {
+  display: none !important;
+}
+body.light-mode .specs-settings-row select {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #000;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='12' viewBox='0 0 8 12' fill='none'%3E%3Cpath d='M4 1L7 4.5H1L4 1Z' fill='black' opacity='0.6'/%3E%3Cpath d='M4 11L1 7.5H7L4 11Z' fill='black' opacity='0.6'/%3E%3C/svg%3E");
+}
+.specs-settings-row select:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+body.light-mode .specs-settings-row select:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+.specs-settings-row select:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.25);
+}
+
+/* Premium Custom Glass Dropdown Select styles */
+.glass-select-trigger {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+}
+body.light-mode .glass-select-trigger {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #000 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+.glass-select-trigger:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+body.light-mode .glass-select-trigger:hover {
+  background: rgba(0, 0, 0, 0.07) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+.glass-select-options {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-select-options.hidden {
+  opacity: 0 !important;
+  transform: translateY(-8px) scale(0.96) !important;
+  pointer-events: none !important;
+  display: none !important;
+}
+body.light-mode .glass-select-options {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(30px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(190%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+.glass-select-option {
+  padding: 6px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+body.light-mode .glass-select-option {
+  color: #1c1c1e !important;
+}
+body.light-mode .glass-select-option:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+

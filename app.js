@@ -895,30 +895,7 @@ let previousVolume = 70;
 
 // Helper: Synthesize beautiful macOS-style glass chime via Web Audio API
 function playGlassChime() {
-  if (dndActive) return;
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(880, ctx.currentTime); // High pitch A5
-    osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.04); // Pitch slide up
-    osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.15); // Resolve to E6
-    
-    gain.gain.setValueAtTime(0.18 * (systemVolume / 100), ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35); // Fast decay
-    
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
-    osc.start();
-    osc.stop(ctx.currentTime + 0.36);
-  } catch (e) {
-    console.error("Audio error", e);
-  }
+  // Completely silent no-op
 }
 
 
@@ -6344,11 +6321,10 @@ function initHardwareProfileUI() {
   const selectChip = document.getElementById("profile-chip");
   const selectRam = document.getElementById("profile-ram");
   const selectMacos = document.getElementById("profile-macos");
-  const checkCrossover = document.getElementById("profile-crossover");
   const checkFilterSpecs = document.getElementById("filter-by-specs");
   const statusEl = document.getElementById("profile-status");
 
-  if (!selectModel || !selectChip || !selectRam || !selectMacos || !checkCrossover || !statusEl) {
+  if (!selectModel || !selectChip || !selectRam || !selectMacos || !statusEl) {
     console.warn("Hardware profile UI elements missing in DOM.");
     return;
   }
@@ -6361,22 +6337,192 @@ function initHardwareProfileUI() {
     selectChip.value = p.chip || "";
     selectRam.value = p.ram || "";
     selectMacos.value = p.macosVersion || "";
-    checkCrossover.checked = !!p.crossoverInstalled;
     
     updateStatusText(p);
   }
 
-  // Helper to update status message
+  // Helper to update status message and dynamic visual feedback
   function updateStatusText(p) {
     if (p && p.macModel && p.chip) {
-      statusEl.textContent = `Active • ${p.macModel} (${p.chip}, ${p.ram || '8GB'})`;
+      statusEl.textContent = "Specifications Synced";
       statusEl.style.opacity = "0.85";
       statusEl.style.color = "var(--accent-color)";
+      
+      const hwModel = document.getElementById("account-hw-model");
+      const hwSub = document.getElementById("account-hw-sub");
+      if (hwModel) hwModel.textContent = p.macModel;
+      if (hwSub) hwSub.textContent = `${p.chip} • ${p.ram || '8GB'} • ${p.macosVersion || 'macOS 26'}`;
+
+      // Dynamically update the premium device icon based on selected Mac model
+      const imgEl = document.getElementById("account-hw-icon");
+      if (imgEl) {
+        const modelLower = p.macModel.toLowerCase();
+        if (modelLower.includes("studio") || modelLower.includes("mini")) {
+          imgEl.src = "assets/imgs/macstudio_icon.webp";
+        } else if (modelLower.includes("imac")) {
+          imgEl.src = "assets/imgs/imac_icon.webp";
+        } else if (modelLower.includes("pro") && modelLower.includes("mac pro")) {
+          imgEl.src = "assets/imgs/macpro_icon.webp";
+        } else {
+          imgEl.src = "assets/imgs/macbook_device.svg";
+        }
+      }
     } else {
       statusEl.textContent = "Profile inactive";
       statusEl.style.opacity = "0.45";
       statusEl.style.color = "";
     }
+  }
+
+  // Helper to sync custom select dropdown elements with select values
+  function syncCustomSelectTriggers() {
+    [selectModel, selectChip, selectRam, selectMacos].forEach(select => {
+      const container = select.closest(".glass-select-container");
+      if (container) {
+        const valSpan = container.querySelector(".glass-select-value");
+        const activeOpt = select.options[select.selectedIndex];
+        if (valSpan && activeOpt) {
+          valSpan.textContent = activeOpt.textContent;
+        }
+        
+        // Refresh highlighted option in custom dropdown options panel
+        const optionsPanel = container.querySelector(".glass-select-options");
+        if (optionsPanel) {
+          optionsPanel.querySelectorAll(".glass-select-option").forEach((child, idx) => {
+            const opt = select.options[idx];
+            if (opt && opt.value === select.value) {
+              child.style.background = "var(--accent-color)";
+              child.style.fontWeight = "600";
+            } else {
+              child.style.background = "";
+              child.style.fontWeight = "";
+            }
+          });
+        }
+      }
+    });
+  }
+
+  // Initialize premium custom glass select selectors
+  function initGlassSelects() {
+    const selects = [selectModel, selectChip, selectRam, selectMacos];
+    selects.forEach(select => {
+      if (select.closest(".glass-select-container")) return; // Prevent double wraps
+      
+      const container = document.createElement("div");
+      container.className = "glass-select-container";
+      container.style.position = "relative";
+      container.style.width = "160px";
+      container.style.userSelect = "none";
+      
+      const trigger = document.createElement("div");
+      trigger.className = "glass-select-trigger";
+      trigger.style.display = "flex";
+      trigger.style.alignItems = "center";
+      trigger.style.justifyContent = "space-between";
+      trigger.style.padding = "6px 10px";
+      trigger.style.borderRadius = "6px";
+      trigger.style.fontSize = "12px";
+      trigger.style.cursor = "pointer";
+      trigger.style.transition = "all 0.2s ease";
+      
+      const valSpan = document.createElement("span");
+      valSpan.className = "glass-select-value";
+      const activeOpt = select.options[select.selectedIndex] || select.options[0];
+      valSpan.textContent = activeOpt ? activeOpt.textContent : "";
+      
+      const chevronSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      chevronSvg.setAttribute("width", "8");
+      chevronSvg.setAttribute("height", "12");
+      chevronSvg.setAttribute("viewBox", "0 0 8 12");
+      chevronSvg.setAttribute("fill", "none");
+      chevronSvg.style.opacity = "0.7";
+      chevronSvg.style.flexShrink = "0";
+      chevronSvg.style.marginLeft = "8px";
+      chevronSvg.innerHTML = `<path d="M4 1L7 4.5H1L4 1Z" fill="currentColor"/><path d="M4 11L1 7.5H7L4 11Z" fill="currentColor"/>`;
+      
+      trigger.appendChild(valSpan);
+      trigger.appendChild(chevronSvg);
+      
+      const optionsPanel = document.createElement("div");
+      optionsPanel.className = "glass-select-options hidden";
+      optionsPanel.style.position = "absolute";
+      optionsPanel.style.top = "calc(100% + 4px)";
+      optionsPanel.style.left = "0";
+      optionsPanel.style.right = "0";
+      optionsPanel.style.background = "rgba(28, 28, 30, 0.76)";
+      optionsPanel.style.backdropFilter = "blur(30px) saturate(210%)";
+      optionsPanel.style.webkitBackdropFilter = "blur(30px) saturate(210%)";
+      optionsPanel.style.border = "1px solid rgba(255, 255, 255, 0.15)";
+      optionsPanel.style.borderRadius = "8px";
+      optionsPanel.style.boxShadow = "0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)";
+      optionsPanel.style.zIndex = "9300";
+      optionsPanel.style.maxHeight = "220px";
+      optionsPanel.style.overflowY = "auto";
+      optionsPanel.style.padding = "4px";
+      optionsPanel.style.display = "flex";
+      optionsPanel.style.flexDirection = "column";
+      optionsPanel.style.gap = "2px";
+      
+      Array.from(select.options).forEach((opt, idx) => {
+        const optDiv = document.createElement("div");
+        optDiv.className = "glass-select-option";
+        optDiv.textContent = opt.textContent;
+        
+        if (opt.value === select.value) {
+          optDiv.style.background = "var(--accent-color)";
+          optDiv.style.fontWeight = "600";
+        }
+        
+        optDiv.addEventListener("click", (e) => {
+          e.stopPropagation();
+          select.value = opt.value;
+          valSpan.textContent = opt.textContent;
+          select.dispatchEvent(new Event("change"));
+          optionsPanel.classList.add("hidden");
+          syncCustomSelectTriggers();
+        });
+        
+        optDiv.addEventListener("mouseenter", () => {
+          if (select.value !== opt.value) {
+            optDiv.style.background = "rgba(255, 255, 255, 0.1)";
+          }
+        });
+        optDiv.addEventListener("mouseleave", () => {
+          if (select.value !== opt.value) {
+            optDiv.style.background = "";
+          }
+        });
+        
+        optionsPanel.appendChild(optDiv);
+      });
+      
+      trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        document.querySelectorAll(".glass-select-options").forEach(panel => {
+          if (panel !== optionsPanel) panel.classList.add("hidden");
+        });
+        optionsPanel.classList.toggle("hidden");
+      });
+      
+      select.parentNode.insertBefore(container, select);
+      container.appendChild(trigger);
+      container.appendChild(optionsPanel);
+      container.appendChild(select);
+    });
+    
+    // Close dropdowns on document click
+    document.addEventListener("click", () => {
+      document.querySelectorAll(".glass-select-options").forEach(panel => {
+        panel.classList.add("hidden");
+      });
+    });
+  }
+
+  // Initialize
+  initGlassSelects();
+  if (profileRow && profileRow.length > 0) {
+    syncCustomSelectTriggers();
   }
 
   // Save functionality
@@ -6385,7 +6531,6 @@ function initHardwareProfileUI() {
     const chip = selectChip.value;
     const ram = selectRam.value;
     const macosVersion = selectMacos.value;
-    const crossoverInstalled = checkCrossover.checked;
 
     if (!macModel || !chip || !ram || !macosVersion) {
       statusEl.textContent = "Please fill in all specs";
@@ -6401,11 +6546,12 @@ function initHardwareProfileUI() {
     setTimeout(() => {
       db.query(
         "INSERT OR REPLACE INTO hardware_profile (macModel, chip, ram, macosVersion, crossoverInstalled) VALUES (?, ?, ?, ?, ?)",
-        [macModel, chip, ram, macosVersion, crossoverInstalled]
+        [macModel, chip, ram, macosVersion, false]
       );
       
-      const updatedProfile = { macModel, chip, ram, macosVersion, crossoverInstalled };
+      const updatedProfile = { macModel, chip, ram, macosVersion, crossoverInstalled: false };
       updateStatusText(updatedProfile);
+      syncCustomSelectTriggers();
       
       // Visual feedback: soft glow toast on status element
       statusEl.classList.add("pulse-glow");
@@ -6421,7 +6567,6 @@ function initHardwareProfileUI() {
   [selectModel, selectChip, selectRam, selectMacos].forEach(el => {
     el.addEventListener("change", saveProfile);
   });
-  checkCrossover.addEventListener("change", saveProfile);
 
   // Bind the spec filter checkbox
   if (checkFilterSpecs) {
@@ -8391,18 +8536,10 @@ function initAccountSystem() {
   const btnReauthenticate = document.getElementById("btn-reauthenticate");
   const accountWin = document.getElementById("account-window");
   
-  // Make sign-in window draggable & focusable, bind close & backdrop clicks
+  // Make sign-in window draggable and focusable.
   const signinWin = document.getElementById("signin-window");
   if (signinWin) {
     makeWindowDraggable(signinWin);
-    
-    // Close button (traffic light red)
-    const signinClose = document.getElementById("signin-close");
-    if (signinClose) {
-      signinClose.addEventListener("click", () => {
-        closeSignInWindow();
-      });
-    }
   }
   
   const signinBackdrop = document.getElementById("signin-backdrop");
