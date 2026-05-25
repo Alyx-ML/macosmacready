@@ -8083,7 +8083,8 @@ function makeWindowDraggable(windowEl) {
   let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   const isMainWindow = windowEl.id === "app-window";
   const isSettingsWindow = windowEl.id === "settings-window";
-  const isBoundedWindow = isMainWindow || isSettingsWindow;
+  const isAccountWindow = windowEl.id === "account-window";
+  const isBoundedWindow = isMainWindow || isSettingsWindow || isAccountWindow;
 
   function getWindowDragBounds(width, height) {
     const menuBar = document.getElementById("menu-bar");

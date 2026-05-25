@@ -7814,25 +7814,69 @@ function makeWindowDraggable(windowEl) {
   if (!titlebar) return;
 
   let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  const isMainWindow = windowEl.id === "app-window";
+  const isSettingsWindow = windowEl.id === "settings-window";
+  const isAccountWindow = windowEl.id === "account-window";
+  const isBoundedWindow = isMainWindow || isSettingsWindow || isAccountWindow;
 
-  titlebar.style.cursor = "move";
-  titlebar.onmousedown = dragMouseDown;
+  function getWindowDragBounds(width, height) {
+    const menuBar = document.getElementById("menu-bar");
+    const dock = document.getElementById("dock-container");
+    const menuRect = menuBar?.getBoundingClientRect();
+    const dockRect = dock?.getBoundingClientRect();
+    const top = menuRect && menuRect.height > 0 ? menuRect.bottom + 8 : 8;
+    const bottom = dockRect && dockRect.height > 0 ? dockRect.top - 8 : window.innerHeight - 8;
+    const maxHeight = Math.max(220, bottom - top);
+    const adjustedHeight = Math.min(height, maxHeight);
+
+    return {
+      minLeft: 8,
+      maxLeft: Math.max(8, window.innerWidth - width - 8),
+      minTop: top,
+      maxTop: Math.max(top, bottom - adjustedHeight),
+      height: adjustedHeight
+    };
+  }
+
+  titlebar.style.cursor = "grab";
+  titlebar.addEventListener("mousedown", dragMouseDown);
 
   function dragMouseDown(e) {
     e = e || window.event;
-    if (e.target.closest(".traffic-lights") || e.target.closest("button")) return;
+    if (e.button !== 0) return;
+    if (e.target.closest(".traffic-lights") || e.target.closest("button, input, textarea, select, a")) return;
     
     e.preventDefault();
     bringWindowToFront(windowEl);
+
+    if (isBoundedWindow) {
+      const rect = windowEl.getBoundingClientRect();
+      const bounds = getWindowDragBounds(rect.width, rect.height);
+      windowEl.classList.remove("maximized");
+      windowEl.classList.add("freeform-window");
+      windowEl.style.position = "fixed";
+      windowEl.style.left = `${Math.min(Math.max(rect.left, bounds.minLeft), bounds.maxLeft)}px`;
+      windowEl.style.top = `${Math.min(Math.max(rect.top, bounds.minTop), bounds.maxTop)}px`;
+      windowEl.style.width = `${rect.width}px`;
+      windowEl.style.height = `${bounds.height}px`;
+      windowEl.style.maxWidth = "none";
+      windowEl.style.margin = "0";
+      if (isSettingsWindow) {
+        windowEl.style.animation = "none";
+      }
+    }
     
     pos3 = e.clientX;
     pos4 = e.clientY;
     
-    // Smooth responsive transition during drag
-    windowEl.style.transition = "transform 0.08s ease-out";
+    windowEl.classList.add("dragging-window");
+    windowEl.style.transition = "none";
+    windowEl.style.transform = "none";
+    windowEl.style.rotate = "0deg";
+    titlebar.style.cursor = "grabbing";
     
-    document.onmouseup = closeDragElement;
-    document.onmousemove = elementDrag;
+    document.addEventListener("mouseup", closeDragElement);
+    document.addEventListener("mousemove", elementDrag);
   }
 
   function elementDrag(e) {
@@ -7844,21 +7888,31 @@ function makeWindowDraggable(windowEl) {
     pos3 = e.clientX;
     pos4 = e.clientY;
     
-    windowEl.style.top = (windowEl.offsetTop - pos2) + "px";
-    windowEl.style.left = (windowEl.offsetLeft - pos1) + "px";
+    let nextTop = windowEl.offsetTop - pos2;
+    let nextLeft = windowEl.offsetLeft - pos1;
+
+    if (isBoundedWindow) {
+      const bounds = getWindowDragBounds(windowEl.offsetWidth, windowEl.offsetHeight);
+      nextTop = Math.min(Math.max(nextTop, bounds.minTop), bounds.maxTop);
+      nextLeft = Math.min(Math.max(nextLeft, bounds.minLeft), bounds.maxLeft);
+    }
+
+    windowEl.style.top = `${nextTop}px`;
+    windowEl.style.left = `${nextLeft}px`;
     
-    // Inertial dragging tilt momentum based on horizontal velocity
-    const tilt = Math.max(Math.min(-pos1 * 0.55, 2.5), -2.5);
-    windowEl.style.transform = `rotate(${tilt}deg)`;
+    windowEl.style.transform = "none";
+    windowEl.style.rotate = "0deg";
   }
 
   function closeDragElement() {
-    document.onmouseup = null;
-    document.onmousemove = null;
+    document.removeEventListener("mouseup", closeDragElement);
+    document.removeEventListener("mousemove", elementDrag);
     
-    // Highly elastic Snap-Back transition on release
-    windowEl.style.transition = "transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease, filter 0.5s ease";
+    windowEl.classList.remove("dragging-window");
+    windowEl.style.transition = "opacity 0.5s ease, filter 0.5s ease";
     windowEl.style.transform = "none";
+    windowEl.style.rotate = "0deg";
+    titlebar.style.cursor = "grab";
   }
 }
 
