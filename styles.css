@@ -4245,6 +4245,21 @@ body.light-mode .stat-item {
   flex: 1;
 }
 
+.steam-search-loader {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 180px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
 .game-card {
   background: rgba(27, 40, 56, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.06);

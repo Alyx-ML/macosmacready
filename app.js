@@ -3503,7 +3503,7 @@ function filterGames(query) {
   const grid = document.getElementById("games-grid");
   if (grid) {
     grid.innerHTML = `
-      <div class="empty-state" style="padding: 40px; grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
+      <div class="steam-search-loader">
         <div class="macos-beachball-loader" aria-hidden="true"></div>
         <p style="margin-top: 12px; font-size: 13px; opacity: 0.7;">Searching Steam database...</p>
       </div>
