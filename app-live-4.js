@@ -6527,6 +6527,8 @@ function initHardwareProfileUI() {
     console.warn("Hardware profile UI elements missing in DOM.");
     return;
   }
+  if (selectModel.dataset.hardwareProfileReady === "true") return;
+  selectModel.dataset.hardwareProfileReady = "true";
 
   // Load profile from database
   const profileRow = db.query("SELECT * FROM hardware_profile");
@@ -6595,7 +6597,33 @@ function initHardwareProfileUI() {
 
   // Initialize premium custom glass select selectors
   function initGlassSelects() {
+    const accountWindow = document.getElementById("account-window");
     const selects = [selectModel, selectChip, selectRam, selectMacos];
+    function positionOptionsPanel(container, trigger, optionsPanel) {
+      const triggerRect = trigger.getBoundingClientRect();
+      const bottomLimit = window.innerHeight - 92;
+      const spaceBelow = bottomLimit - triggerRect.bottom - 8;
+      const spaceAbove = triggerRect.top - 16;
+      const openUp = spaceBelow < 220 && spaceAbove > spaceBelow;
+      const maxHeight = Math.max(180, Math.min(openUp ? spaceAbove - 8 : spaceBelow, 420));
+
+      optionsPanel.style.maxHeight = `${maxHeight}px`;
+      if (openUp) {
+        optionsPanel.style.top = "auto";
+        optionsPanel.style.bottom = "calc(100% + 4px)";
+      } else {
+        optionsPanel.style.top = "calc(100% + 4px)";
+        optionsPanel.style.bottom = "auto";
+      }
+    }
+
+    function closeGlassSelects() {
+      document.querySelectorAll(".glass-select-options").forEach(panel => {
+        panel.classList.add("hidden");
+      });
+      if (accountWindow) accountWindow.classList.remove("hardware-dropdown-open");
+    }
+
     selects.forEach(select => {
       if (select.closest(".glass-select-container")) return; // Prevent double wraps
       
@@ -6692,7 +6720,11 @@ function initHardwareProfileUI() {
         document.querySelectorAll(".glass-select-options").forEach(panel => {
           if (panel !== optionsPanel) panel.classList.add("hidden");
         });
+        const willOpen = optionsPanel.classList.contains("hidden");
+        if (accountWindow) accountWindow.classList.toggle("hardware-dropdown-open", willOpen);
+        if (willOpen) positionOptionsPanel(container, trigger, optionsPanel);
         optionsPanel.classList.toggle("hidden");
+        if (!willOpen && accountWindow) accountWindow.classList.remove("hardware-dropdown-open");
       });
       
       select.parentNode.insertBefore(container, select);
@@ -6702,11 +6734,7 @@ function initHardwareProfileUI() {
     });
     
     // Close dropdowns on document click
-    document.addEventListener("click", () => {
-      document.querySelectorAll(".glass-select-options").forEach(panel => {
-        panel.classList.add("hidden");
-      });
-    });
+    document.addEventListener("click", closeGlassSelects);
   }
 
   // Initialize
@@ -8895,6 +8923,9 @@ function initAccountSystem() {
         if (targetPane) {
           targetPane.style.display = "block";
           targetPane.classList.add("active");
+        }
+        if (tab === "hardware") {
+          initHardwareProfileUI();
         }
       });
     });

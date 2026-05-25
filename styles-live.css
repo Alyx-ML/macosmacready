@@ -7967,6 +7967,13 @@ body.light-mode .touchid-sensor {
   z-index: 102;
   box-shadow: var(--shadow-window);
 }
+#account-window.hardware-dropdown-open,
+#account-window.hardware-dropdown-open .window-body,
+#account-window.hardware-dropdown-open .account-content,
+#account-window.hardware-dropdown-open #pane-account-hardware,
+#account-window.hardware-dropdown-open .specs-settings-card {
+  overflow: visible !important;
+}
 .account-sidebar .sidebar-menu {
   list-style: none;
   display: flex;
