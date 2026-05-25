@@ -7,7 +7,7 @@
   <title>MacReady</title>
   <link rel="icon" type="image/webp" href="public/assets/imgs/finderfavicon.webp">
   <link rel="preload" as="image" href="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" imagesrcset="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp 960w, public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
-  <link rel="stylesheet" href="styles-live.css?v=steam-about-no-card">
+  <link rel="stylesheet" href="styles-live.css?v=memory-wallpaper-previews-v2">
   <!-- Google Fonts for gorgeous typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,6 +19,9 @@
 
   <!-- Immersive Desktop Container -->
   <div id="desktop">
+    <!-- Layered Wallpaper Elements for Stutter-Free Graceful Cross-Fade Transitions -->
+    <div id="desktop-bg-base" style="position: absolute !important; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; pointer-events: none; z-index: 0;"></div>
+    <div id="desktop-bg-overlay" style="position: absolute !important; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; pointer-events: none; z-index: 0; opacity: 0; transition: opacity 0.6s ease-in-out;"></div>
     
     <!-- Night Light Amber Glass Screen Filter (Functional Eye Care) -->
     <div id="night-light-overlay"></div>
@@ -1772,6 +1775,26 @@
                   <div class="wallpaper-preview wallpaper-preview-os-x-snow-leopard"></div>
                   <div class="wallpaper-label">OS X Snow Leopard</div>
                 </div>
+                <!-- OS X Leopard -->
+                <div class="wallpaper-card" data-wallpaper="os-x-leopard">
+                  <div class="wallpaper-preview wallpaper-preview-os-x-leopard"></div>
+                  <div class="wallpaper-label">OS X Leopard</div>
+                </div>
+                <!-- OS X Lion -->
+                <div class="wallpaper-card" data-wallpaper="os-x-lion">
+                  <div class="wallpaper-preview wallpaper-preview-os-x-lion"></div>
+                  <div class="wallpaper-label">OS X Lion</div>
+                </div>
+                <!-- OS X Mavericks -->
+                <div class="wallpaper-card" data-wallpaper="os-x-mavericks">
+                  <div class="wallpaper-preview wallpaper-preview-os-x-mavericks"></div>
+                  <div class="wallpaper-label">OS X Mavericks</div>
+                </div>
+                <!-- OS X Yosemite -->
+                <div class="wallpaper-card" data-wallpaper="os-x-yosemite">
+                  <div class="wallpaper-preview wallpaper-preview-os-x-yosemite"></div>
+                  <div class="wallpaper-label">OS X Yosemite</div>
+                </div>
               </div>
             </div>
 
@@ -1787,71 +1810,17 @@
               </div>
             </div>
 
-            <!-- Vibrant Gradients Section -->
+            <!-- Gaming Wallpapers Section -->
             <div class="wallpaper-section" style="margin-top: 18px;">
-              <h3 class="wallpaper-section-title" data-i18n="wallpaper_section_gradients">Vibrant Gradients</h3>
+              <h3 class="wallpaper-section-title">Gaming Wallpapers</h3>
               <div class="wallpaper-grid">
-                <!-- Sunset -->
-                <div class="wallpaper-card" data-wallpaper="tahoe-sunset">
-                  <div class="wallpaper-preview wallpaper-preview-sunset"></div>
-                  <div class="wallpaper-label">Tahoe Sunset</div>
-                </div>
-                <!-- Aurora -->
-                <div class="wallpaper-card" data-wallpaper="aurora-glow">
-                  <div class="wallpaper-preview wallpaper-preview-aurora"></div>
-                  <div class="wallpaper-label">Aurora Glow</div>
-                </div>
-                <!-- Midnight Teal -->
-                <div class="wallpaper-card" data-wallpaper="midnight-teal">
-                  <div class="wallpaper-preview wallpaper-preview-teal"></div>
-                  <div class="wallpaper-label">Midnight Teal</div>
-                </div>
-                <!-- Neon Dream -->
-                <div class="wallpaper-card" data-wallpaper="neon-dream">
-                  <div class="wallpaper-preview wallpaper-preview-neon"></div>
-                  <div class="wallpaper-label">Neon Dream</div>
-                </div>
-                <!-- Royal Velvet -->
-                <div class="wallpaper-card" data-wallpaper="royal-velvet">
-                  <div class="wallpaper-preview wallpaper-preview-royal"></div>
-                  <div class="wallpaper-label">Royal Velvet</div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Pride Gradients Section -->
-            <div class="wallpaper-section" style="margin-top: 18px;">
-              <h3 class="wallpaper-section-title" data-i18n="wallpaper_section_pride">Pride Gradients</h3>
-              <div class="wallpaper-grid">
-                <!-- Rainbow Pride -->
-                <div class="wallpaper-card" data-wallpaper="rainbow-pride">
-                  <div class="wallpaper-preview wallpaper-preview-rainbow"></div>
-                  <div class="wallpaper-label">Rainbow Pride</div>
-                </div>
-                <!-- Trans Pride -->
-                <div class="wallpaper-card" data-wallpaper="trans-pride">
-                  <div class="wallpaper-preview wallpaper-preview-trans"></div>
-                  <div class="wallpaper-label">Trans Pride</div>
-                </div>
-                <!-- Bisexual Pride -->
-                <div class="wallpaper-card" data-wallpaper="bi-pride">
-                  <div class="wallpaper-preview wallpaper-preview-bi"></div>
-                  <div class="wallpaper-label">Bisexual Pride</div>
-                </div>
-                <!-- Lesbian Pride -->
-                <div class="wallpaper-card" data-wallpaper="lesbian-pride">
-                  <div class="wallpaper-preview wallpaper-preview-lesbian"></div>
-                  <div class="wallpaper-label">Lesbian Pride</div>
-                </div>
-                <!-- Nonbinary Pride -->
-                <div class="wallpaper-card" data-wallpaper="nonbinary-pride">
-                  <div class="wallpaper-preview wallpaper-preview-nonbinary"></div>
-                  <div class="wallpaper-label">Nonbinary Pride</div>
-                </div>
-                <!-- Asexual Pride -->
-                <div class="wallpaper-card" data-wallpaper="asexual-pride">
-                  <div class="wallpaper-preview wallpaper-preview-asexual"></div>
-                  <div class="wallpaper-label">Asexual Pride</div>
+                <!-- Gaming Cycle -->
+                <div class="wallpaper-card" data-wallpaper="gaming-cycle">
+                  <div class="wallpaper-preview" style="background: linear-gradient(135deg, #2b1055, #7597de); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: bold; color: #fff;">🎮</div>
+                  <div class="wallpaper-label" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
+                    <span style="font-weight: 500;">Gaming Wallpaper</span>
+                    <button id="cycle-gaming-btn" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; color: #fff; padding: 2px 8px; font-size: 10px; font-weight: 600; cursor: pointer; transition: background 0.15s; outline: none; margin-right: -2px;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">Cycle</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1871,6 +1840,8 @@
                 <button class="settings-accent-circle accent-amber" data-color="amber" title="Amber"></button>
                 <button class="settings-accent-circle accent-green" data-color="green" title="Green"></button>
                 <button class="settings-accent-circle accent-silver" data-color="silver" title="Silver"></button>
+                <button class="settings-accent-circle accent-teal" data-color="teal" title="Teal"></button>
+                <button class="settings-accent-circle accent-rose" data-color="rose" title="Rose"></button>
               </div>
             </div>
 
@@ -1883,6 +1854,9 @@
                 <button class="settings-accent-circle accent-leopard" data-color="leopard" title="Snow Leopard (Steel)"></button>
                 <button class="settings-accent-circle accent-yosemite" data-color="yosemite" title="Yosemite (Sunset)"></button>
                 <button class="settings-accent-circle accent-sequoia" data-color="sequoia" title="Sequoia (Forest)"></button>
+                <button class="settings-accent-circle accent-puma" data-color="puma" title="Cheetah/Puma (Classic Blue)"></button>
+                <button class="settings-accent-circle accent-mavericks" data-color="mavericks" title="Mavericks (Oceanic Wave)"></button>
+                <button class="settings-accent-circle accent-mojave" data-color="mojave" title="Mojave (Desert Sunset)"></button>
               </div>
             </div>
 
@@ -2156,6 +2130,6 @@
     </div>
 
   <!-- Client-side logic loader -->
-  <script type="module" src="app-live-4.js?v=steam-about-no-card"></script>
+  <script type="module" src="app-live-4.js?v=memory-wallpaper-previews-v2"></script>
 </body>
 </html>

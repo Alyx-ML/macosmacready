@@ -101,6 +101,36 @@
   --accent-glow: rgba(22, 163, 74, 0.4);
   --accent-gradient: linear-gradient(135deg, #86efac 0%, #16a34a 100%);
 }
+.theme-teal {
+  --accent-color: #00a3c4;
+  --accent-color-rgb: 0, 163, 196;
+  --accent-glow: rgba(0, 163, 196, 0.45);
+  --accent-gradient: linear-gradient(135deg, #00a3c4 0%, #006b82 100%);
+}
+.theme-rose {
+  --accent-color: #e11d48;
+  --accent-color-rgb: 225, 29, 72;
+  --accent-glow: rgba(225, 29, 72, 0.45);
+  --accent-gradient: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+}
+.theme-puma {
+  --accent-color: #2b7a78;
+  --accent-color-rgb: 43, 122, 120;
+  --accent-glow: rgba(43, 122, 120, 0.4);
+  --accent-gradient: linear-gradient(135deg, #74ebd5 0%, #acb6e5 100%);
+}
+.theme-mavericks {
+  --accent-color: #0ea5e9;
+  --accent-color-rgb: 14, 165, 233;
+  --accent-glow: rgba(14, 165, 233, 0.4);
+  --accent-gradient: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+}
+.theme-mojave {
+  --accent-color: #fb923c;
+  --accent-color-rgb: 251, 146, 60;
+  --accent-glow: rgba(251, 146, 60, 0.4);
+  --accent-gradient: linear-gradient(135deg, #f43f5e 0%, #fb923c 50%, #f59e0b 100%);
+}
 
 
 /* Light Mode Variations (When toggled via widget control center) */
@@ -166,16 +196,37 @@ body.light-mode ::-webkit-scrollbar-thumb:hover {
   width: 100%;
   height: 100%;
   position: relative;
-  background-image: url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp');
-  background-size: cover;
-  background-position: center;
+  background: #000;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
   padding-bottom: 60px; /* Leave space for Dock */
   overflow: hidden;
-  transition: background-image 0.5s ease;
+  transition: filter var(--motion-medium) var(--motion-soft);
+}
+
+#desktop-bg-base,
+#desktop-bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 0; /* Positioned directly behind ambient glows (z-index: 1) */
+}
+
+#desktop-bg-base {
+  background-image: url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp');
+}
+
+#desktop-bg-overlay {
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
 }
 
 #desktop::before, #lock-screen::before {
@@ -934,6 +985,11 @@ body.light-mode .window-sidebar {
 .accent-leopard { background: linear-gradient(135deg, #9ca3af 0%, #4b5563 100%); }
 .accent-yosemite { background: linear-gradient(135deg, #fdba74 0%, #f97316 100%); }
 .accent-sequoia { background: linear-gradient(135deg, #86efac 0%, #16a34a 100%); }
+.accent-teal { background-color: #00a3c4; }
+.accent-rose { background-color: #e11d48; }
+.accent-puma { background: linear-gradient(135deg, #74ebd5 0%, #acb6e5 100%); }
+.accent-mavericks { background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); }
+.accent-mojave { background: linear-gradient(135deg, #f43f5e 0%, #fb923c 50%, #f59e0b 100%); }
 
 
 /* News Window Feed Section */
@@ -2298,6 +2354,11 @@ body.light-mode .core-layer.active {
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   z-index: 1;
+}
+
+body.reader-active .ambient-glow {
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .reader-card {
@@ -6732,49 +6793,61 @@ body.light-mode .wallpaper-section-title {
 
 /* Wallpaper previews */
 .wallpaper-preview-tahoe {
-  background-image: url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/TahoeWallpaper-mobile.jpg');
 }
 .wallpaper-preview-tahoe-beach {
-  background-image: url('public/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dawn.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/26-Tahoe-Beach-Dawn.jpg');
 }
 .wallpaper-preview-tahoe-beach-dusk {
-  background-image: url('public/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dusk.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/26-Tahoe-Beach-Dusk.jpg');
 }
 .wallpaper-preview-tahoe-dark {
-  background-image: url('public/assets/imgs/wallpapers/optimized/26-Tahoe-Dark-6K.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/26-Tahoe-Dark-6K.jpg');
 }
 .wallpaper-preview-sequoia {
-  background-image: url('public/assets/imgs/wallpapers/optimized/15-Sequoia-Sunrise.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/15-Sequoia-Sunrise.jpg');
 }
 .wallpaper-preview-big-sur {
-  background-image: url('public/assets/imgs/wallpapers/optimized/11-0-Big-Sur-Color-Night.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/11-0-Big-Sur-Color-Night.jpg');
 }
 .wallpaper-preview-big-sur-night-dark {
-  background-image: url('public/assets/imgs/wallpapers/optimized/11-0-Night.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/11-0-Night.jpg');
 }
 .wallpaper-preview-mojave-night {
-  background-image: url('public/assets/imgs/wallpapers/optimized/10-14-Night.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/10-14-Night.jpg');
 }
 .wallpaper-preview-os-x-cheetah-puma {
-  background-image: url('public/assets/imgs/wallpapers/optimized/10-0_10.1.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/10-0_10.1.jpg');
 }
 .wallpaper-preview-os-x-tiger {
-  background-image: url('public/assets/imgs/wallpapers/optimized/Tiger.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/Tiger.jpg');
 }
 .wallpaper-preview-os-x-snow-leopard {
-  background-image: url('public/assets/imgs/wallpapers/optimized/10-6.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/10-6.jpg');
+}
+.wallpaper-preview-os-x-leopard {
+  background: linear-gradient(135deg, #0d1020 0%, #2f2f72 44%, #7b5cff 100%);
+}
+.wallpaper-preview-os-x-lion {
+  background: linear-gradient(135deg, #172a45 0%, #2d7ebf 48%, #e2edf7 100%);
+}
+.wallpaper-preview-os-x-mavericks {
+  background: linear-gradient(135deg, #0b5f6a 0%, #38b6c4 44%, #f5f0d8 100%);
+}
+.wallpaper-preview-os-x-yosemite {
+  background: linear-gradient(135deg, #1c3b6e 0%, #e3664c 48%, #f4d27a 100%);
 }
 .wallpaper-preview-monterey-dark {
-  background-image: url('public/assets/imgs/wallpapers/optimized/12-Dark.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/12-Dark.jpg');
 }
 .wallpaper-preview-ventura-dark {
-  background-image: url('public/assets/imgs/wallpapers/optimized/13-Ventura-Dark.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/13-Ventura-Dark.jpg');
 }
 .wallpaper-preview-macbook-neo-blue {
-  background-image: url('public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Blue.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/MacBook-Neo-wallpaper-Blue.jpg');
 }
 .wallpaper-preview-macbook-neo-purple {
-  background-image: url('public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp');
+  background-image: url('public/assets/imgs/wallpapers/previews/MacBook-Neo-wallpaper-Purple.jpg');
 }
 .wallpaper-preview-black {
   background: #000000;
@@ -7239,7 +7312,6 @@ body.text-scale-large .news-title { font-size: 18px !important; }
   overflow: hidden;
   background-size: cover;
   background-position: center;
-  background-image: url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp');
   transition: 
     opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);

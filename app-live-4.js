@@ -121,53 +121,6 @@ let genreLoading = new Set();
 let finderCurrentDir = "desktop";
 let finderSelectedFile = null;
 
-const WALLPAPER_IMAGE_URLS = [
-  "public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp",
-  "public/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp",
-  "public/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dawn.webp",
-  "public/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dusk.webp",
-  "public/assets/imgs/wallpapers/optimized/26-Tahoe-Dark-6K.webp",
-  "public/assets/imgs/wallpapers/optimized/15-Sequoia-Sunrise.webp",
-  "public/assets/imgs/wallpapers/optimized/11-0-Big-Sur-Color-Night.webp",
-  "public/assets/imgs/wallpapers/optimized/11-0-Night.webp",
-  "public/assets/imgs/wallpapers/optimized/10-14-Night.webp",
-  "public/assets/imgs/wallpapers/optimized/10-0_10.1.webp",
-  "public/assets/imgs/wallpapers/optimized/Tiger.webp",
-  "public/assets/imgs/wallpapers/optimized/10-6.webp",
-  "public/assets/imgs/wallpapers/optimized/12-Dark.webp",
-  "public/assets/imgs/wallpapers/optimized/13-Ventura-Dark.webp",
-  "public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Blue.webp",
-  "public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp"
-];
-let wallpaperWarmupStarted = false;
-
-function warmWallpaperImages() {
-  if (wallpaperWarmupStarted) return;
-  wallpaperWarmupStarted = true;
-
-  const warmImages = () => {
-    WALLPAPER_IMAGE_URLS.forEach(src => {
-      const image = new Image();
-      image.decoding = "async";
-      image.src = src;
-    });
-
-    if ("caches" in window) {
-      caches.open("macready-wallpapers-v1").then(cache => {
-        cache.addAll(WALLPAPER_IMAGE_URLS).catch(error => {
-          console.warn("Wallpaper cache warmup failed.", error);
-        });
-      });
-    }
-  };
-
-  if ("requestIdleCallback" in window) {
-    requestIdleCallback(warmImages, { timeout: 2500 });
-  } else {
-    window.setTimeout(warmImages, 900);
-  }
-}
-
 // Initialize data from LocalStorage or the current article set
 function initData() {
   articles = [];
@@ -229,7 +182,6 @@ function initData() {
 
   // Update counts
   updateCounts();
-  warmWallpaperImages();
   updateAppHeader();
 }
 
@@ -1256,7 +1208,10 @@ function openArticle(id) {
   }
 
   // Open the overlay
-  if (overlay) overlay.classList.remove("hidden");
+  if (overlay) {
+    overlay.classList.remove("hidden");
+    document.body.classList.add("reader-active");
+  }
   const bodyPane = document.getElementById("reader-body");
   if (bodyPane) {
     bodyPane.scrollTop = 0;
@@ -1443,7 +1398,10 @@ function toggleReadingQueue(id) {
 
 function closeReader() {
   const overlay = document.getElementById("reader-overlay");
-  if (overlay) overlay.classList.add("hidden");
+  if (overlay) {
+    overlay.classList.add("hidden");
+    document.body.classList.remove("reader-active");
+  }
   
   const dropdown = document.getElementById("reader-options-dropdown");
   if (dropdown) {
@@ -7476,6 +7434,35 @@ const translations = {
   }
 };
 
+const GAMING_WALLPAPERS = [
+  "url('https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Cyberpunk Character Render
+  "url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Epic Dark Fantasy Landscape
+  "url('https://images.unsplash.com/photo-1515621061946-eff1c2a352bd?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Neon Cyberpunk City Street
+  "url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Synthwave Neon Sunset Grid
+  "url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Sci-fi Deep Space & Nebula
+  "url('https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Cinematic Futuristic Sunset Landscape
+  "url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Nordic Nordic Mountains (Adventure vibes)
+  "url('https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1280&q=60&fm=webp')"  // Digital 3D Sci-fi City concept
+];
+
+function cycleGamingWallpaper() {
+  const currentUrl = localStorage.getItem("tahoe_gaming_wallpaper_url");
+  let nextUrl = currentUrl;
+  
+  if (GAMING_WALLPAPERS.length > 1) {
+    while (nextUrl === currentUrl) {
+      const randomIndex = Math.floor(Math.random() * GAMING_WALLPAPERS.length);
+      nextUrl = GAMING_WALLPAPERS[randomIndex];
+    }
+  } else {
+    nextUrl = GAMING_WALLPAPERS[0];
+  }
+  
+  localStorage.setItem("tahoe_gaming_wallpaper_url", nextUrl);
+  setWallpaper("gaming-cycle");
+  pushNotification("Gaming Wallpaper Cycled", "Enjoy your new gaming wallpaper background!");
+}
+
 const wallpaperGlows = {
   "tahoe-liquid": ["rgba(59, 130, 246, 0.8)", "rgba(168, 85, 247, 0.6)", "rgba(236, 72, 153, 0.5)"],
   "tahoe-beach-dawn": ["rgba(251, 191, 36, 0.5)", "rgba(244, 63, 94, 0.4)", "rgba(56, 189, 248, 0.4)"],
@@ -7488,22 +7475,16 @@ const wallpaperGlows = {
   "os-x-cheetah-puma": ["rgba(173, 216, 230, 0.4)", "rgba(100, 149, 237, 0.35)", "rgba(255, 255, 255, 0.2)"],
   "os-x-tiger": ["rgba(30, 144, 255, 0.45)", "rgba(0, 0, 128, 0.35)", "rgba(255, 255, 255, 0.2)"],
   "os-x-snow-leopard": ["rgba(138, 43, 226, 0.4)", "rgba(25, 25, 112, 0.4)", "rgba(255, 255, 255, 0.25)"],
+  "os-x-leopard": ["rgba(124, 58, 237, 0.45)", "rgba(59, 130, 246, 0.4)", "rgba(255, 255, 255, 0.15)"],
+  "os-x-lion": ["rgba(30, 144, 255, 0.4)", "rgba(79, 70, 229, 0.35)", "rgba(255, 255, 255, 0.2)"],
+  "os-x-mavericks": ["rgba(13, 148, 136, 0.45)", "rgba(6, 182, 212, 0.4)", "rgba(255, 255, 255, 0.15)"],
+  "os-x-yosemite": ["rgba(249, 115, 22, 0.4)", "rgba(99, 102, 241, 0.35)", "rgba(255, 255, 255, 0.15)"],
   "black-solid": ["rgba(0, 0, 0, 0)", "rgba(0, 0, 0, 0)", "rgba(0, 0, 0, 0)"],
-  "tahoe-sunset": ["rgba(255, 107, 107, 0.4)", "rgba(240, 147, 251, 0.3)", "rgba(253, 187, 45, 0.25)"],
-  "aurora-glow": ["rgba(0, 242, 254, 0.35)", "rgba(0, 205, 172, 0.3)", "rgba(168, 85, 247, 0.2)"],
-  "midnight-teal": ["rgba(10, 147, 150, 0.35)", "rgba(0, 180, 216, 0.25)", "rgba(0, 18, 25, 0.1)"],
-  "neon-dream": ["rgba(0, 240, 255, 0.45)", "rgba(255, 0, 127, 0.45)", "rgba(123, 31, 162, 0.3)"],
-  "royal-velvet": ["rgba(99, 102, 241, 0.45)", "rgba(217, 119, 6, 0.35)", "rgba(67, 56, 202, 0.3)"],
-  "rainbow-pride": ["rgba(228, 3, 3, 0.45)", "rgba(0, 128, 38, 0.4)", "rgba(115, 41, 130, 0.35)"],
-  "trans-pride": ["rgba(91, 206, 250, 0.45)", "rgba(245, 169, 184, 0.45)", "rgba(255, 255, 255, 0.3)"],
-  "bi-pride": ["rgba(214, 2, 112, 0.45)", "rgba(0, 56, 168, 0.45)", "rgba(155, 79, 150, 0.35)"],
-  "lesbian-pride": ["rgba(213, 45, 0, 0.45)", "rgba(216, 75, 149, 0.4)", "rgba(162, 38, 51, 0.35)"],
-  "nonbinary-pride": ["rgba(252, 244, 52, 0.35)", "rgba(156, 89, 209, 0.4)", "rgba(255, 255, 255, 0.2)"],
-  "asexual-pride": ["rgba(128, 0, 128, 0.45)", "rgba(163, 163, 163, 0.35)", "rgba(255, 255, 255, 0.2)"],
   "monterey-dark": ["rgba(147, 51, 234, 0.45)", "rgba(219, 39, 119, 0.4)", "rgba(30, 41, 59, 0.3)"],
   "ventura-dark": ["rgba(249, 115, 22, 0.45)", "rgba(220, 38, 38, 0.35)", "rgba(30, 41, 59, 0.3)"],
   "macbook-neo-blue": ["rgba(6, 182, 212, 0.45)", "rgba(59, 130, 246, 0.4)", "rgba(255, 255, 255, 0.15)"],
-  "macbook-neo-purple": ["rgba(168, 85, 247, 0.45)", "rgba(236, 72, 153, 0.4)", "rgba(255, 255, 255, 0.15)"]
+  "macbook-neo-purple": ["rgba(168, 85, 247, 0.45)", "rgba(236, 72, 153, 0.4)", "rgba(255, 255, 255, 0.15)"],
+  "gaming-cycle": ["rgba(168, 85, 247, 0.45)", "rgba(0, 240, 255, 0.45)", "rgba(255, 45, 85, 0.4)"]
 };
 
 // --- Wallpaper Switching Engine ---
@@ -7524,22 +7505,16 @@ function setWallpaper(wallpaperName) {
     "os-x-cheetah-puma": "url('public/assets/imgs/wallpapers/optimized/10-0_10.1.webp')",
     "os-x-tiger": "url('public/assets/imgs/wallpapers/optimized/Tiger.webp')",
     "os-x-snow-leopard": "url('public/assets/imgs/wallpapers/optimized/10-6.webp')",
+    "os-x-leopard": "url('https://media.512pixels.net/downloads/macos-wallpapers-6k/10-5-6k.jpg')",
+    "os-x-lion": "url('https://media.512pixels.net/downloads/macos-wallpapers-6k/10-7-6k.jpg')",
+    "os-x-mavericks": "url('https://media.512pixels.net/downloads/macos-wallpapers-6k/10-9-6k.jpg')",
+    "os-x-yosemite": "url('https://media.512pixels.net/downloads/macos-wallpapers-6k/10-10-6k.jpg')",
     "black-solid": "#000000",
-    "tahoe-sunset": "radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.9) 0%, transparent 60%), radial-gradient(circle at 20% 80%, rgba(240, 147, 251, 0.95) 0%, transparent 60%), radial-gradient(circle at 50% 50%, rgba(253, 187, 45, 0.8) 0%, transparent 70%), linear-gradient(135deg, #1b0c24 0%, #0d0413 100%)",
-    "aurora-glow": "radial-gradient(circle at 20% 30%, rgba(0, 242, 254, 0.5) 0%, transparent 60%), radial-gradient(circle at 80% 70%, rgba(0, 205, 172, 0.45) 0%, transparent 60%), radial-gradient(circle at 70% 20%, rgba(168, 85, 247, 0.4) 0%, transparent 60%), linear-gradient(135deg, #05141c 0%, #03080d 100%)",
-    "midnight-teal": "radial-gradient(circle at 30% 40%, rgba(10, 147, 150, 0.5) 0%, transparent 60%), radial-gradient(circle at 70% 60%, rgba(0, 180, 216, 0.4) 0%, transparent 60%), linear-gradient(135deg, #001219 0%, #000508 100%)",
-    "neon-dream": "radial-gradient(circle at 20% 20%, rgba(0, 240, 255, 0.5) 0%, transparent 60%), radial-gradient(circle at 80% 80%, rgba(255, 0, 127, 0.5) 0%, transparent 60%), radial-gradient(circle at 50% 40%, rgba(123, 31, 162, 0.4) 0%, transparent 70%), linear-gradient(135deg, #0b0914 0%, #030206 100%)",
-    "royal-velvet": "radial-gradient(circle at 30% 20%, rgba(99, 102, 241, 0.55) 0%, transparent 60%), radial-gradient(circle at 70% 80%, rgba(217, 119, 6, 0.4) 0%, transparent 60%), radial-gradient(circle at 60% 40%, rgba(67, 56, 202, 0.45) 0%, transparent 70%), linear-gradient(135deg, #0d0b1a 0%, #040308 100%)",
-    "rainbow-pride": "radial-gradient(circle at 10% 20%, rgba(228, 3, 3, 0.5) 0%, transparent 50%), radial-gradient(circle at 50% 20%, rgba(255, 140, 0, 0.45) 0%, transparent 50%), radial-gradient(circle at 90% 20%, rgba(255, 237, 0, 0.4) 0%, transparent 50%), radial-gradient(circle at 90% 80%, rgba(0, 128, 38, 0.4) 0%, transparent 50%), radial-gradient(circle at 50% 80%, rgba(0, 76, 255, 0.45) 0%, transparent 50%), radial-gradient(circle at 10% 80%, rgba(115, 41, 130, 0.5) 0%, transparent 50%), linear-gradient(135deg, #120f1a 0%, #07050a 100%)",
-    "trans-pride": "radial-gradient(circle at 15% 25%, rgba(91, 206, 250, 0.55) 0%, transparent 60%), radial-gradient(circle at 85% 75%, rgba(91, 206, 250, 0.55) 0%, transparent 60%), radial-gradient(circle at 50% 30%, rgba(245, 169, 184, 0.5) 0%, transparent 60%), radial-gradient(circle at 50% 70%, rgba(245, 169, 184, 0.5) 0%, transparent 60%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.4) 0%, transparent 55%), linear-gradient(135deg, #0e1117 0%, #07090d 100%)",
-    "bi-pride": "radial-gradient(circle at 20% 30%, rgba(214, 2, 112, 0.55) 0%, transparent 60%), radial-gradient(circle at 80% 70%, rgba(0, 56, 168, 0.55) 0%, transparent 60%), radial-gradient(circle at 50% 50%, rgba(155, 79, 150, 0.45) 0%, transparent 65%), linear-gradient(135deg, #0f0a17 0%, #06040a 100%)",
-    "lesbian-pride": "radial-gradient(circle at 10% 20%, rgba(213, 45, 0, 0.5) 0%, transparent 50%), radial-gradient(circle at 40% 30%, rgba(255, 154, 86, 0.45) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.35) 0%, transparent 50%), radial-gradient(circle at 60% 70%, rgba(216, 75, 149, 0.45) 0%, transparent 50%), radial-gradient(circle at 90% 80%, rgba(162, 38, 51, 0.5) 0%, transparent 50%), linear-gradient(135deg, #130a0d 0%, #060304 100%)",
-    "nonbinary-pride": "radial-gradient(circle at 15% 25%, rgba(252, 244, 52, 0.45) 0%, transparent 60%), radial-gradient(circle at 85% 75%, rgba(156, 89, 209, 0.5) 0%, transparent 60%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.3) 0%, transparent 50%), linear-gradient(135deg, #0e0e12 0%, #050508 100%)",
-    "asexual-pride": "radial-gradient(circle at 20% 30%, rgba(128, 0, 128, 0.55) 0%, transparent 60%), radial-gradient(circle at 80% 70%, rgba(163, 163, 163, 0.4) 0%, transparent 60%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.25) 0%, transparent 55%), linear-gradient(135deg, #0a0a0c 0%, #030304 100%)",
     "monterey-dark": "url('public/assets/imgs/wallpapers/optimized/12-Dark.webp')",
     "ventura-dark": "url('public/assets/imgs/wallpapers/optimized/13-Ventura-Dark.webp')",
     "macbook-neo-blue": "url('public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Blue.webp')",
-    "macbook-neo-purple": "url('public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp')"
+    "macbook-neo-purple": "url('public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp')",
+    "gaming-cycle": localStorage.getItem("tahoe_gaming_wallpaper_url") || "url('https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1920&q=80')"
   };
 
   const physicalImages = [
@@ -7554,25 +7529,75 @@ function setWallpaper(wallpaperName) {
     "os-x-cheetah-puma",
     "os-x-tiger",
     "os-x-snow-leopard",
+    "os-x-leopard",
+    "os-x-lion",
+    "os-x-mavericks",
+    "os-x-yosemite",
     "monterey-dark",
     "ventura-dark",
     "macbook-neo-blue",
-    "macbook-neo-purple"
+    "macbook-neo-purple",
+    "gaming-cycle"
   ];
 
   // 1. Sync Desktop Background
-  if (physicalImages.includes(wallpaperName)) {
-    desktop.style.background = "";
-    desktop.style.backgroundImage = wallpapers[wallpaperName] || "url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp')";
-    desktop.style.backgroundSize = "cover";
-    desktop.style.backgroundPosition = "center";
+  const baseBg = document.getElementById("desktop-bg-base");
+  const overlayBg = document.getElementById("desktop-bg-overlay");
+  
+  if (baseBg && overlayBg) {
+    const newBgValue = wallpapers[wallpaperName] || "url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp')";
+    const isImage = physicalImages.includes(wallpaperName);
+    
+    if (isImage) {
+      // Clean and extract the raw URL for asynchronous GPU pre-decoding
+      const cleanUrl = newBgValue.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
+      const img = new Image();
+      img.src = cleanUrl;
+      
+      const startTransition = () => {
+        overlayBg.style.backgroundImage = newBgValue;
+        overlayBg.style.opacity = "1";
+        
+        // After fade transition (600ms):
+        setTimeout(() => {
+          baseBg.style.backgroundImage = newBgValue;
+          overlayBg.style.opacity = "0";
+        }, 600);
+      };
+
+      if (typeof img.decode === 'function') {
+        img.decode().then(startTransition).catch(startTransition);
+      } else {
+        img.onload = startTransition;
+      }
+    } else {
+      // Solid colors / Gradients - Transition gracefully
+      overlayBg.style.backgroundImage = "none";
+      overlayBg.style.background = newBgValue;
+      overlayBg.style.opacity = "1";
+      
+      // After fade transition (600ms):
+      setTimeout(() => {
+        baseBg.style.backgroundImage = "none";
+        baseBg.style.background = newBgValue;
+        overlayBg.style.opacity = "0";
+      }, 600);
+    }
   } else {
-    desktop.style.backgroundImage = "none";
-    desktop.style.background = wallpapers[wallpaperName] || "";
+    // Fallback if layered divs aren't rendered
+    if (physicalImages.includes(wallpaperName)) {
+      desktop.style.background = "";
+      desktop.style.backgroundImage = wallpapers[wallpaperName] || "url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp')";
+      desktop.style.backgroundSize = "cover";
+      desktop.style.backgroundPosition = "center";
+    } else {
+      desktop.style.backgroundImage = "none";
+      desktop.style.background = wallpapers[wallpaperName] || "";
+    }
   }
 
   // 2. Sync Lock Screen Background
-  if (lockScreen) {
+  if (lockScreen && !lockScreen.classList.contains("hidden-lock")) {
     if (physicalImages.includes(wallpaperName)) {
       lockScreen.style.background = "";
       lockScreen.style.backgroundImage = wallpapers[wallpaperName] || "url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp')";
@@ -7734,6 +7759,25 @@ function applyLanguage(lang) {
 function initSettingsWindow() {
   // A. Load saved values on startup
   const savedWallpaper = localStorage.getItem("tahoe_wallpaper") || "tahoe-liquid";
+  if (savedWallpaper === "gaming-cycle") {
+    const navEntries = performance.getEntriesByType("navigation");
+    const isReload = navEntries.length > 0 && navEntries[0].type === "reload";
+    
+    // Only cycle if this was an actual reload/refresh
+    if (isReload) {
+      const currentUrl = localStorage.getItem("tahoe_gaming_wallpaper_url");
+      let nextUrl = currentUrl;
+      if (GAMING_WALLPAPERS.length > 1) {
+        while (nextUrl === currentUrl) {
+          const randomIndex = Math.floor(Math.random() * GAMING_WALLPAPERS.length);
+          nextUrl = GAMING_WALLPAPERS[randomIndex];
+        }
+      } else {
+        nextUrl = GAMING_WALLPAPERS[0];
+      }
+      localStorage.setItem("tahoe_gaming_wallpaper_url", nextUrl);
+    }
+  }
   setWallpaper(savedWallpaper);
 
   const savedScale = localStorage.getItem("tahoe_text_scale") || "medium";
@@ -7807,7 +7851,6 @@ function initSettingsWindow() {
   // C. Menu Bar & Dock Openers
   const openSettings = (e) => {
     if (e) e.preventDefault();
-    warmWallpaperImages();
     const settingsWin = document.getElementById("settings-window");
     if (settingsWin) {
       settingsWin.classList.remove("hidden-window");
@@ -7895,6 +7938,15 @@ function initSettingsWindow() {
       pushNotification("Wallpaper Changed", `Desktop wallpaper set to ${capitalized}.`);
     });
   });
+
+  const cycleBtn = document.getElementById("cycle-gaming-btn");
+  if (cycleBtn) {
+    cycleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      cycleGamingWallpaper();
+      playGlassChime();
+    });
+  }
 
   // F. Appearance Toggles
   const darkCard = document.getElementById("appearance-dark");
@@ -8420,12 +8472,10 @@ let lockClockInterval = null;
 function lockSystem() {
   const lockScreen = document.getElementById("lock-screen");
   if (!lockScreen) return;
-  
-  // Update lock screen background with active wallpaper
+
+  lockScreen.classList.remove("hidden-lock");
   const savedWall = localStorage.getItem("tahoe_wallpaper") || "tahoe-liquid";
   setWallpaper(savedWall);
-  
-  lockScreen.classList.remove("hidden-lock");
   playGlassChime();
   
   // Reset passcode input
@@ -8451,6 +8501,12 @@ function unlockSystem() {
   
   lockScreen.classList.add("hidden-lock");
   playGlassChime();
+  window.setTimeout(() => {
+    if (lockScreen.classList.contains("hidden-lock")) {
+      lockScreen.style.backgroundImage = "none";
+      lockScreen.style.background = "";
+    }
+  }, 650);
   
   clearInterval(lockClockInterval);
 }
