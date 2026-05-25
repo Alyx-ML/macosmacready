@@ -7802,9 +7802,10 @@ function initSettingsWindow() {
 
 // --- macOS Tahoe Premium Dragging & Focusing System ---
 let maxZIndex = 100;
+const MAX_WINDOW_Z_INDEX = 7900;
 
 function bringWindowToFront(windowEl) {
-  maxZIndex++;
+  maxZIndex = Math.min(maxZIndex + 1, MAX_WINDOW_Z_INDEX);
   windowEl.style.zIndex = maxZIndex;
 }
 

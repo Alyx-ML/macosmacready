@@ -34,6 +34,12 @@
   --motion-fast: 180ms;
   --motion-medium: 320ms;
   --motion-long: 520ms;
+
+  /* Layering */
+  --z-window-max: 7900;
+  --z-system-chrome: 9000;
+  --z-system-popover: 9200;
+  --z-system-alerts: 9300;
   
   /* Category Dot Colors */
   --cat-tech: #3b82f6;
@@ -291,7 +297,7 @@ body.light-mode ::-webkit-scrollbar-thumb:hover {
   justify-content: space-between;
   align-items: center;
   padding: 0 14px;
-  z-index: 100;
+  z-index: var(--z-system-chrome);
   font-size: 12px;
 }
 body.light-mode #menu-bar {
@@ -382,7 +388,7 @@ body.light-mode .menu-icon:hover, body.light-mode .menu-icon.active {
   box-shadow: var(--shadow-dropdown);
   min-width: 220px;
   padding: 5px;
-  z-index: 101;
+  z-index: var(--z-system-popover);
   display: none;
   flex-direction: column;
   transform: translateY(-5px) scale(0.98);
@@ -1311,7 +1317,7 @@ body.light-mode .card-source {
   max-height: calc(100vh - 100px);
   margin-right: 0;
   border-radius: 18px;
-  z-index: 95;
+  z-index: var(--z-system-alerts);
   transform: translateY(-22px) scale(0.96);
   transform-origin: top right;
   opacity: 0;
@@ -3319,7 +3325,7 @@ body.light-mode .modal-footer {
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 100;
+  z-index: var(--z-system-chrome);
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -3372,6 +3378,7 @@ body.light-mode #dock {
 /* Tooltip standard popups */
 .dock-tooltip {
   position: absolute;
+  z-index: var(--z-system-popover);
   top: -34px;
   background: rgba(15, 15, 20, 0.7);
   backdrop-filter: blur(10px);
@@ -3550,7 +3557,7 @@ body.light-mode .dock-tooltip {
   #widget-center {
     width: calc(100% - 24px);
     height: calc(100vh - 46px);
-    z-index: 100;
+    z-index: var(--z-system-alerts);
   }
   
   #reader-overlay {
