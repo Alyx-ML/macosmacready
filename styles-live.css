@@ -26,6 +26,14 @@
   --shadow-dock: 0 15px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   --shadow-dropdown: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.2);
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
+
+  /* Fluid Motion */
+  --motion-fluid: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-spring: cubic-bezier(0.22, 1.35, 0.36, 1);
+  --motion-soft: cubic-bezier(0.25, 1, 0.5, 1);
+  --motion-fast: 180ms;
+  --motion-medium: 320ms;
+  --motion-long: 520ms;
   
   /* Category Dot Colors */
   --cat-tech: #3b82f6;
@@ -175,7 +183,7 @@ body.light-mode ::-webkit-scrollbar-thumb:hover {
   align-items: center;
   padding-bottom: 60px; /* Leave space for Dock */
   overflow: hidden;
-  transition: background-image 0.5s ease;
+  transition: background-image var(--motion-long) var(--motion-soft), filter var(--motion-medium) var(--motion-soft);
 }
 
 #desktop::before, #lock-screen::before {
@@ -446,8 +454,8 @@ body.light-mode .dropdown-divider {
   overflow: hidden;
   z-index: 10;
   position: relative;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, width 0.4s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s cubic-bezier(0.16, 1, 0.3, 1), margin 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.3s ease, visibility 0.4s;
-  animation: openWindow 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--motion-long) var(--motion-fluid), opacity var(--motion-medium) var(--motion-soft), width var(--motion-long) var(--motion-fluid), height var(--motion-long) var(--motion-fluid), margin var(--motion-long) var(--motion-fluid), border-radius var(--motion-medium) var(--motion-soft), visibility var(--motion-medium);
+  animation: openWindow 0.72s var(--motion-spring);
   will-change: transform, opacity;
   visibility: visible;
   border-bottom-color: transparent !important;
@@ -455,12 +463,14 @@ body.light-mode .dropdown-divider {
 
 @keyframes openWindow {
   from {
-    transform: translateY(40px) scale(0.95);
+    transform: translateY(34px) scale(0.965);
     opacity: 0;
+    filter: saturate(0.85);
   }
   to {
     transform: translateY(0) scale(1);
     opacity: 1;
+    filter: saturate(1);
   }
 }
 
@@ -991,7 +1001,7 @@ body.light-mode .window-sidebar {
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: var(--shadow-card);
   cursor: pointer;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+  transition: transform var(--motion-medium) var(--motion-spring), border-color var(--motion-medium) var(--motion-soft), box-shadow var(--motion-medium) var(--motion-soft), background-color var(--motion-medium) var(--motion-soft);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -1003,7 +1013,7 @@ body.light-mode .news-card {
 }
 
 .news-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-7px) scale(1.012);
   border-color: rgba(var(--accent-color-rgb), 0.35);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(var(--accent-color-rgb), 0.15);
   background: rgba(25, 25, 35, 0.45);
@@ -1021,7 +1031,7 @@ body.light-mode .news-card:hover {
   background: radial-gradient(800px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(255,255,255,0.06), transparent 40%);
   pointer-events: none;
   z-index: 2;
-  transition: opacity 0.5s;
+  transition: opacity var(--motion-long) var(--motion-soft);
   opacity: 0;
 }
 .news-card:hover::before {
@@ -1041,10 +1051,11 @@ body.light-mode .news-card:hover {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.72s var(--motion-fluid), filter var(--motion-medium) var(--motion-soft);
 }
 .news-card:hover .card-cover img {
-  transform: scale(1.05);
+  transform: scale(1.075);
+  filter: saturate(1.08);
 }
 
 .card-category-badge {
@@ -3327,7 +3338,7 @@ body.light-mode .modal-footer {
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: var(--shadow-dock);
   position: relative;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--motion-medium) var(--motion-spring);
 }
 body.light-mode #dock {
   background: rgba(255, 255, 255, 0.25);
@@ -3340,7 +3351,7 @@ body.light-mode #dock {
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--motion-medium) var(--motion-spring);
   transform-origin: bottom center;
 }
 
@@ -3354,7 +3365,7 @@ body.light-mode #dock {
   justify-content: center;
   padding: 0;
   margin-bottom: 4px;
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--motion-fast) var(--motion-spring), filter var(--motion-fast) var(--motion-soft);
   transform-origin: bottom center;
 }
 
@@ -3375,7 +3386,7 @@ body.light-mode #dock {
   pointer-events: none;
   opacity: 0;
   transform: translateY(5px);
-  transition: opacity 0.25s, transform 0.25s;
+  transition: opacity var(--motion-fast) var(--motion-soft), transform var(--motion-fast) var(--motion-spring);
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 body.light-mode .dock-tooltip {
@@ -3561,11 +3572,11 @@ body.light-mode .dock-tooltip {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  animation: fadeInApp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeInApp var(--motion-long) var(--motion-spring) forwards;
 }
 
 @keyframes fadeInApp {
-  from { opacity: 0; transform: scale(0.99) translateY(4px); }
+  from { opacity: 0; transform: scale(0.985) translateY(10px); filter: saturate(0.9); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
@@ -4208,7 +4219,7 @@ body.light-mode .stat-item {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition: transform var(--motion-medium) var(--motion-spring), border-color var(--motion-medium) var(--motion-soft), box-shadow var(--motion-medium) var(--motion-soft);
   cursor: pointer;
 }
 
@@ -4218,7 +4229,7 @@ body.light-mode .game-card {
 }
 
 .game-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-7px) scale(1.012);
   border-color: rgba(102, 192, 244, 0.4);
   box-shadow: 0 8px 24px rgba(102, 192, 244, 0.1);
 }
@@ -4235,11 +4246,12 @@ body.light-mode .game-card {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease;
+  transition: transform 0.72s var(--motion-fluid), filter var(--motion-medium) var(--motion-soft);
 }
 
 .game-card:hover .game-card-cover img {
-  transform: scale(1.06);
+  transform: scale(1.08);
+  filter: saturate(1.08);
 }
 
 .compat-badge {
@@ -4503,7 +4515,7 @@ body.light-mode .store-featured-subtitle {
   align-items: stretch;
   gap: 12px;
   cursor: pointer;
-  transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+  transition: transform var(--motion-medium) var(--motion-spring), background-color var(--motion-medium) var(--motion-soft), box-shadow var(--motion-medium) var(--motion-soft), border-color var(--motion-medium) var(--motion-soft);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -4514,7 +4526,7 @@ body.light-mode .store-app-card {
 }
 
 .store-app-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-6px) scale(1.01);
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.09);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);

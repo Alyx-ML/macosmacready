@@ -588,12 +588,45 @@ function initDockMagnification() {
   if (!dock || !dockContainer) return;
 
   const items = Array.from(dock.querySelectorAll(".dock-item-wrapper"));
+  const motion = items.map(item => ({ item, current: 1, target: 1 }));
+  let dockMotionFrame = null;
+
+  const renderDockMotion = () => {
+    let moving = false;
+
+    motion.forEach(entry => {
+      entry.current += (entry.target - entry.current) * 0.28;
+      if (Math.abs(entry.target - entry.current) > 0.001) moving = true;
+
+      const scale = entry.current;
+      entry.item.style.transform = `scale(${scale}) translateY(${-15 * (scale - 1)}px)`;
+
+      const dockItem = entry.item.querySelector(".dock-item");
+      if (dockItem) {
+        const margin = 5 * (scale - 1);
+        dockItem.style.margin = `0 ${margin}px 4px ${margin}px`;
+      }
+    });
+
+    if (moving) {
+      dockMotionFrame = requestAnimationFrame(renderDockMotion);
+    } else {
+      dockMotionFrame = null;
+    }
+  };
+
+  const startDockMotion = () => {
+    if (!dockMotionFrame) {
+      dockMotionFrame = requestAnimationFrame(renderDockMotion);
+    }
+  };
 
   dock.addEventListener("mousemove", (e) => {
     const mouseX = e.clientX;
     const mouseY = e.clientY;
 
-    items.forEach((item) => {
+    motion.forEach((entry) => {
+      const item = entry.item;
       const rect = item.getBoundingClientRect();
       const itemX = rect.left + rect.width / 2;
       const itemY = rect.top + rect.height;
@@ -613,26 +646,17 @@ function initDockMagnification() {
         scale = 1.0 + 0.38 * factor;
       }
 
-      // Apply dynamic transformation directly
-      item.style.transform = `scale(${scale}) translateY(${-15 * (scale - 1)}px)`;
-      
-      // Update padding on parent to keep alignment elegant
-      const dockItem = item.querySelector(".dock-item");
-      if (dockItem) {
-        dockItem.style.margin = `0 ${5 * (scale - 1)}px 4px ${5 * (scale - 1)}px`;
-      }
+      entry.target = scale;
     });
+    startDockMotion();
   });
 
   dock.addEventListener("mouseleave", () => {
     // Reset all scale factors smoothly
-    items.forEach((item) => {
-      item.style.transform = "scale(1) translateY(0)";
-      const dockItem = item.querySelector(".dock-item");
-      if (dockItem) {
-        dockItem.style.margin = "0 0 4px 0";
-      }
+    motion.forEach((entry) => {
+      entry.target = 1;
     });
+    startDockMotion();
   });
 }
 
