@@ -3590,7 +3590,7 @@ function renderGamesView() {
   if (allFiltered.length === 0) {
     grid.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 40px; width: 100%;">
-        <h3 style="font-family: var(--font-title); font-size: 16px; color: #66c0f4;">No Games Found</h3>
+        <h3 style="font-family: inherit; font-size: 16px; color: #fff;">No Games Found</h3>
         <p style="font-size: 12px; opacity: 0.6; margin-top: 4px;">Try refining your search query or filters.</p>
       </div>
     `;
