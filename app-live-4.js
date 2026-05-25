@@ -6522,9 +6522,8 @@ function initHardwareProfileUI() {
   const selectRam = document.getElementById("profile-ram");
   const selectMacos = document.getElementById("profile-macos");
   const checkFilterSpecs = document.getElementById("filter-by-specs");
-  const statusEl = document.getElementById("profile-status");
 
-  if (!selectModel || !selectChip || !selectRam || !selectMacos || !statusEl) {
+  if (!selectModel || !selectChip || !selectRam || !selectMacos) {
     console.warn("Hardware profile UI elements missing in DOM.");
     return;
   }
@@ -6538,16 +6537,11 @@ function initHardwareProfileUI() {
     selectRam.value = p.ram || "";
     selectMacos.value = p.macosVersion || "";
     
-    updateStatusText(p);
+    updateHardwareSummary(p);
   }
 
-  // Helper to update status message and dynamic visual feedback
-  function updateStatusText(p) {
+  function updateHardwareSummary(p) {
     if (p && p.macModel && p.chip) {
-      statusEl.textContent = "Specifications Synced";
-      statusEl.style.opacity = "0.85";
-      statusEl.style.color = "var(--accent-color)";
-      
       const hwModel = document.getElementById("account-hw-model");
       const hwSub = document.getElementById("account-hw-sub");
       if (hwModel) hwModel.textContent = p.macModel;
@@ -6567,10 +6561,6 @@ function initHardwareProfileUI() {
           imgEl.src = "assets/imgs/macbook_device.svg";
         }
       }
-    } else {
-      statusEl.textContent = "Profile inactive";
-      statusEl.style.opacity = "0.45";
-      statusEl.style.color = "";
     }
   }
 
@@ -6733,14 +6723,8 @@ function initHardwareProfileUI() {
     const macosVersion = selectMacos.value;
 
     if (!macModel || !chip || !ram || !macosVersion) {
-      statusEl.textContent = "Please fill in all specs";
-      statusEl.style.opacity = "0.85";
-      statusEl.style.color = "#ff6b6b";
       return;
     }
-
-    statusEl.textContent = "Saving to SQLite...";
-    statusEl.style.color = "#ffd060";
 
     // Simulate small latency then replace in SQLite mock
     setTimeout(() => {
@@ -6750,12 +6734,8 @@ function initHardwareProfileUI() {
       );
       
       const updatedProfile = { macModel, chip, ram, macosVersion, crossoverInstalled: false };
-      updateStatusText(updatedProfile);
+      updateHardwareSummary(updatedProfile);
       syncCustomSelectTriggers();
-      
-      // Visual feedback: soft glow toast on status element
-      statusEl.classList.add("pulse-glow");
-      setTimeout(() => statusEl.classList.remove("pulse-glow"), 1000);
 
       // Re-render games feed since hardware profile affects tested badges & filtering
       renderGamesView();
