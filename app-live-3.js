@@ -5152,7 +5152,7 @@ function bindEvents() {
       e.stopPropagation();
       try {
         const windowEl = document.getElementById("app-window");
-        if (windowEl) windowEl.classList.toggle("maximized");
+        toggleWindowMaximized(windowEl);
       } catch (err) {
         console.error("Caught error during window maximize:", err);
       }
@@ -7596,7 +7596,7 @@ function initSettingsWindow() {
     maximizeBtn.addEventListener("click", () => {
       const settingsWin = document.getElementById("settings-window");
       if (settingsWin) {
-        settingsWin.classList.toggle("maximized");
+        toggleWindowMaximized(settingsWin);
         playGlassChime();
       }
     });
@@ -7822,6 +7822,54 @@ function getTopVisibleWindow() {
     const topZ = topWindow ? Number.parseInt(getComputedStyle(topWindow).zIndex, 10) || 0 : -1;
     return winZ > topZ ? win : topWindow;
   }, null);
+}
+
+const MAXIMIZE_RESTORE_PROPS = [
+  "position",
+  "left",
+  "top",
+  "width",
+  "height",
+  "maxWidth",
+  "margin",
+  "transform",
+  "borderRadius",
+  "animation"
+];
+
+function toggleWindowMaximized(windowEl) {
+  if (!windowEl) return;
+
+  if (windowEl.classList.contains("maximized")) {
+    const restoreState = JSON.parse(windowEl.dataset.maximizeRestoreState || "{}");
+    windowEl.classList.remove("maximized");
+
+    MAXIMIZE_RESTORE_PROPS.forEach(prop => {
+      const value = restoreState.styles?.[prop];
+      if (value) {
+        windowEl.style[prop] = value;
+      } else {
+        windowEl.style.removeProperty(prop.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`));
+      }
+    });
+
+    windowEl.classList.toggle("freeform-window", Boolean(restoreState.freeformWindow));
+    delete windowEl.dataset.maximizeRestoreState;
+    bringWindowToFront(windowEl);
+    return;
+  }
+
+  windowEl.dataset.maximizeRestoreState = JSON.stringify({
+    freeformWindow: windowEl.classList.contains("freeform-window"),
+    styles: Object.fromEntries(MAXIMIZE_RESTORE_PROPS.map(prop => [prop, windowEl.style[prop] || ""]))
+  });
+
+  MAXIMIZE_RESTORE_PROPS.forEach(prop => {
+    windowEl.style.removeProperty(prop.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`));
+  });
+  windowEl.classList.remove("freeform-window");
+  windowEl.classList.add("maximized");
+  bringWindowToFront(windowEl);
 }
 
 function makeWindowDraggable(windowEl) {
