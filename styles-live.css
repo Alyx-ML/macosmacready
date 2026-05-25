@@ -376,6 +376,21 @@ body.light-mode .menu-icon:hover, body.light-mode .menu-icon.active {
   filter: brightness(0) invert(1);
 }
 
+.menu-search-icon {
+  width: 12px;
+  height: 12px;
+  display: block;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.96);
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body.light-mode .menu-search-icon {
+  stroke: rgba(0, 0, 0, 0.72);
+}
+
 /* Dropdown Menus */
 .dropdown-menu {
   position: absolute;
