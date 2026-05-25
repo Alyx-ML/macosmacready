@@ -13,7 +13,11 @@ const NEWS_RSS_SOURCES = [
 const MAC_NEWS_TERMS = /\b(macOS|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]|WWDC)\b/i;
 
 function fetchDevProxy(url) {
-  return fetch(`/rss?url=${encodeURIComponent(url)}`);
+  const isLocalDev = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const requestUrl = isLocalDev
+    ? `/rss?url=${encodeURIComponent(url)}`
+    : `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+  return fetch(requestUrl);
 }
 
 // Curated Preset Gradients for Visual Diversity
@@ -1576,59 +1580,18 @@ function renderCrossoverData(changelogs, blogs) {
   blogContainer.innerHTML = blogsHtml;
 }
 
-// Robust Multi-Proxy CORS Fetcher
 async function fetchViaProxy(url) {
-  // 1. Try Codetabs (returns raw target content directly)
-  try {
-    const proxyUrl = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`;
-    const res = await fetch(proxyUrl);
-    if (res.ok) {
-      const text = await res.text();
-      return {
-        ok: true,
-        json: async () => {
-          return { contents: text };
-        },
-        text: async () => text
-      };
-    }
-  } catch (err) {
-    console.warn("Codetabs proxy failed, trying AllOrigins...", err);
-  }
-
-  // 2. Try AllOrigins (returns JSON wrapper with .contents)
-  try {
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-    const res = await fetch(proxyUrl);
-    if (res.ok) {
-      return res;
-    }
-  } catch (err) {
-    console.warn("AllOrigins proxy failed, trying AllOrigins raw...", err);
-  }
-
-  // 3. Try AllOrigins Raw (returns raw target content directly)
-  try {
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-    const res = await fetch(proxyUrl);
-    if (res.ok) {
-      const text = await res.text();
-      return {
-        ok: true,
-        json: async () => {
-          return { contents: text };
-        },
-        text: async () => text
-      };
-    }
-  } catch (err) {
-    console.error("All proxies failed for URL:", url, err);
-  }
-
-  return { ok: false };
+  const res = await fetchDevProxy(url);
+  if (!res.ok) return res;
+  const text = await res.text();
+  return {
+    ok: true,
+    json: async () => ({ contents: text }),
+    text: async () => text
+  };
 }
 
-// Fetch CrossOver feeds with offline fallback and updating animations
+// Fetch CrossOver feeds with updating animations
 async function updateCrossoverFeeds() {
   const syncIcon = document.querySelector(".update-sync-icon");
   if (syncIcon) syncIcon.classList.add("syncing");
@@ -1695,15 +1658,25 @@ async function updateCrossoverFeeds() {
       return;
     }
   } catch (err) {
-    console.warn("CrossOver live RSS failed. Using pre-seeded fallbacks.", err);
+    console.error("CrossOver live RSS failed.", err);
   }
 
-  // Fallback
-  setTimeout(() => {
-    renderCrossoverData(CROSSOVER_CHANGELOG, CROSSOVER_BLOGS);
-    if (syncIcon) syncIcon.classList.remove("syncing");
-    pushNotification("Updated Feed", "CrossOver data loaded from local cache.");
-  }, 1200);
+  changelogContainer.innerHTML = `
+    <div class="crossover-changelog-card" style="padding: 16px;">
+      <h4 class="changelog-version">Live feed unavailable</h4>
+      <p style="font-size: 12px; opacity: 0.72; margin-top: 8px;">CodeWeavers RSS could not be loaded right now.</p>
+    </div>
+  `;
+  blogContainer.innerHTML = `
+    <div class="crossover-blog-card">
+      <div class="blog-card-body">
+        <h4 class="blog-card-title">Live blog unavailable</h4>
+        <p class="blog-card-excerpt">CodeWeavers RSS could not be loaded right now.</p>
+      </div>
+    </div>
+  `;
+  if (syncIcon) syncIcon.classList.remove("syncing");
+  pushNotification("Feed Unavailable", "CodeWeavers RSS could not be loaded right now.");
 }
 
 function filterCrossover(query) {
