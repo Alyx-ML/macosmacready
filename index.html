@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="MacReady is a macOS-style hub for Apple news, Mac games, app discovery, reviews, and desktop utilities.">
   <title>MacReady</title>
-  <link rel="icon" type="image/webp" href="/assets/imgs/finderfavicon.webp">
-  <link rel="preload" as="image" href="/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" imagesrcset="/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp 960w, /assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
+  <link rel="icon" type="image/webp" href="public/assets/imgs/finderfavicon.webp">
+  <link rel="preload" as="image" href="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" imagesrcset="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp 960w, public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
   <link rel="stylesheet" href="styles.css">
   <!-- Google Fonts for gorgeous typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,7 +47,7 @@
       <div class="menu-right">
         <!-- Control Center Button -->
         <button class="menu-icon" id="control-center-toggle" title="Control Center">
-          <img src="/assets/imgs/control-centre.svg" alt="Control Center" class="menu-icon-img">
+          <img src="public/assets/imgs/control-centre.svg" alt="Control Center" class="menu-icon-img">
         </button>
         <!-- Search icon -->
         <button class="menu-icon" id="menu-search-toggle" title="Spotlight Search">
@@ -312,7 +312,7 @@
         <div id="crossover-app-view" class="app-view-container hidden-app">
           <div class="crossover-hero">
             <div class="crossover-hero-glow"></div>
-            <img src="/assets/imgs/optimized/Crossoverlogo.png" alt="CrossOver Logo" class="crossover-hero-logo" width="72" height="72">
+            <img src="public/assets/imgs/optimized/Crossoverlogo.png" alt="CrossOver Logo" class="crossover-hero-logo" width="72" height="72">
             <div class="crossover-hero-text">
               <h2 class="font-bold text-2xl font-outfit">CrossOver for macOS</h2>
               <p class="text-sm opacity-80"> Run your favourite games and applications on MacOS</p>
@@ -342,7 +342,7 @@
         <div id="macos-app-view" class="app-view-container hidden-app">
           <div class="macos-hero">
             <div class="macos-hero-glow"></div>
-            <img src="/assets/imgs/MacOSIcon.webp" alt="macOS Logo" class="macos-hero-logo" width="72" height="72">
+            <img src="public/assets/imgs/MacOSIcon.webp" alt="macOS Logo" class="macos-hero-logo" width="72" height="72">
             <div class="macos-hero-text">
               <h2 class="font-bold text-2xl font-outfit">macOS Release Notes</h2>
               <p class="text-sm opacity-80">Explore developer SDK changes, known issues, fixes, and framework APIs</p>
@@ -1860,7 +1860,7 @@
         <div class="lock-user-card">
           <!-- Circular modern avatar -->
           <div class="lock-user-avatar">
-            <img class="lock-avatar-image" src="/assets/imgs/wallpaper.webp" alt="User">
+            <img class="lock-avatar-image" src="public/assets/imgs/wallpaper.webp" alt="User">
           </div>
           <!-- Username -->
           <div class="lock-user-name">User</div>
@@ -1889,7 +1889,7 @@
         <div class="dock-item-wrapper active" data-app="news">
           <div class="dock-tooltip">News</div>
           <button class="dock-item">
-            <img src="/assets/imgs/optimized/NewsIcon.png" alt="News" class="dock-icon" width="48" height="48">
+            <img src="public/assets/imgs/optimized/NewsIcon.png" alt="News" class="dock-icon" width="48" height="48">
           </button>
           <span class="dock-indicator active-dot"></span>
         </div>
@@ -1898,7 +1898,7 @@
         <div class="dock-item-wrapper" data-app="crossover">
           <div class="dock-tooltip">Crossover</div>
           <button class="dock-item">
-            <img src="/assets/imgs/optimized/Crossoverlogo.png" alt="Crossover" class="dock-icon" width="48" height="48">
+            <img src="public/assets/imgs/optimized/Crossoverlogo.png" alt="Crossover" class="dock-icon" width="48" height="48">
           </button>
           <span class="dock-indicator"></span>
         </div>
@@ -1907,7 +1907,7 @@
         <div class="dock-item-wrapper" data-app="games">
           <div class="dock-tooltip">Games</div>
           <button class="dock-item">
-            <img src="/assets/imgs/optimized/SteamLogo.png" alt="Games" class="dock-icon" width="48" height="48">
+            <img src="public/assets/imgs/optimized/SteamLogo.png" alt="Games" class="dock-icon" width="48" height="48">
           </button>
           <span class="dock-indicator"></span>
         </div>
@@ -1916,7 +1916,7 @@
         <div class="dock-item-wrapper" data-app="app-store">
           <div class="dock-tooltip">App Store</div>
           <button class="dock-item">
-            <img src="/assets/imgs/optimized/AppStore.png" alt="App Store" class="dock-icon" width="46" height="46">
+            <img src="public/assets/imgs/optimized/AppStore.png" alt="App Store" class="dock-icon" width="46" height="46">
           </button>
           <span class="dock-indicator"></span>
         </div>
@@ -1925,7 +1925,7 @@
         <div class="dock-item-wrapper" data-app="macos">
           <div class="dock-tooltip">macOS</div>
           <button class="dock-item" id="dock-macos-btn">
-            <img src="/assets/imgs/optimized/MacOSIcon.png" alt="macOS" class="dock-icon" width="48" height="48">
+            <img src="public/assets/imgs/optimized/MacOSIcon.png" alt="macOS" class="dock-icon" width="48" height="48">
           </button>
           <span class="dock-indicator"></span>
         </div>
@@ -1934,7 +1934,7 @@
         <div class="dock-item-wrapper" data-app="applications">
           <div class="dock-tooltip" data-i18n="applications">Applications</div>
           <button class="dock-item" id="dock-applications-btn">
-            <img src="/assets/imgs/icnsFile_e72069e47fa08a2bf67085cd2597061c_1733175802251.webp" alt="Applications" class="dock-icon" width="48" height="48">
+            <img src="public/assets/imgs/icnsFile_e72069e47fa08a2bf67085cd2597061c_1733175802251.webp" alt="Applications" class="dock-icon" width="48" height="48">
           </button>
           <span class="dock-indicator" id="dock-applications-indicator"></span>
         </div>
@@ -1943,7 +1943,7 @@
         <div class="dock-item-wrapper" data-app="settings">
           <div class="dock-tooltip">Settings</div>
           <button class="dock-item" id="dock-settings-btn">
-            <img src="/assets/imgs/optimized/SettingsGear.png" alt="Settings" class="dock-icon" width="48" height="48">
+            <img src="public/assets/imgs/optimized/SettingsGear.png" alt="Settings" class="dock-icon" width="48" height="48">
           </button>
           <span class="dock-indicator" id="dock-settings-indicator"></span>
         </div>
@@ -1960,35 +1960,35 @@
       </div>
       <div class="launchpad-apps-grid" id="launchpad-apps-grid">
         <div class="launchpad-app-item" data-app="news">
-          <img src="/assets/imgs/optimized/NewsIcon.png" alt="MacReady" class="launchpad-app-icon">
+          <img src="public/assets/imgs/optimized/NewsIcon.png" alt="MacReady" class="launchpad-app-icon">
           <div class="launchpad-app-name">MacReady</div>
         </div>
         <div class="launchpad-app-item" data-app="crossover">
-          <img src="/assets/imgs/optimized/Crossoverlogo.png" alt="CrossOver" class="launchpad-app-icon">
+          <img src="public/assets/imgs/optimized/Crossoverlogo.png" alt="CrossOver" class="launchpad-app-icon">
           <div class="launchpad-app-name">CrossOver</div>
         </div>
         <div class="launchpad-app-item" data-app="games">
-          <img src="/assets/imgs/optimized/SteamLogo.png" alt="Steam" class="launchpad-app-icon">
+          <img src="public/assets/imgs/optimized/SteamLogo.png" alt="Steam" class="launchpad-app-icon">
           <div class="launchpad-app-name">Steam</div>
         </div>
         <div class="launchpad-app-item" data-app="app-store">
-          <img src="/assets/imgs/optimized/AppStore.png" alt="App Store" class="launchpad-app-icon">
+          <img src="public/assets/imgs/optimized/AppStore.png" alt="App Store" class="launchpad-app-icon">
           <div class="launchpad-app-name">App Store</div>
         </div>
         <div class="launchpad-app-item" data-utility="terminal">
-          <img src="/assets/imgs/Terminal.webp" alt="Terminal" class="launchpad-app-icon">
+          <img src="public/assets/imgs/Terminal.webp" alt="Terminal" class="launchpad-app-icon">
           <div class="launchpad-app-name">Terminal</div>
         </div>
         <div class="launchpad-app-item" data-utility="calculator">
-          <img src="/assets/imgs/Calculator.webp" alt="Calculator" class="launchpad-app-icon">
+          <img src="public/assets/imgs/Calculator.webp" alt="Calculator" class="launchpad-app-icon">
           <div class="launchpad-app-name">Calculator</div>
         </div>
         <div class="launchpad-app-item" data-utility="textedit">
-          <img src="/assets/imgs/Notes.webp" alt="Notes" class="launchpad-app-icon">
+          <img src="public/assets/imgs/Notes.webp" alt="Notes" class="launchpad-app-icon">
           <div class="launchpad-app-name">Notes</div>
         </div>
         <div class="launchpad-app-item" data-utility="settings">
-          <img src="/assets/imgs/optimized/SettingsGear.png" alt="Settings" class="launchpad-app-icon">
+          <img src="public/assets/imgs/optimized/SettingsGear.png" alt="Settings" class="launchpad-app-icon">
           <div class="launchpad-app-name">Settings</div>
         </div>
         

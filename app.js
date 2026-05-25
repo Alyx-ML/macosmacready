@@ -4465,13 +4465,13 @@ const FINDER_FS = {
     name: "Applications",
     path: ["Macintosh HD", "Applications"],
     items: [
-      { name: "MacReady.app", kind: "app", size: "45 MB", date: "May 22, 2026", app: "news", icon: "/assets/imgs/optimized/NewsIcon.png" },
-      { name: "CrossOver.app", kind: "app", size: "142 MB", date: "May 22, 2026", app: "crossover", icon: "/assets/imgs/optimized/Crossoverlogo.png" },
-      { name: "Steam.app", kind: "app", size: "90 MB", date: "May 22, 2026", app: "games", icon: "/assets/imgs/optimized/SteamLogo.png" },
-      { name: "App Store.app", kind: "app", size: "32 MB", date: "May 22, 2026", app: "app-store", icon: "/assets/imgs/optimized/AppStore.png" },
-      { name: "Terminal.app", kind: "app", size: "12 MB", date: "May 23, 2026", app: "terminal", icon: "/assets/imgs/Terminal.webp" },
-      { name: "Calculator.app", kind: "app", size: "8 MB", date: "May 23, 2026", app: "calculator", icon: "/assets/imgs/Calculator.webp" },
-      { name: "Notes.app", kind: "app", size: "15 MB", date: "May 23, 2026", app: "textedit", icon: "/assets/imgs/Notes.webp" },
+      { name: "MacReady.app", kind: "app", size: "45 MB", date: "May 22, 2026", app: "news", icon: "public/assets/imgs/optimized/NewsIcon.png" },
+      { name: "CrossOver.app", kind: "app", size: "142 MB", date: "May 22, 2026", app: "crossover", icon: "public/assets/imgs/optimized/Crossoverlogo.png" },
+      { name: "Steam.app", kind: "app", size: "90 MB", date: "May 22, 2026", app: "games", icon: "public/assets/imgs/optimized/SteamLogo.png" },
+      { name: "App Store.app", kind: "app", size: "32 MB", date: "May 22, 2026", app: "app-store", icon: "public/assets/imgs/optimized/AppStore.png" },
+      { name: "Terminal.app", kind: "app", size: "12 MB", date: "May 23, 2026", app: "terminal", icon: "public/assets/imgs/Terminal.webp" },
+      { name: "Calculator.app", kind: "app", size: "8 MB", date: "May 23, 2026", app: "calculator", icon: "public/assets/imgs/Calculator.webp" },
+      { name: "Notes.app", kind: "app", size: "15 MB", date: "May 23, 2026", app: "textedit", icon: "public/assets/imgs/Notes.webp" },
       { name: "Mac OS 9.app", kind: "app", size: "120 MB", date: "May 23, 2026", app: "macos9", icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='10' ry='10' fill='%2364b5f6'/><path d='M24 2a22 22 0 0 1 22 22v14a8 8 0 0 1-8 8H24V2z' fill='%231976d2'/><path d='M24 8v16h10c2 0 4 2 4 4s-2 4-4 4H20a2 2 0 0 1-2-2V14c0-2-2-4-4-4H8V8h16z' fill='%23ffffff'/><circle cx='15' cy='17' r='3' fill='%231976d2'/><circle cx='33' cy='17' r='3' fill='%23ffffff'/><path d='M14 34c2 4 8 4 10 0' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M24 34c2 4 8 4 10 0' stroke='%231976d2' stroke-width='3' stroke-linecap='round' fill='none'/></svg>" },
       { name: "Marathon.app", kind: "app", size: "80 MB", date: "May 23, 2026", app: "marathon", icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='10' ry='10' fill='%23111111' stroke='%23e65100' stroke-width='1.5'/><circle cx='24' cy='24' r='16' fill='none' stroke='%23e65100' stroke-width='3'/><path d='M16 24h16M24 16v16' stroke='%23e65100' stroke-width='3'/><circle cx='24' cy='24' r='8' fill='%23e65100'/></svg>" },
       { name: "Apple Lisa.app", kind: "app", size: "35 MB", date: "May 23, 2026", app: "lisa", icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='10' ry='10' fill='%23e0d8c0' stroke='%23bcaaa4' stroke-width='1.5'/><rect x='8' y='8' width='32' height='20' rx='2' ry='2' fill='%233e2723'/><rect x='11' y='11' width='26' height='14' fill='%23a1887f'/><rect x='6' y='32' width='36' height='8' fill='%23d7ccc8'/><line x1='12' y1='36' x2='36' y2='36' stroke='%238d6e63' stroke-width='2'/></svg>" },
@@ -4492,16 +4492,16 @@ const FINDER_FS = {
     path: ["Macintosh HD", "Users", "wallsendcc", "Desktop", "Wallpapers"],
     parentDir: "desktop",
     items: [
-      { name: "Tahoe Liquid.webp", kind: "image", size: "2.4 MB", date: "May 22, 2026", src: "/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp", wallpaperId: "tahoe-liquid" },
-      { name: "Tahoe Beach Dawn.webp", kind: "image", size: "3.1 MB", date: "May 22, 2026", src: "/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dawn.webp", wallpaperId: "tahoe-beach-dawn" },
-      { name: "Tahoe Beach Dusk.webp", kind: "image", size: "2.8 MB", date: "May 22, 2026", src: "/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dusk.webp", wallpaperId: "tahoe-beach-dusk" },
-      { name: "Tahoe Dark.webp", kind: "image", size: "4.2 MB", date: "May 22, 2026", src: "/assets/imgs/wallpapers/optimized/26-Tahoe-Dark-6K.webp", wallpaperId: "tahoe-dark" },
-      { name: "Sequoia Sunrise.webp", kind: "image", size: "3.8 MB", date: "May 22, 2026", src: "/assets/imgs/wallpapers/optimized/15-Sequoia-Sunrise.webp", wallpaperId: "sequoia-sunrise" },
-      { name: "Big Sur Night.webp", kind: "image", size: "3.5 MB", date: "May 22, 2026", src: "/assets/imgs/wallpapers/optimized/11-0-Big-Sur-Color-Night.webp", wallpaperId: "big-sur-night" },
-      { name: "Monterey Dark.webp", kind: "image", size: "2.9 MB", date: "May 22, 2026", src: "/assets/imgs/wallpapers/optimized/12-Dark.webp", wallpaperId: "monterey-dark" },
-      { name: "Ventura Dark.webp", kind: "image", size: "3.2 MB", date: "May 22, 2026", src: "/assets/imgs/wallpapers/optimized/13-Ventura-Dark.webp", wallpaperId: "ventura-dark" },
-      { name: "MacBook Neo Blue.webp", kind: "image", size: "2.1 MB", date: "May 22, 2026", src: "/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Blue.webp", wallpaperId: "macbook-neo-blue" },
-      { name: "MacBook Neo Purple.webp", kind: "image", size: "2.3 MB", date: "May 22, 2026", src: "/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp", wallpaperId: "macbook-neo-purple" }
+      { name: "Tahoe Liquid.webp", kind: "image", size: "2.4 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp", wallpaperId: "tahoe-liquid" },
+      { name: "Tahoe Beach Dawn.webp", kind: "image", size: "3.1 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dawn.webp", wallpaperId: "tahoe-beach-dawn" },
+      { name: "Tahoe Beach Dusk.webp", kind: "image", size: "2.8 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dusk.webp", wallpaperId: "tahoe-beach-dusk" },
+      { name: "Tahoe Dark.webp", kind: "image", size: "4.2 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/26-Tahoe-Dark-6K.webp", wallpaperId: "tahoe-dark" },
+      { name: "Sequoia Sunrise.webp", kind: "image", size: "3.8 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/15-Sequoia-Sunrise.webp", wallpaperId: "sequoia-sunrise" },
+      { name: "Big Sur Night.webp", kind: "image", size: "3.5 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/11-0-Big-Sur-Color-Night.webp", wallpaperId: "big-sur-night" },
+      { name: "Monterey Dark.webp", kind: "image", size: "2.9 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/12-Dark.webp", wallpaperId: "monterey-dark" },
+      { name: "Ventura Dark.webp", kind: "image", size: "3.2 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/13-Ventura-Dark.webp", wallpaperId: "ventura-dark" },
+      { name: "MacBook Neo Blue.webp", kind: "image", size: "2.1 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Blue.webp", wallpaperId: "macbook-neo-blue" },
+      { name: "MacBook Neo Purple.webp", kind: "image", size: "2.3 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp", wallpaperId: "macbook-neo-purple" }
     ]
   }
 };
@@ -7137,17 +7137,17 @@ function setWallpaper(wallpaperName) {
   if (!desktop) return;
 
   const wallpapers = {
-    "tahoe-liquid": "url('/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp')",
-    "tahoe-beach-dawn": "url('/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dawn.webp')",
-    "tahoe-beach-dusk": "url('/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dusk.webp')",
-    "tahoe-dark": "url('/assets/imgs/wallpapers/optimized/26-Tahoe-Dark-6K.webp')",
-    "sequoia-sunrise": "url('/assets/imgs/wallpapers/optimized/15-Sequoia-Sunrise.webp')",
-    "big-sur-night": "url('/assets/imgs/wallpapers/optimized/11-0-Big-Sur-Color-Night.webp')",
-    "big-sur-night-dark": "url('/assets/imgs/wallpapers/optimized/11-0-Night.webp')",
-    "mojave-night": "url('/assets/imgs/wallpapers/optimized/10-14-Night.webp')",
-    "os-x-cheetah-puma": "url('/assets/imgs/wallpapers/optimized/10-0_10.1.webp')",
-    "os-x-tiger": "url('/assets/imgs/wallpapers/optimized/Tiger.webp')",
-    "os-x-snow-leopard": "url('/assets/imgs/wallpapers/optimized/10-6.webp')",
+    "tahoe-liquid": "url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp')",
+    "tahoe-beach-dawn": "url('public/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dawn.webp')",
+    "tahoe-beach-dusk": "url('public/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dusk.webp')",
+    "tahoe-dark": "url('public/assets/imgs/wallpapers/optimized/26-Tahoe-Dark-6K.webp')",
+    "sequoia-sunrise": "url('public/assets/imgs/wallpapers/optimized/15-Sequoia-Sunrise.webp')",
+    "big-sur-night": "url('public/assets/imgs/wallpapers/optimized/11-0-Big-Sur-Color-Night.webp')",
+    "big-sur-night-dark": "url('public/assets/imgs/wallpapers/optimized/11-0-Night.webp')",
+    "mojave-night": "url('public/assets/imgs/wallpapers/optimized/10-14-Night.webp')",
+    "os-x-cheetah-puma": "url('public/assets/imgs/wallpapers/optimized/10-0_10.1.webp')",
+    "os-x-tiger": "url('public/assets/imgs/wallpapers/optimized/Tiger.webp')",
+    "os-x-snow-leopard": "url('public/assets/imgs/wallpapers/optimized/10-6.webp')",
     "black-solid": "#000000",
     "tahoe-sunset": "radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.9) 0%, transparent 60%), radial-gradient(circle at 20% 80%, rgba(240, 147, 251, 0.95) 0%, transparent 60%), radial-gradient(circle at 50% 50%, rgba(253, 187, 45, 0.8) 0%, transparent 70%), linear-gradient(135deg, #1b0c24 0%, #0d0413 100%)",
     "aurora-glow": "radial-gradient(circle at 20% 30%, rgba(0, 242, 254, 0.5) 0%, transparent 60%), radial-gradient(circle at 80% 70%, rgba(0, 205, 172, 0.45) 0%, transparent 60%), radial-gradient(circle at 70% 20%, rgba(168, 85, 247, 0.4) 0%, transparent 60%), linear-gradient(135deg, #05141c 0%, #03080d 100%)",
@@ -7160,10 +7160,10 @@ function setWallpaper(wallpaperName) {
     "lesbian-pride": "radial-gradient(circle at 10% 20%, rgba(213, 45, 0, 0.5) 0%, transparent 50%), radial-gradient(circle at 40% 30%, rgba(255, 154, 86, 0.45) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.35) 0%, transparent 50%), radial-gradient(circle at 60% 70%, rgba(216, 75, 149, 0.45) 0%, transparent 50%), radial-gradient(circle at 90% 80%, rgba(162, 38, 51, 0.5) 0%, transparent 50%), linear-gradient(135deg, #130a0d 0%, #060304 100%)",
     "nonbinary-pride": "radial-gradient(circle at 15% 25%, rgba(252, 244, 52, 0.45) 0%, transparent 60%), radial-gradient(circle at 85% 75%, rgba(156, 89, 209, 0.5) 0%, transparent 60%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.3) 0%, transparent 50%), linear-gradient(135deg, #0e0e12 0%, #050508 100%)",
     "asexual-pride": "radial-gradient(circle at 20% 30%, rgba(128, 0, 128, 0.55) 0%, transparent 60%), radial-gradient(circle at 80% 70%, rgba(163, 163, 163, 0.4) 0%, transparent 60%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.25) 0%, transparent 55%), linear-gradient(135deg, #0a0a0c 0%, #030304 100%)",
-    "monterey-dark": "url('/assets/imgs/wallpapers/optimized/12-Dark.webp')",
-    "ventura-dark": "url('/assets/imgs/wallpapers/optimized/13-Ventura-Dark.webp')",
-    "macbook-neo-blue": "url('/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Blue.webp')",
-    "macbook-neo-purple": "url('/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp')"
+    "monterey-dark": "url('public/assets/imgs/wallpapers/optimized/12-Dark.webp')",
+    "ventura-dark": "url('public/assets/imgs/wallpapers/optimized/13-Ventura-Dark.webp')",
+    "macbook-neo-blue": "url('public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Blue.webp')",
+    "macbook-neo-purple": "url('public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp')"
   };
 
   const physicalImages = [
@@ -7187,7 +7187,7 @@ function setWallpaper(wallpaperName) {
   // 1. Sync Desktop Background
   if (physicalImages.includes(wallpaperName)) {
     desktop.style.background = "";
-    desktop.style.backgroundImage = wallpapers[wallpaperName] || "url('/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp')";
+    desktop.style.backgroundImage = wallpapers[wallpaperName] || "url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp')";
     desktop.style.backgroundSize = "cover";
     desktop.style.backgroundPosition = "center";
   } else {
@@ -7199,7 +7199,7 @@ function setWallpaper(wallpaperName) {
   if (lockScreen) {
     if (physicalImages.includes(wallpaperName)) {
       lockScreen.style.background = "";
-      lockScreen.style.backgroundImage = wallpapers[wallpaperName] || "url('/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp')";
+      lockScreen.style.backgroundImage = wallpapers[wallpaperName] || "url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp')";
       lockScreen.style.backgroundSize = "cover";
       lockScreen.style.backgroundPosition = "center";
     } else {
