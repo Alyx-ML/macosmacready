@@ -3704,9 +3704,7 @@ function filterGames(query) {
   if (grid) {
     grid.innerHTML = `
       <div class="empty-state" style="padding: 40px; grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
-        <svg class="update-sync-icon syncing" style="width: 32px; height: 32px; color: #66c0f4;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
-        </svg>
+        <div class="macos-beachball-loader" aria-hidden="true"></div>
         <p style="margin-top: 12px; font-size: 13px; opacity: 0.7;">Searching Steam database...</p>
       </div>
     `;

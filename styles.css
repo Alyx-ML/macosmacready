@@ -3960,6 +3960,35 @@ body.light-mode .crossover-hero {
   animation: spinSync 1.2s linear infinite;
 }
 
+.macos-beachball-loader {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      #ff3b30 0deg 45deg,
+      #ff9500 45deg 90deg,
+      #ffcc00 90deg 135deg,
+      #34c759 135deg 180deg,
+      #00c7be 180deg 225deg,
+      #007aff 225deg 270deg,
+      #5856d6 270deg 315deg,
+      #ff2d55 315deg 360deg
+    );
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.22), inset 0 0 0 2px rgba(255, 255, 255, 0.22);
+  animation: spinSync 0.9s linear infinite;
+}
+
+.macos-beachball-loader::after {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin: 11px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+}
+
 @keyframes spinSync {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
