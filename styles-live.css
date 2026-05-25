@@ -845,6 +845,11 @@ body.light-mode .window-sidebar {
   scale: 1 !important;
 }
 
+#settings-window.freeform-window {
+  transform: none !important;
+  animation: none !important;
+}
+
 .sidebar-section {
   margin-bottom: 24px;
 }
@@ -6485,7 +6490,7 @@ body.light-mode #settings-window {
   margin: 0;
 }
 
-#settings-window:not(.hidden-window):not(.minimized) {
+#settings-window:not(.hidden-window):not(.minimized):not(.freeform-window) {
   animation: openSettingsWindow 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 

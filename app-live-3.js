@@ -7815,8 +7815,10 @@ function makeWindowDraggable(windowEl) {
 
   let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   const isMainWindow = windowEl.id === "app-window";
+  const isSettingsWindow = windowEl.id === "settings-window";
+  const isBoundedWindow = isMainWindow || isSettingsWindow;
 
-  function getMainWindowDragBounds(width, height) {
+  function getWindowDragBounds(width, height) {
     const menuBar = document.getElementById("menu-bar");
     const dock = document.getElementById("dock-container");
     const menuRect = menuBar?.getBoundingClientRect();
@@ -7846,10 +7848,11 @@ function makeWindowDraggable(windowEl) {
     e.preventDefault();
     bringWindowToFront(windowEl);
 
-    if (isMainWindow) {
+    if (isBoundedWindow) {
       const rect = windowEl.getBoundingClientRect();
-      const bounds = getMainWindowDragBounds(rect.width, rect.height);
+      const bounds = getWindowDragBounds(rect.width, rect.height);
       windowEl.classList.remove("maximized");
+      windowEl.classList.add("freeform-window");
       windowEl.style.position = "fixed";
       windowEl.style.left = `${Math.min(Math.max(rect.left, bounds.minLeft), bounds.maxLeft)}px`;
       windowEl.style.top = `${Math.min(Math.max(rect.top, bounds.minTop), bounds.maxTop)}px`;
@@ -7857,6 +7860,9 @@ function makeWindowDraggable(windowEl) {
       windowEl.style.height = `${bounds.height}px`;
       windowEl.style.maxWidth = "none";
       windowEl.style.margin = "0";
+      if (isSettingsWindow) {
+        windowEl.style.animation = "none";
+      }
     }
     
     pos3 = e.clientX;
@@ -7884,8 +7890,8 @@ function makeWindowDraggable(windowEl) {
     let nextTop = windowEl.offsetTop - pos2;
     let nextLeft = windowEl.offsetLeft - pos1;
 
-    if (isMainWindow) {
-      const bounds = getMainWindowDragBounds(windowEl.offsetWidth, windowEl.offsetHeight);
+    if (isBoundedWindow) {
+      const bounds = getWindowDragBounds(windowEl.offsetWidth, windowEl.offsetHeight);
       nextTop = Math.min(Math.max(nextTop, bounds.minTop), bounds.maxTop);
       nextLeft = Math.min(Math.max(nextLeft, bounds.minLeft), bounds.maxLeft);
     }
