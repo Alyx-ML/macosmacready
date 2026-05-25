@@ -115,6 +115,53 @@ let genreLoading = new Set();
 let finderCurrentDir = "desktop";
 let finderSelectedFile = null;
 
+const WALLPAPER_IMAGE_URLS = [
+  "public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp",
+  "public/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp",
+  "public/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dawn.webp",
+  "public/assets/imgs/wallpapers/optimized/26-Tahoe-Beach-Dusk.webp",
+  "public/assets/imgs/wallpapers/optimized/26-Tahoe-Dark-6K.webp",
+  "public/assets/imgs/wallpapers/optimized/15-Sequoia-Sunrise.webp",
+  "public/assets/imgs/wallpapers/optimized/11-0-Big-Sur-Color-Night.webp",
+  "public/assets/imgs/wallpapers/optimized/11-0-Night.webp",
+  "public/assets/imgs/wallpapers/optimized/10-14-Night.webp",
+  "public/assets/imgs/wallpapers/optimized/10-0_10.1.webp",
+  "public/assets/imgs/wallpapers/optimized/Tiger.webp",
+  "public/assets/imgs/wallpapers/optimized/10-6.webp",
+  "public/assets/imgs/wallpapers/optimized/12-Dark.webp",
+  "public/assets/imgs/wallpapers/optimized/13-Ventura-Dark.webp",
+  "public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Blue.webp",
+  "public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp"
+];
+let wallpaperWarmupStarted = false;
+
+function warmWallpaperImages() {
+  if (wallpaperWarmupStarted) return;
+  wallpaperWarmupStarted = true;
+
+  const warmImages = () => {
+    WALLPAPER_IMAGE_URLS.forEach(src => {
+      const image = new Image();
+      image.decoding = "async";
+      image.src = src;
+    });
+
+    if ("caches" in window) {
+      caches.open("macready-wallpapers-v1").then(cache => {
+        cache.addAll(WALLPAPER_IMAGE_URLS).catch(error => {
+          console.warn("Wallpaper cache warmup failed.", error);
+        });
+      });
+    }
+  };
+
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(warmImages, { timeout: 2500 });
+  } else {
+    window.setTimeout(warmImages, 900);
+  }
+}
+
 // Initialize data from LocalStorage or the current article set
 function initData() {
   articles = [];
@@ -176,6 +223,7 @@ function initData() {
 
   // Update counts
   updateCounts();
+  warmWallpaperImages();
 }
 
 function saveToStorage() {
@@ -734,6 +782,7 @@ function switchApp(appName, pushHistory = true) {
       loadAllGamesData();
     } else {
       renderGamesView();
+      refreshSteamGamesIfNeeded();
     }
     applyAtmosphericGlow(activeAtmosphericGame);
   }
@@ -2404,6 +2453,10 @@ let gamesCache = [
 ];
 let gamesLoaded = false;
 let gamesLoading = false;
+const STEAM_GAMES_CACHE_KEY = "macready_steam_games_cache_v2";
+const STEAM_GAMES_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+let steamGamesLastSavedAt = 0;
+let steamGamesRefreshStarted = false;
 let currentGameFilter = "trending";
 let currentGameCompat = "all";
 let gameSearchQuery = "";
@@ -2420,6 +2473,43 @@ let currentCarouselIndex = 0;
 // New state for Dynamic Wallpaper Glass Blending
 let activeAtmosphericGame = null;
 let isDetailModalOpen = false;
+
+function loadCachedSteamGames() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(STEAM_GAMES_CACHE_KEY) || "null");
+    if (!cached || !Array.isArray(cached.games) || cached.games.length === 0) return;
+
+    gamesCache = cached.games;
+    steamGamesLastSavedAt = Number(cached.savedAt) || 0;
+    gamesLoaded = true;
+  } catch (error) {
+    console.warn("Steam games cache could not be read.", error);
+  }
+}
+
+function saveSteamGamesCache() {
+  try {
+    localStorage.setItem(STEAM_GAMES_CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      games: gamesCache
+    }));
+    steamGamesLastSavedAt = Date.now();
+  } catch (error) {
+    console.warn("Steam games cache could not be saved.", error);
+  }
+}
+
+function refreshSteamGamesIfNeeded() {
+  if (steamGamesRefreshStarted || gamesLoading) return;
+  const cacheAge = Date.now() - steamGamesLastSavedAt;
+  if (!steamGamesLastSavedAt || cacheAge > STEAM_GAMES_CACHE_TTL_MS) {
+    steamGamesRefreshStarted = true;
+    loadAllGamesData({ silent: true, force: true });
+  }
+}
+
+loadCachedSteamGames();
+if (gamesCache.length > 0) gamesLoaded = true;
 
 // --- Dynamic Wallpaper Glass Blending (Atmospheric Blur) ---
 function applyAtmosphericGlow(game) {
@@ -2683,19 +2773,29 @@ function getSteamSearchCover(row) {
 // --- Merge games into cache (deduplicates by appid) ---
 function mergeGamesIntoCache(newGames) {
   newGames.forEach(game => {
-    if (!gamesCache.some(g => g.appid === game.appid)) {
+    const existing = gamesCache.find(g => g.appid === game.appid);
+    if (existing) {
+      Object.assign(existing, {
+        ...game,
+        screenshots: game.screenshots?.length ? game.screenshots : existing.screenshots,
+        features: game.features?.length ? game.features : existing.features,
+        fullDescription: game.fullDescription || existing.fullDescription,
+        systemRequirements: game.systemRequirements || existing.systemRequirements
+      });
+    } else {
       gamesCache.push(game);
     }
   });
 }
 
 // --- Dynamic Startup: Fetch live from Steam search result pages ---
-async function loadAllGamesData() {
-  if (gamesLoaded || gamesLoading) return;
+async function loadAllGamesData(options = {}) {
+  const { silent = false, force = false } = options;
+  if ((gamesLoaded && !force) || gamesLoading) return;
   gamesLoading = true;
 
   const grid = document.getElementById("games-grid");
-  if (grid) {
+  if (grid && !silent) {
     grid.innerHTML = `
       <div class="empty-state" style="padding: 40px; grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
         <svg class="update-sync-icon syncing" style="width: 32px; height: 32px; color: #66c0f4;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -2713,6 +2813,7 @@ async function loadAllGamesData() {
   ];
 
   try {
+    let mergedCount = 0;
     const results = await Promise.allSettled(
       steamSearchUrls.map(url => fetchViaProxy(url))
     );
@@ -2731,6 +2832,7 @@ async function loadAllGamesData() {
           }
           if (htmlText && htmlText.includes("search_result_row")) {
             const parsed = parseSteamSearchResults(htmlText);
+            mergedCount += parsed.length;
             mergeGamesIntoCache(parsed);
           }
         } catch (e) {
@@ -2740,7 +2842,6 @@ async function loadAllGamesData() {
     }
 
     if (gamesCache.length === 0) {
-      // If all CORS proxies failed, show an error
       if (grid) {
         grid.innerHTML = `
           <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 40px; width: 100%;">
@@ -2751,13 +2852,16 @@ async function loadAllGamesData() {
       }
     }
 
+    if (mergedCount > 0) {
+      saveSteamGamesCache();
+    }
     gamesLoaded = true;
   } catch (err) {
     console.error("Error loading Steam games:", err);
     pushNotification("SteamDB Error", "Could not fetch Steam search data.");
   } finally {
     gamesLoading = false;
-    renderGamesView();
+    if (currentApp === "games" || !silent) renderGamesView();
     updateSteamStats();
   }
 }
@@ -2791,18 +2895,8 @@ async function syncLiveSteamGames() {
       }
       if (htmlText && htmlText.includes("search_result_row")) {
         const freshGames = parseSteamSearchResults(htmlText);
-        // Update existing entries with fresh pricing/rating data
-        freshGames.forEach(fresh => {
-          const existing = gamesCache.find(g => g.appid === fresh.appid);
-          if (existing) {
-            existing.price = fresh.price;
-            existing.discount = fresh.discount;
-            existing.cover = fresh.cover;
-            if (fresh.rating !== null) existing.rating = fresh.rating;
-          } else {
-            gamesCache.push(fresh);
-          }
-        });
+        mergeGamesIntoCache(freshGames);
+        saveSteamGamesCache();
       }
     }
 
@@ -7485,6 +7579,7 @@ function initSettingsWindow() {
   // C. Menu Bar & Dock Openers
   const openSettings = (e) => {
     if (e) e.preventDefault();
+    warmWallpaperImages();
     const settingsWin = document.getElementById("settings-window");
     if (settingsWin) {
       settingsWin.classList.remove("hidden-window");
