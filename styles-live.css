@@ -8050,8 +8050,9 @@ body.light-mode .specs-list > div {
   transition: opacity 0.3s ease;
 }
 #signin-backdrop.show {
-  opacity: 1;
-  pointer-events: auto;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 body.light-mode #signin-backdrop {
   background: rgba(255, 255, 255, 0.2);
@@ -8079,10 +8080,10 @@ body.light-mode #signin-backdrop {
 }
 
 #signin-window.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translate(-50%, -50%) scale(1);
-  pointer-events: auto;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+  pointer-events: auto !important;
 }
 body.light-mode #signin-window {
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -8248,4 +8249,3 @@ body.light-mode .glass-select-option {
 body.light-mode .glass-select-option:hover {
   background: rgba(0, 0, 0, 0.05) !important;
 }
-
