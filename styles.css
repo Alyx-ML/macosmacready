@@ -7952,7 +7952,7 @@ body.light-mode #signin-backdrop {
   transform: translate(-50%, -50%) scale(0.95);
   width: 360px;
   border-radius: 16px;
-  padding: 54px 24px 24px;
+  padding: 24px;
   z-index: 9260;
   opacity: 0;
   pointer-events: none;
@@ -7963,26 +7963,6 @@ body.light-mode #signin-backdrop {
   border-top: 1px solid rgba(255, 255, 255, 0.25) !important;
   display: flex;
   flex-direction: column;
-}
-
-.signin-titlebar {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  height: 14px;
-  display: flex;
-  align-items: center;
-  background: transparent;
-  border: 0;
-  padding: 0;
-  margin: 0;
-  user-select: none;
-}
-
-.signin-traffic-lights {
-  display: flex;
-  gap: 8px;
-  margin: 0;
 }
 
 #signin-window.show {
