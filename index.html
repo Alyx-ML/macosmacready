@@ -5,9 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="MacReady is a macOS-style hub for Apple news, Mac games, app discovery, reviews, and desktop utilities.">
   <title>MacReady</title>
+  <script>
+    const initialWallpaperName = localStorage.getItem("tahoe_wallpaper");
+    let initialGamingWallpaperSource = localStorage.getItem("tahoe_gaming_wallpaper_source");
+    if (initialGamingWallpaperSource && !/^\d+$/.test(initialGamingWallpaperSource)) {
+      localStorage.removeItem("tahoe_gaming_wallpaper_source");
+      initialGamingWallpaperSource = "";
+    }
+    if (initialWallpaperName === "gaming-cycle" && initialGamingWallpaperSource) {
+      const initialSteamHero = `https://cdn.cloudflare.steamstatic.com/steam/apps/${initialGamingWallpaperSource}/library_hero.jpg`;
+      document.documentElement.style.setProperty(
+        "--initial-wallpaper",
+        `url('${initialSteamHero}')`
+      );
+    }
+  </script>
   <link rel="icon" type="image/webp" href="public/assets/imgs/finderfavicon.webp">
   <link rel="preload" as="image" href="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" imagesrcset="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp 960w, public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
-  <link rel="stylesheet" href="styles-live.min.css?v=desktop-report-1">
+  <link rel="stylesheet" href="styles-live.min.css?v=heritage-previews-4">
   <!-- Google Fonts for gorgeous typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +35,7 @@
   <!-- Immersive Desktop Container -->
   <div id="desktop">
     <!-- Layered Wallpaper Elements for Stutter-Free Graceful Cross-Fade Transitions -->
-    <div id="desktop-bg-base" style="position: absolute !important; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; pointer-events: none; z-index: 0;"></div>
+    <div id="desktop-bg-base" style="position: absolute !important; top: 0; left: 0; width: 100%; height: 100%; background-image: var(--initial-wallpaper, url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp')); background-size: cover; background-position: center; pointer-events: none; z-index: 0;"></div>
     <div id="desktop-bg-overlay" style="position: absolute !important; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; pointer-events: none; z-index: 0; opacity: 0; transition: opacity 0.6s ease-in-out;"></div>
     
     <!-- Night Light Amber Glass Screen Filter (Functional Eye Care) -->
@@ -39,10 +54,25 @@
           <span class="apple-logo" aria-hidden="true">&#63743;</span>
         </button>
         <button class="menu-item font-semibold menu-trigger" data-menu="app-menu" id="menu-user-btn">Guest</button>
+        
+        <!-- Active App Name & its menus container -->
+        <div id="active-app-menu-container" style="display: flex; align-items: center; gap: 8px; margin-left: 6px;">
+          <!-- Active App Name Label -->
+          <span id="menu-active-app" style="font-weight: 700; cursor: default; padding: 1px 4px;">Finder</span>
+          
+          <!-- Notes Dynamic Menu Bar Group (File Edit Format View) -->
+          <div id="notes-menu-group" style="display: none; align-items: center; gap: 2px;">
+            <button id="global-file-menu-btn" class="menu-item menu-trigger" data-menu="notes-file-menu">File</button>
+            <button id="global-edit-menu-btn" class="menu-item menu-trigger" data-menu="notes-edit-menu">Edit</button>
+            <button id="global-format-menu-btn" class="menu-item menu-trigger" data-menu="notes-format-menu">Format</button>
+            <button id="global-view-menu-btn" class="menu-item menu-trigger" data-menu="notes-view-menu">View</button>
+          </div>
+        </div>
       </div>
 
       <!-- Right side items -->
       <div class="menu-right">
+        
         <!-- Search icon -->
         <button class="menu-icon" id="menu-search-toggle" title="Spotlight Search">
           <svg class="menu-search-icon" viewBox="0 0 16 16" aria-hidden="true">
@@ -75,6 +105,42 @@
 
       <!-- App Menu / Guest Sign In Panel Dropdown Placeholder -->
       <div class="dropdown-menu" id="app-menu" style="display: none !important;"></div>
+
+      <!-- Notes File Menu -->
+      <div class="dropdown-menu" id="notes-file-menu">
+        <a href="#" class="dropdown-item" id="menu-notes-new">New Note <span class="shortcut">⌘N</span></a>
+        <a href="#" class="dropdown-item" id="menu-notes-save">Save / Export Note <span class="shortcut">⌘S</span></a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" id="menu-notes-delete" style="color: #ff453a;">Delete Note <span class="shortcut">⌘⌫</span></a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" id="menu-notes-close">Close Notes <span class="shortcut">⌘W</span></a>
+      </div>
+
+      <!-- Notes Edit Menu -->
+      <div class="dropdown-menu" id="notes-edit-menu">
+        <a href="#" class="dropdown-item" id="menu-notes-undo">Undo <span class="shortcut">⌘Z</span></a>
+        <a href="#" class="dropdown-item" id="menu-notes-redo">Redo <span class="shortcut">⇧⌘Z</span></a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" id="menu-notes-cut">Cut <span class="shortcut">⌘X</span></a>
+        <a href="#" class="dropdown-item" id="menu-notes-copy">Copy <span class="shortcut">⌘C</span></a>
+        <a href="#" class="dropdown-item" id="menu-notes-paste">Paste <span class="shortcut">⌘V</span></a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" id="menu-notes-selectall">Select All <span class="shortcut">⌘A</span></a>
+      </div>
+
+      <!-- Notes Format Menu -->
+      <div class="dropdown-menu" id="notes-format-menu">
+        <a href="#" class="dropdown-item" id="menu-notes-bold">Bold <span class="shortcut">⌘B</span></a>
+        <a href="#" class="dropdown-item" id="menu-notes-italic">Italic <span class="shortcut">⌘I</span></a>
+        <a href="#" class="dropdown-item" id="menu-notes-underline">Underline <span class="shortcut">⌘U</span></a>
+        <a href="#" class="dropdown-item" id="menu-notes-strikethrough">Strikethrough <span class="shortcut">⇧⌘X</span></a>
+      </div>
+
+      <!-- Notes View Menu -->
+      <div class="dropdown-menu" id="notes-view-menu">
+        <a href="#" class="dropdown-item" id="menu-notes-toggle-sidebar">Toggle Sidebar <span class="shortcut">⌥⌘S</span></a>
+        <a href="#" class="dropdown-item" id="menu-notes-fullscreen">Toggle Fullscreen <span class="shortcut">^⌘F</span></a>
+      </div>
     </header>
 
     <!-- Main macOS News Application Window -->
@@ -1111,7 +1177,7 @@
               <option value="preset-4">Monolithic Silver (Slate & Quartz)</option>
               <option value="custom">Custom Image Link...</option>
             </select>
-            <input type="url" id="form-cover-custom" class="hidden mt-2" placeholder="https://images.unsplash.com/photo-..." autocomplete="off">
+            <input type="url" id="form-cover-custom" class="hidden mt-2" placeholder="https://example.com/cover.webp" autocomplete="off">
           </div>
 
           <div class="form-group">
@@ -1315,7 +1381,7 @@
       <div class="window-titlebar" style="background: rgba(20, 20, 25, 0.6); display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
         <div class="traffic-lights" style="display: flex; gap: 8px;">
           <button class="traffic-light red" id="terminal-close" title="Close" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff453a; cursor: pointer;"></button>
-          <button class="traffic-light yellow" id="terminal-minimize" title="Minimize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff9f0a; opacity: 0.5; pointer-events: none;"></button>
+          <button class="traffic-light yellow" id="terminal-minimize" title="Minimize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff9f0a; cursor: pointer;"></button>
           <button class="traffic-light green" id="terminal-maximize" title="Maximize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #30d158; opacity: 0.5; pointer-events: none;"></button>
         </div>
         <div class="window-title" style="color: #fff; font-size: 11px; font-weight: 500; font-family: monospace; flex: 1; text-align: center; margin-right: 50px;">user &mdash; sh &mdash; 80&times;24</div>
@@ -1337,7 +1403,7 @@
       <div class="window-titlebar" style="background: transparent; display: flex; align-items: center; padding: 10px 16px; border-bottom: none;">
         <div class="traffic-lights" style="display: flex; gap: 8px;">
           <button class="traffic-light red" id="calculator-close" title="Close" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff453a; cursor: pointer;"></button>
-          <button class="traffic-light yellow" id="calculator-minimize" title="Minimize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff9f0a; opacity: 0.5; pointer-events: none;"></button>
+          <button class="traffic-light yellow" id="calculator-minimize" title="Minimize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff9f0a; cursor: pointer;"></button>
           <button class="traffic-light green" id="calculator-maximize" title="Maximize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #30d158; opacity: 0.5; pointer-events: none;"></button>
         </div>
       </div>
@@ -1371,16 +1437,51 @@
       </div>
     </div>
 
-    <!-- Simulated macOS TextEdit Window -->
-    <div id="textedit-window" class="liquid-glass hidden-window utility-window" style="width: 480px; height: 380px; position: absolute; left: 45%; top: 48%; transform: translate(-50%, -50%); display: flex; flex-direction: column; border-radius: 12px; z-index: 95; overflow: hidden;">
-      <div class="window-titlebar" style="background: rgba(30, 30, 40, 0.4); display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
-        <div class="traffic-lights" style="display: flex; gap: 8px;">
+    <!-- Simulated macOS Notes Window -->
+    <div id="textedit-window" class="liquid-glass hidden-window utility-window" style="width: 640px; height: 420px; position: absolute; left: 45%; top: 48%; transform: translate(-50%, -50%); display: flex; flex-direction: column; border-radius: 12px; z-index: 95; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5);">
+      <div class="window-titlebar" style="background: rgba(30, 30, 40, 0.4); display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); position: relative; justify-content: space-between;">
+        <div class="traffic-lights" style="display: flex; gap: 8px; width: 80px;">
           <button class="traffic-light red" id="textedit-close" title="Close" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff453a; cursor: pointer;"></button>
-          <button class="traffic-light yellow" id="textedit-minimize" title="Minimize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff9f0a; opacity: 0.5; pointer-events: none;"></button>
+          <button class="traffic-light yellow" id="textedit-minimize" title="Minimize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff9f0a; cursor: pointer;"></button>
           <button class="traffic-light green" id="textedit-maximize" title="Maximize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #30d158; opacity: 0.5; pointer-events: none;"></button>
         </div>
-        <div class="window-title" id="textedit-window-title" style="color: #fff; font-size: 11px; font-weight: 500; flex: 1; text-align: center; margin-right: 50px;">Notes &mdash; Untitled.txt</div>
+        <div class="window-title" id="textedit-window-title" style="color: #fff; font-size: 11px; font-weight: 500; text-align: center; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none;">Notes</div>
+        <div style="width: 80px; display: flex; justify-content: flex-end; gap: 6px;">
+          <button id="notes-new-btn" title="Create New Note" style="background: transparent; border: none; color: #fff; cursor: pointer; opacity: 0.85; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+        </div>
       </div>
+      
+      <!-- Main Content Area: Sidebar + Editor -->
+      <div style="flex: 1; display: flex; background: rgba(18, 18, 24, 0.35);">
+        <!-- Notes Sidebar -->
+        <div id="notes-sidebar" style="width: 160px; border-right: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); display: flex; flex-direction: column;">
+          <!-- Search box -->
+          <div style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <input type="text" id="notes-search" placeholder="Search notes..." style="width: 100%; padding: 4px 8px; font-size: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #fff; outline: none; box-sizing: border-box;">
+          </div>
+          <!-- Notes List Container -->
+          <div id="notes-list" style="flex: 1; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 4px;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+        
+        <!-- Editor Pane -->
+        <div style="flex: 1; display: flex; flex-direction: column; background: rgba(25, 25, 30, 0.25);">
+
+          
+          <!-- Textarea area -->
+          <div style="flex: 1; position: relative;">
+            <textarea id="textedit-textarea" placeholder="Type your note here..." style="width: 100%; height: 100%; border: none; background: transparent; color: rgba(255, 255, 255, 0.9); padding: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; resize: none; outline: none; box-sizing: border-box;"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="textedit-statusbar" style="padding: 6px 12px; background: rgba(0, 0, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: rgba(255, 255, 255, 0.5);">
+        <span id="textedit-char-count">0 characters</span>
+        <span></span>
       </div>
     </div>
 
@@ -2130,6 +2231,6 @@
     </div>
 
   <!-- Client-side logic loader -->
-  <script defer src="app-live-4.min.js?v=news-image-sizing-1"></script>
+  <script defer src="app-live-4.min.js?v=menu-window-detection-1"></script>
 </body>
 </html>

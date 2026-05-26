@@ -235,7 +235,7 @@ body.light-mode ::-webkit-scrollbar-thumb:hover {
 }
 
 #desktop-bg-base {
-  background-image: url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp');
+  background-image: var(--initial-wallpaper, url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp'));
 }
 
 #desktop-bg-overlay {
@@ -6679,6 +6679,13 @@ body.light-mode #settings-window {
   visibility: hidden !important;
 }
 
+.utility-window.minimized {
+  transform: translate(-50%, 25%) scale(0.65) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
 /* Calculator Button Styles */
 .calc-btn {
   background: rgba(255, 255, 255, 0.08);
@@ -6918,16 +6925,16 @@ body.light-mode .wallpaper-section-title {
   background-image: url('public/assets/imgs/wallpapers/previews/10-6.jpg');
 }
 .wallpaper-preview-os-x-leopard {
-  background: linear-gradient(135deg, #0d1020 0%, #2f2f72 44%, #7b5cff 100%);
+  background-image: url('https://images.weserv.nl/?url=media.512pixels.net/downloads/macos-wallpapers-6k/10-5-6k.jpg&output=webp&w=480&q=82');
 }
 .wallpaper-preview-os-x-lion {
-  background: linear-gradient(135deg, #172a45 0%, #2d7ebf 48%, #e2edf7 100%);
+  background-image: url('https://images.weserv.nl/?url=media.512pixels.net/downloads/macos-wallpapers-6k/10-7-6k.jpg&output=webp&w=480&q=82');
 }
 .wallpaper-preview-os-x-mavericks {
-  background: linear-gradient(135deg, #0b5f6a 0%, #38b6c4 44%, #f5f0d8 100%);
+  background-image: url('https://images.weserv.nl/?url=media.512pixels.net/downloads/macos-wallpapers-6k/10-9-6k.jpg&output=webp&w=480&q=82');
 }
 .wallpaper-preview-os-x-yosemite {
-  background: linear-gradient(135deg, #1c3b6e 0%, #e3664c 48%, #f4d27a 100%);
+  background-image: url('https://images.weserv.nl/?url=media.512pixels.net/downloads/macos-wallpapers-6k/10-10-6k.jpg&output=webp&w=480&q=82');
 }
 .wallpaper-preview-monterey-dark {
   background-image: url('public/assets/imgs/wallpapers/previews/12-Dark.jpg');
@@ -7889,8 +7896,8 @@ body.reduce-transparency #lock-screen .lock-screen-glass {
 }
 
 /* Fluid window transition rules */
-#app-window, #settings-window, #calculator-window, #textedit-window, .utility-window {
-  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), filter 0.5s cubic-bezier(0.25, 1, 0.5, 1) !important;
+#app-window, #calculator-window, #textedit-window, .utility-window {
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), filter 0.5s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.5s !important;
 }
 
 /* Recede desktop app windows when Launchpad is active */
@@ -8376,4 +8383,61 @@ body.light-mode .glass-select-option {
 }
 body.light-mode .glass-select-option:hover {
   background: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Dynamic macOS App Dock Animations */
+.dock-item-wrapper.dynamic-app {
+  width: 48px;
+  min-width: 48px;
+  max-width: 48px;
+  overflow: visible;
+  transition: transform var(--motion-medium) var(--motion-spring);
+  transform-origin: bottom center;
+}
+
+.dock-item-wrapper.dynamic-app-opening {
+  animation: dockItemOpen 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.dock-item-wrapper.dynamic-app-closing {
+  animation: dockItemClose 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: none !important;
+}
+
+@keyframes dockItemOpen {
+  from {
+    width: 0px;
+    min-width: 0px;
+    max-width: 0px;
+    opacity: 0;
+    transform: scale(0.3) translateY(20px);
+    margin: 0 -6px;
+  }
+  to {
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    margin: 0;
+  }
+}
+
+@keyframes dockItemClose {
+  from {
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    margin: 0;
+  }
+  to {
+    width: 0px;
+    min-width: 0px;
+    max-width: 0px;
+    opacity: 0;
+    transform: scale(0.3) translateY(20px);
+    margin: 0 -6px;
+  }
 }

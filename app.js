@@ -368,7 +368,8 @@ function setAccentColor(color) {
     "theme-blue", "theme-purple", "theme-pink",
     "theme-amber", "theme-green", "theme-silver",
     "theme-tiger", "theme-panther", "theme-leopard",
-    "theme-yosemite", "theme-sequoia"
+    "theme-yosemite", "theme-sequoia", "theme-teal",
+    "theme-rose", "theme-puma", "theme-mavericks", "theme-mojave"
   );
   
   document.body.classList.add(`theme-${color}`);
@@ -400,11 +401,16 @@ function setAccentColor(color) {
       amber: "Amber",
       green: "Green",
       silver: "Silver",
+      teal: "Teal",
+      rose: "Rose",
       tiger: "Tiger (Aqua)",
       panther: "Panther (Graphite)",
       leopard: "Snow Leopard",
       yosemite: "Yosemite",
-      sequoia: "Sequoia"
+      sequoia: "Sequoia",
+      puma: "Cheetah/Puma Blue",
+      mavericks: "Mavericks Oceanic",
+      mojave: "Mojave Gold"
     };
     accentStatus.textContent = names[color] || (color.charAt(0).toUpperCase() + color.slice(1));
   }
@@ -459,18 +465,24 @@ function updateModeButtonLabel() {
 }
 
 // --- 3. Dynamic Dock Magnification Mathematics ---
+let dockItemsList = [];
 function initDockMagnification() {
   const dock = document.getElementById("dock");
   const dockContainer = document.getElementById("dock-container");
   if (!dock || !dockContainer) return;
 
-  const items = Array.from(dock.querySelectorAll(".dock-item-wrapper"));
+  const refreshDockItems = () => {
+    dockItemsList = Array.from(dock.querySelectorAll(".dock-item-wrapper"));
+  };
+
+  refreshDockItems();
+  window.refreshDockMagnification = refreshDockItems;
 
   dock.addEventListener("mousemove", (e) => {
     const mouseX = e.clientX;
     const mouseY = e.clientY;
 
-    items.forEach((item) => {
+    dockItemsList.forEach((item) => {
       const rect = item.getBoundingClientRect();
       const itemX = rect.left + rect.width / 2;
       const itemY = rect.top + rect.height;
@@ -503,7 +515,7 @@ function initDockMagnification() {
 
   dock.addEventListener("mouseleave", () => {
     // Reset all scale factors smoothly
-    items.forEach((item) => {
+    dockItemsList.forEach((item) => {
       item.style.transform = "scale(1) translateY(0)";
       const dockItem = item.querySelector(".dock-item");
       if (dockItem) {
@@ -564,10 +576,6 @@ function switchApp(appName, pushHistory = true) {
     if (app === appName) {
       wrapper.classList.add("active");
       if (indicator) indicator.classList.add("active-dot");
-      
-      // Bouncing animation
-      wrapper.style.animation = "bounce 0.6s ease";
-      setTimeout(() => wrapper.style.animation = "", 600);
     } else {
       wrapper.classList.remove("active");
       if (indicator) {
@@ -692,6 +700,7 @@ function switchApp(appName, pushHistory = true) {
   if (appName !== "games") {
     applyAtmosphericGlow(null);
   }
+  updateGlobalMenuBar();
 }
 
 function updateNavControls() {
@@ -4672,6 +4681,7 @@ function handleFinderItemOpen(item) {
       const win = document.getElementById("terminal-window");
       if (win) {
         win.classList.remove("hidden-window");
+        addAppToDock("terminal");
         const terminalInput = document.getElementById("terminal-input");
         if (terminalInput) terminalInput.focus();
         playGlassChime();
@@ -4681,18 +4691,19 @@ function handleFinderItemOpen(item) {
       const win = document.getElementById("calculator-window");
       if (win) {
         win.classList.remove("hidden-window");
+        addAppToDock("calculator");
         playGlassChime();
       }
     } else if (item.app === "textedit") {
       openTextEditFile({ name: "Untitled.txt", content: "" });
     } else if (item.app === "macos9") {
-      openIframeApp("Mac OS 9", "/classic/mac-os-9/index.html", "");
+      openIframeApp("Mac OS 9", "/classic/mac-os-9/index.html", "", "macos9");
     } else if (item.app === "marathon") {
-      openIframeApp("Marathon", "https://archive.org/embed/marathon-demo", "");
+      openIframeApp("Marathon", "https://archive.org/embed/marathon-demo", "", "marathon");
     } else if (item.app === "lisa") {
-      openIframeApp("Apple Lisa", "https://alpha.lisagui.com/", "🖥️");
+      openIframeApp("Apple Lisa", "https://alpha.lisagui.com/", "🖥️", "lisa");
     } else if (item.app === "system7") {
-      openIframeApp("System 7", "https://jamesfriend.com.au/pce-js/", "💾");
+      openIframeApp("System 7", "https://jamesfriend.com.au/pce-js/", "💾", "system7");
     } else {
       // Switch active view to launched app
       pushNotification("Launching Application", `Starting ${item.name}`);
@@ -7604,55 +7615,76 @@ function applyLanguage(lang) {
 // --- Initialize Settings Window Controller ---
 function initSettingsWindow() {
   // A. Load saved values on startup
-  const savedWallpaper = localStorage.getItem("tahoe_wallpaper") || "tahoe-liquid";
-  if (savedWallpaper === "gaming-cycle") {
-    const navEntries = performance.getEntriesByType("navigation");
-    const isReload = navEntries.length > 0 && navEntries[0].type === "reload";
-    
-    // Only cycle if this was an actual reload/refresh
-    if (isReload) {
-      const currentUrl = localStorage.getItem("tahoe_gaming_wallpaper_url");
-      let nextUrl = currentUrl;
-      if (GAMING_WALLPAPERS.length > 1) {
-        while (nextUrl === currentUrl) {
-          const randomIndex = Math.floor(Math.random() * GAMING_WALLPAPERS.length);
-          nextUrl = GAMING_WALLPAPERS[randomIndex];
+  try {
+    const savedWallpaper = localStorage.getItem("tahoe_wallpaper") || "tahoe-liquid";
+    if (savedWallpaper === "gaming-cycle") {
+      const navEntries = performance.getEntriesByType("navigation");
+      const isReload = navEntries.length > 0 && navEntries[0].type === "reload";
+      
+      // Only cycle if this was an actual reload/refresh
+      if (isReload) {
+        const currentUrl = localStorage.getItem("tahoe_gaming_wallpaper_url");
+        let nextUrl = currentUrl;
+        if (GAMING_WALLPAPERS.length > 1) {
+          while (nextUrl === currentUrl) {
+            const randomIndex = Math.floor(Math.random() * GAMING_WALLPAPERS.length);
+            nextUrl = GAMING_WALLPAPERS[randomIndex];
+          }
+        } else {
+          nextUrl = GAMING_WALLPAPERS[0];
         }
-      } else {
-        nextUrl = GAMING_WALLPAPERS[0];
+        localStorage.setItem("tahoe_gaming_wallpaper_url", nextUrl);
       }
-      localStorage.setItem("tahoe_gaming_wallpaper_url", nextUrl);
     }
+    setWallpaper(savedWallpaper);
+  } catch (err) {
+    console.error("Failed to load wallpaper on startup:", err);
   }
-  setWallpaper(savedWallpaper);
 
-  const savedScale = localStorage.getItem("tahoe_text_scale") || "medium";
-  setTextScale(savedScale);
+  try {
+    const savedScale = localStorage.getItem("tahoe_text_scale") || "medium";
+    setTextScale(savedScale);
+  } catch (err) {
+    console.error("Failed to load text scale on startup:", err);
+  }
 
-  const savedLang = localStorage.getItem("tahoe_language") || "en";
-  applyLanguage(savedLang);
+  try {
+    const savedLang = localStorage.getItem("tahoe_language") || "en";
+    applyLanguage(savedLang);
+  } catch (err) {
+    console.error("Failed to load language on startup:", err);
+  }
 
-  const savedTheme = localStorage.getItem("tahoe_theme") || "blue";
-  setAccentColor(savedTheme);
+  let savedTheme = "blue";
+  try {
+    savedTheme = localStorage.getItem("tahoe_theme") || "blue";
+    setAccentColor(savedTheme);
+  } catch (err) {
+    console.error("Failed to load theme on startup:", err);
+  }
 
   // Sync Accent picker selections
-  document.querySelectorAll(".settings-accent-circle").forEach(circle => {
-    circle.classList.remove("active");
-    if (circle.getAttribute("data-color") === savedTheme) {
-      circle.classList.add("active");
-    }
-    
-    circle.addEventListener("click", () => {
-      const color = circle.getAttribute("data-color");
-      setAccentColor(color);
-      document.querySelectorAll(".settings-accent-circle").forEach(c => c.classList.remove("active"));
-      circle.classList.add("active");
-      playGlassChime();
+  try {
+    document.querySelectorAll(".settings-accent-circle").forEach(circle => {
+      circle.classList.remove("active");
+      if (circle.getAttribute("data-color") === savedTheme) {
+        circle.classList.add("active");
+      }
       
-      const capitalized = color.charAt(0).toUpperCase() + color.slice(1);
-      pushNotification("Accent Color Changed", `System accent color updated to ${capitalized}.`);
+      circle.addEventListener("click", () => {
+        const color = circle.getAttribute("data-color");
+        setAccentColor(color);
+        document.querySelectorAll(".settings-accent-circle").forEach(c => c.classList.remove("active"));
+        circle.classList.add("active");
+        playGlassChime();
+        
+        const capitalized = color.charAt(0).toUpperCase() + color.slice(1);
+        pushNotification("Accent Color Changed", `System accent color updated to ${capitalized}.`);
+      });
     });
-  });
+  } catch (err) {
+    console.error("Failed to sync accent circles:", err);
+  }
 
   // B. Window Traffic Light Listeners
   const closeBtn = document.getElementById("settings-close");
@@ -7728,13 +7760,11 @@ function initSettingsWindow() {
         const isHidden = settingsWin.classList.contains("hidden-window");
         const isMinimized = settingsWin.classList.contains("minimized");
 
-        // Bounce animation
+        // Active class management without bounce
         const wrapper = dockSettingsBtn.closest(".dock-item-wrapper");
         if (wrapper) {
           wrapper.classList.add("active");
-          wrapper.style.animation = "bounce 0.6s ease";
           setTimeout(() => {
-            wrapper.style.animation = "";
             wrapper.classList.remove("active");
           }, 600);
         }
@@ -7903,9 +7933,66 @@ function initSettingsWindow() {
 // --- macOS Tahoe Premium Dragging & Focusing System ---
 let maxZIndex = 100;
 
+function getTopVisibleWindow() {
+  const visibleWindows = [...document.querySelectorAll("#app-window, #settings-window, #calculator-window, #textedit-window, .utility-window")]
+    .filter(win => !win.classList.contains("hidden-window") && !win.classList.contains("minimized"));
+
+  return visibleWindows.reduce((topWindow, win) => {
+    const winZ = parseInt(getComputedStyle(win).zIndex, 10) || 0;
+    const topZ = topWindow ? parseInt(getComputedStyle(topWindow).zIndex, 10) || 0 : -1;
+    return winZ > topZ ? win : topWindow;
+  }, null);
+}
+
+function updateGlobalMenuBar() {
+  const topWin = getTopVisibleWindow();
+  const notesMenuGroup = document.getElementById("notes-menu-group");
+  const activeAppLabel = document.getElementById("menu-active-app");
+  
+  if (activeAppLabel) {
+    if (topWin) {
+      if (topWin.id === "textedit-window") {
+        activeAppLabel.textContent = "Notes";
+      } else if (topWin.id === "calculator-window") {
+        activeAppLabel.textContent = "Calculator";
+      } else if (topWin.id === "terminal-window") {
+        activeAppLabel.textContent = "Terminal";
+      } else if (topWin.id === "settings-window") {
+        activeAppLabel.textContent = "Settings";
+      } else if (topWin.id === "account-window") {
+        activeAppLabel.textContent = "User Account";
+      } else if (topWin.id === "app-window") {
+        const appNames = {
+          news: "News",
+          reviews: "Reviews",
+          crossover: "CrossOver",
+          macos: "macOS Notes",
+          games: "Games",
+          "app-store": "App Store",
+          finder: "Finder"
+        };
+        activeAppLabel.textContent = appNames[currentApp] || "News";
+      } else {
+        activeAppLabel.textContent = "Finder";
+      }
+    } else {
+      activeAppLabel.textContent = "Finder";
+    }
+  }
+  
+  if (notesMenuGroup) {
+    if (topWin && topWin.id === "textedit-window") {
+      notesMenuGroup.style.display = "flex";
+    } else {
+      notesMenuGroup.style.display = "none";
+    }
+  }
+}
+
 function bringWindowToFront(windowEl) {
   maxZIndex++;
   windowEl.style.zIndex = maxZIndex;
+  setTimeout(updateGlobalMenuBar, 10);
 }
 
 function makeWindowDraggable(windowEl) {
@@ -8016,7 +8103,7 @@ function makeWindowDraggable(windowEl) {
 }
 
 // --- macOS Tahoe Retro Iframe Window Spawner ---
-function openIframeApp(title, url, icon) {
+function openIframeApp(title, url, icon, appId) {
   const existingId = `iframe-win-${title.replace(/\s+/g, '-').toLowerCase()}`;
   let win = document.getElementById(existingId);
   if (win) {
@@ -8024,6 +8111,11 @@ function openIframeApp(title, url, icon) {
     bringWindowToFront(win);
     playGlassChime();
     return;
+  }
+
+  // Add emulator to the Dock when opened
+  if (appId) {
+    addAppToDock(appId);
   }
 
   win = document.createElement("div");
@@ -8048,7 +8140,7 @@ function openIframeApp(title, url, icon) {
     <div class="window-titlebar" style="background: rgba(30, 30, 40, 0.4); display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); position: relative; justify-content: space-between;">
       <div class="traffic-lights" style="display: flex; gap: 8px; width: 80px;">
         <button class="traffic-light red" title="Close" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff453a; cursor: pointer;"></button>
-        <button class="traffic-light yellow" title="Minimize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff9f0a; opacity: 0.5; pointer-events: none;"></button>
+        <button class="traffic-light yellow" title="Minimize" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #ff9f0a; cursor: pointer;"></button>
         <button class="traffic-light green" title="Fullscreen" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #30d158; cursor: pointer;"></button>
       </div>
       <div class="window-title" style="color: #fff; font-size: 11px; font-weight: 500; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none;">
@@ -8085,6 +8177,18 @@ function openIframeApp(title, url, icon) {
   if (closeBtn) {
     closeBtn.onclick = () => {
       win.remove();
+      if (appId) {
+        removeAppFromDock(appId);
+      }
+      playGlassChime();
+    };
+  }
+
+  const yellowBtn = win.querySelector(".traffic-light.yellow");
+  if (yellowBtn) {
+    yellowBtn.onclick = () => {
+      win.classList.add("minimized");
+      pushNotification(`${title} Minimized`, "Access emulator seamlessly from your desktop Dock.");
       playGlassChime();
     };
   }
@@ -8151,13 +8255,11 @@ function initLaunchpad() {
       e.preventDefault();
       e.stopPropagation();
 
-      // Bounce Dock Icon
+      // Active class management without bounce
       const wrapper = dockBtn.closest(".dock-item-wrapper");
       if (wrapper) {
         wrapper.classList.add("active");
-        wrapper.style.animation = "bounce 0.6s ease";
         setTimeout(() => {
-          wrapper.style.animation = "";
           wrapper.classList.remove("active");
         }, 600);
       }
@@ -8192,6 +8294,7 @@ function initLaunchpad() {
           const win = document.getElementById("terminal-window");
           if (win) {
             win.classList.remove("hidden-window");
+            addAppToDock("terminal");
             const input = document.getElementById("terminal-input");
             if (input) input.focus();
             playGlassChime();
@@ -8200,6 +8303,7 @@ function initLaunchpad() {
           const win = document.getElementById("calculator-window");
           if (win) {
             win.classList.remove("hidden-window");
+            addAppToDock("calculator");
             playGlassChime();
           }
         } else if (utility === "textedit") {
@@ -8217,13 +8321,13 @@ function initLaunchpad() {
         toggleLaunchpad();
       } else if (emulator) {
         if (emulator === "macos9") {
-          openIframeApp("Mac OS 9", "/classic/mac-os-9/index.html", "");
+          openIframeApp("Mac OS 9", "/classic/mac-os-9/index.html", "", "macos9");
         } else if (emulator === "marathon") {
-          openIframeApp("Marathon", "https://archive.org/embed/marathon-demo", "");
+          openIframeApp("Marathon", "https://archive.org/embed/marathon-demo", "", "marathon");
         } else if (emulator === "lisa") {
-          openIframeApp("Apple Lisa", "https://alpha.lisagui.com/", "🖥️");
+          openIframeApp("Apple Lisa", "https://alpha.lisagui.com/", "🖥️", "lisa");
         } else if (emulator === "system7") {
-          openIframeApp("System 7", "https://jamesfriend.com.au/pce-js/", "💾");
+          openIframeApp("System 7", "https://jamesfriend.com.au/pce-js/", "💾", "system7");
         }
         toggleLaunchpad();
       }
@@ -8365,37 +8469,265 @@ function initLockScreen() {
 }
 
 // --- 18. macOS Simulated Utility Apps (Terminal, Calculator, TextEdit) ---
+// Dynamic Dock App sync system (macOS style dynamic items)
+function addAppToDock(appId) {
+  const existing = document.querySelector(`.dock-item-wrapper[data-app="${appId}"]`);
+  if (existing) {
+    existing.classList.remove("dynamic-app-closing");
+    existing.classList.add("dynamic-app-opening");
+    const indicator = existing.querySelector(".dock-indicator");
+    if (indicator) indicator.classList.add("active-dot");
+    return;
+  }
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "dock-item-wrapper dynamic-app dynamic-app-opening";
+  wrapper.setAttribute("data-app", appId);
+
+  let iconHtmlContent = "";
+  let tooltipName = "";
+  if (appId === "terminal") {
+    iconHtmlContent = `<img src="public/assets/imgs/perf/apps/terminal.webp" alt="Terminal" class="dock-icon" width="48" height="48">`;
+    tooltipName = "Terminal";
+  } else if (appId === "calculator") {
+    iconHtmlContent = `<img src="public/assets/imgs/perf/apps/calculator.webp" alt="Calculator" class="dock-icon" width="48" height="48">`;
+    tooltipName = "Calculator";
+  } else if (appId === "textedit") {
+    iconHtmlContent = `<img src="public/assets/imgs/perf/apps/notes.webp" alt="Notes" class="dock-icon" width="48" height="48">`;
+    tooltipName = "Notes";
+  } else if (appId === "macos9") {
+    iconHtmlContent = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' class="dock-icon" width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='10' ry='10' fill='#64b5f6'/><path d='M24 2a22 22 0 0 1 22 22v14a8 8 0 0 1-8 8H24V2z' fill='#1976d2'/><path d='M24 8v16h10c2 0 4 2 4 4s-2 4-4 4H20a2 2 0 0 1-2-2V14c0-2-2-4-4-4H8V8h16z' fill='#ffffff'/><circle cx='15' cy='17' r='3' fill='#1976d2'/><circle cx='33' cy='17' r='3' fill='#ffffff'/><path d='M14 34c2 4 8 4 10 0' stroke='#ffffff' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M24 34c2 4 8 4 10 0' stroke='#1976d2' stroke-width='3' stroke-linecap='round' fill='none'/></svg>`;
+    tooltipName = "Mac OS 9";
+  } else if (appId === "marathon") {
+    iconHtmlContent = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' class="dock-icon" width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='10' ry='10' fill='#111111' stroke='#e65100' stroke-width='1.5'/><circle cx='24' cy='24' r='16' fill='none' stroke='#e65100' stroke-width='3'/><path d='M16 24h16M24 16v16' stroke='#e65100' stroke-width='3'/><circle cx='24' cy='24' r='8' fill='#e65100'/></svg>`;
+    tooltipName = "Marathon";
+  } else if (appId === "lisa") {
+    iconHtmlContent = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' class="dock-icon" width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='10' ry='10' fill='#e0d8c0' stroke='#bcaaa4' stroke-width='1.5'/><rect x='8' y='8' width='32' height='20' rx='2' ry='2' fill='#3e2723'/><rect x='11' y='11' width='26' height='14' fill='#a1887f'/><rect x='6' y='32' width='36' height='8' fill='#d7ccc8'/><line x1='12' y1='36' x2='36' y2='36' stroke='#8d6e63' stroke-width='2'/></svg>`;
+    tooltipName = "Apple Lisa";
+  } else if (appId === "system7") {
+    iconHtmlContent = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' class="dock-icon" width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='6' ry='6' fill='#1e88e5'/><rect x='10' y='2' width='28' height='16' fill='#ffffff'/><rect x='30' y='5' width='5' height='10' fill='#1e88e5'/><rect x='8' y='24' width='32' height='22' rx='2' ry='2' fill='#ffffff'/><line x1='12' y1='30' x2='36' y2='30' stroke='#757575' stroke-width='2'/><line x1='12' y1='35' x2='36' y2='35' stroke='#757575' stroke-width='2'/><line x1='12' y1='40' x2='36' y2='40' stroke='#757575' stroke-width='2'/></svg>`;
+    tooltipName = "System 7";
+  }
+
+  wrapper.innerHTML = `
+    <div class="dock-tooltip">${tooltipName}</div>
+    <button class="dock-item">
+      ${iconHtmlContent}
+    </button>
+    <span class="dock-indicator active-dot"></span>
+  `;
+
+  wrapper.addEventListener("click", () => {
+    let winId = "";
+    if (appId === "terminal") winId = "terminal-window";
+    else if (appId === "calculator") winId = "calculator-window";
+    else if (appId === "textedit") winId = "textedit-window";
+    else if (appId === "macos9") winId = "iframe-win-mac-os-9";
+    else if (appId === "marathon") winId = "iframe-win-marathon";
+    else if (appId === "lisa") winId = "iframe-win-apple-lisa";
+    else if (appId === "system7") winId = "iframe-win-system-7";
+
+    const win = document.getElementById(winId);
+    if (win) {
+      if (win.classList.contains("hidden-window") || win.classList.contains("minimized")) {
+        win.classList.remove("hidden-window");
+        win.classList.remove("minimized");
+        bringWindowToFront(win);
+        if (appId === "terminal") {
+          const input = document.getElementById("terminal-input");
+          if (input) input.focus();
+        }
+        playGlassChime();
+      } else {
+        bringWindowToFront(win);
+      }
+    }
+  });
+
+  const dock = document.getElementById("dock");
+  if (dock) {
+    const appsWrapper = document.querySelector('.dock-item-wrapper[data-app="applications"]');
+    const settingsWrapper = document.querySelector('.dock-item-wrapper[data-app="settings"]');
+    const targetSibling = appsWrapper || settingsWrapper;
+    
+    if (targetSibling) {
+      dock.insertBefore(wrapper, targetSibling);
+    } else {
+      dock.appendChild(wrapper);
+    }
+
+    // Refresh dynamic magnification motion targets
+    if (typeof window.refreshDockMagnification === "function") {
+      window.refreshDockMagnification();
+    }
+  }
+}
+
+function removeAppFromDock(appId) {
+  const wrapper = document.querySelector(`.dock-item-wrapper[data-app="${appId}"]`);
+  if (!wrapper) return;
+
+  const indicator = wrapper.querySelector(".dock-indicator");
+  if (indicator) indicator.classList.remove("active-dot");
+
+  wrapper.classList.remove("dynamic-app-opening");
+  wrapper.classList.add("dynamic-app-closing");
+
+  setTimeout(() => {
+    if (wrapper.parentNode) {
+      wrapper.parentNode.removeChild(wrapper);
+    }
+    // Refresh dynamic magnification motion targets
+    if (typeof window.refreshDockMagnification === "function") {
+      window.refreshDockMagnification();
+    }
+  }, 400);
+}
+
 let texteditActiveFile = null;
+let notesData = [];
+
+function getNotesData() {
+  if (notesData.length > 0) return notesData;
+  const saved = localStorage.getItem("macready_notes");
+  if (saved) {
+    try {
+      notesData = JSON.parse(saved);
+      // Auto-purge old placeholder notes if they exist in localStorage from a previous session
+      const hasOldPlaceholders = notesData.some(n => 
+        n.name === "Welcome to MacReady.txt" || 
+        n.name === "Shopping List.txt" || 
+        n.name === "Coding Ideas.txt"
+      );
+      if (!hasOldPlaceholders) {
+        return notesData;
+      }
+    } catch(e) {
+      // fallback
+    }
+  }
+  notesData = [
+    { id: "note-1", name: "Untitled Note 1.txt", content: "", updated: Date.now() }
+  ];
+  localStorage.setItem("macready_notes", JSON.stringify(notesData));
+  return notesData;
+}
+
+function renderNotesList() {
+  const notesListContainer = document.getElementById("notes-list");
+  if (!notesListContainer) return;
+  
+  const searchVal = document.getElementById("notes-search")?.value.toLowerCase() || "";
+  const data = getNotesData();
+  
+  notesListContainer.innerHTML = "";
+  
+  const filtered = data.filter(note => 
+    note.name.toLowerCase().includes(searchVal) || 
+    note.content.toLowerCase().includes(searchVal)
+  );
+  
+  if (filtered.length === 0) {
+    notesListContainer.innerHTML = `<div style="font-size: 10px; color: rgba(255,255,255,0.4); text-align: center; padding: 12px 4px;">No Notes</div>`;
+    return;
+  }
+  
+  filtered.forEach(note => {
+    const item = document.createElement("div");
+    const isActive = texteditActiveFile && texteditActiveFile.id === note.id;
+    
+    item.style.padding = "8px 10px";
+    item.style.borderRadius = "6px";
+    item.style.cursor = "pointer";
+    item.style.fontSize = "11px";
+    item.style.transition = "all 0.2s ease";
+    item.style.display = "flex";
+    item.style.flexDirection = "column";
+    item.style.gap = "2px";
+    
+    if (isActive) {
+      item.style.background = "var(--accent-color)";
+      item.style.color = "#fff";
+    } else {
+      item.style.background = "rgba(255, 255, 255, 0.04)";
+      item.style.color = "rgba(255,255,255,0.85)";
+    }
+    
+    item.addEventListener("mouseenter", () => {
+      if (!isActive) item.style.background = "rgba(255,255,255,0.08)";
+    });
+    item.addEventListener("mouseleave", () => {
+      if (!isActive) item.style.background = "rgba(255,255,255,0.04)";
+    });
+    
+    const cleanContent = note.content.replace(/[\n\r]+/g, " ");
+    const previewText = cleanContent.length > 22 ? cleanContent.substring(0, 20) + "..." : cleanContent || "New Note";
+    
+    item.innerHTML = `
+      <div style="font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${note.name}</div>
+      <div style="font-size: 9px; opacity: 0.6; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${previewText}</div>
+    `;
+    
+    item.addEventListener("click", () => {
+      selectNote(note.id);
+    });
+    
+    notesListContainer.appendChild(item);
+  });
+}
+
+function selectNote(noteId) {
+  const data = getNotesData();
+  const note = data.find(n => n.id === noteId);
+  if (!note) return;
+  
+  texteditActiveFile = note;
+  
+  const textarea = document.getElementById("textedit-textarea");
+  const title = document.getElementById("textedit-window-title");
+  const charCount = document.getElementById("textedit-char-count");
+  
+  if (textarea) {
+    textarea.value = note.content || "";
+  }
+  if (title) {
+    title.textContent = `Notes — ${note.name}`;
+  }
+  if (charCount && textarea) {
+    charCount.textContent = `${textarea.value.length} characters`;
+  }
+  
+  renderNotesList();
+}
 
 function openTextEditFile(file) {
   const win = document.getElementById("textedit-window");
   const textarea = document.getElementById("textedit-textarea");
   const title = document.getElementById("textedit-window-title");
-  const charCount = document.getElementById("textedit-char-count");
 
   if (!win || !textarea || !title) return;
 
-  texteditActiveFile = file;
-  title.textContent = `Notes — ${file.name}`;
-  
-  if (file.kind === "code" && file.file) {
-    textarea.value = "Loading live file content...";
-    fetch(file.file)
-      .then(res => res.ok ? res.text() : "// Sandbox restriction")
-      .then(code => {
-        textarea.value = code;
-        if (charCount) charCount.textContent = `${code.length} characters`;
-      })
-      .catch(() => {
-        textarea.value = file.content || "";
-        if (charCount) charCount.textContent = `${textarea.value.length} characters`;
-      });
-  } else {
-    textarea.value = file.content || "";
-    if (charCount) charCount.textContent = `${textarea.value.length} characters`;
+  // Add Notes.app to the Dock when opened
+  addAppToDock("textedit");
+
+  // Check if file is already in notesData
+  const data = getNotesData();
+  let existingNote = data.find(n => n.name === file.name);
+  if (!existingNote) {
+    existingNote = {
+      id: `file-${Date.now()}`,
+      name: file.name,
+      content: file.content || "",
+      updated: Date.now()
+    };
+    data.push(existingNote);
+    localStorage.setItem("macready_notes", JSON.stringify(data));
   }
 
+  selectNote(existingNote.id);
+
   win.classList.remove("hidden-window");
+  bringWindowToFront(win);
   textarea.focus();
   playGlassChime();
 }
@@ -8572,6 +8904,7 @@ Available commands:<br>
     return;
   } else if (command === "exit") {
     document.getElementById("terminal-window").classList.add("hidden-window");
+    removeAppFromDock("terminal");
     input.value = "";
     return;
   } else {
@@ -8603,7 +8936,19 @@ function initUtilityApps() {
   if (termClose) {
     termClose.addEventListener("click", () => {
       document.getElementById("terminal-window").classList.add("hidden-window");
+      removeAppFromDock("terminal");
       playGlassChime();
+      updateGlobalMenuBar();
+    });
+  }
+
+  const termMinimize = document.getElementById("terminal-minimize");
+  if (termMinimize) {
+    termMinimize.addEventListener("click", () => {
+      document.getElementById("terminal-window").classList.add("minimized");
+      pushNotification("Terminal Minimized", "Access Terminal seamlessly from your desktop Dock.");
+      playGlassChime();
+      updateGlobalMenuBar();
     });
   }
 
@@ -8629,26 +8974,61 @@ function initUtilityApps() {
   if (calcClose) {
     calcClose.addEventListener("click", () => {
       document.getElementById("calculator-window").classList.add("hidden-window");
+      removeAppFromDock("calculator");
       playGlassChime();
+      updateGlobalMenuBar();
     });
   }
 
-  // C. TextEdit Setup
+  const calcMinimize = document.getElementById("calculator-minimize");
+  if (calcMinimize) {
+    calcMinimize.addEventListener("click", () => {
+      document.getElementById("calculator-window").classList.add("minimized");
+      pushNotification("Calculator Minimized", "Access Calculator seamlessly from your desktop Dock.");
+      playGlassChime();
+      updateGlobalMenuBar();
+    });
+  }
+
+  // C. TextEdit / Notes Setup
   const texteditTextarea = document.getElementById("textedit-textarea");
   if (texteditTextarea) {
     texteditTextarea.addEventListener("input", () => {
       const charCount = document.getElementById("textedit-char-count");
       if (charCount) charCount.textContent = `${texteditTextarea.value.length} characters`;
+      if (texteditActiveFile) {
+        texteditActiveFile.content = texteditTextarea.value;
+        const data = getNotesData();
+        localStorage.setItem("macready_notes", JSON.stringify(data));
+        renderNotesList();
+      }
     });
   }
 
-  const texteditSaveBtn = document.getElementById("textedit-save-btn");
+  const texteditSaveBtn = document.getElementById("menu-notes-save");
   if (texteditSaveBtn) {
-    texteditSaveBtn.addEventListener("click", () => {
+    texteditSaveBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       if (texteditActiveFile && texteditTextarea) {
         texteditActiveFile.content = texteditTextarea.value;
-        pushNotification("File Saved", `Changes in ${texteditActiveFile.name} successfully updated.`);
+        texteditActiveFile.updated = Date.now();
+        const data = getNotesData();
+        localStorage.setItem("macready_notes", JSON.stringify(data));
+        
+        // Trigger a real file download in the browser
+        const blob = new Blob([texteditActiveFile.content], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = texteditActiveFile.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        pushNotification("Note Exported", `${texteditActiveFile.name} successfully saved to local system.`);
         playGlassChime();
+        renderNotesList();
         renderFinderView();
       }
     });
@@ -8658,8 +9038,292 @@ function initUtilityApps() {
   if (texteditClose) {
     texteditClose.addEventListener("click", () => {
       document.getElementById("textedit-window").classList.add("hidden-window");
+      removeAppFromDock("textedit");
       playGlassChime();
+      updateGlobalMenuBar();
     });
+  }
+
+  const texteditMinimize = document.getElementById("textedit-minimize");
+  if (texteditMinimize) {
+    texteditMinimize.addEventListener("click", () => {
+      document.getElementById("textedit-window").classList.add("minimized");
+      pushNotification("Notes Minimized", "Access Notes seamlessly from your desktop Dock.");
+      playGlassChime();
+      updateGlobalMenuBar();
+    });
+  }
+
+  // Multi-note UI Bindings
+  const notesSearch = document.getElementById("notes-search");
+  if (notesSearch) {
+    notesSearch.addEventListener("input", () => {
+      renderNotesList();
+    });
+  }
+
+  const notesNewBtn = document.getElementById("notes-new-btn");
+  if (notesNewBtn) {
+    notesNewBtn.addEventListener("click", () => {
+      const data = getNotesData();
+      const newId = `note-${Date.now()}`;
+      const newNote = {
+        id: newId,
+        name: `Untitled Note ${data.length + 1}.txt`,
+        content: "",
+        updated: Date.now()
+      };
+      data.push(newNote);
+      localStorage.setItem("macready_notes", JSON.stringify(data));
+      
+      selectNote(newId);
+      pushNotification("New Note Created", "A fresh note has been created.");
+      playGlassChime();
+      
+      if (texteditTextarea) texteditTextarea.focus();
+    });
+  }
+
+  const notesDeleteBtn = document.getElementById("menu-notes-delete");
+  if (notesDeleteBtn) {
+    notesDeleteBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (!texteditActiveFile) return;
+      const data = getNotesData();
+      if (data.length <= 1) {
+        pushNotification("Cannot Delete", "You must keep at least one note.");
+        return;
+      }
+      
+      const idx = data.findIndex(n => n.id === texteditActiveFile.id);
+      if (idx !== -1) {
+        data.splice(idx, 1);
+        localStorage.setItem("macready_notes", JSON.stringify(data));
+        pushNotification("Note Deleted", "The note has been deleted.");
+        playGlassChime();
+        
+        const nextNote = data[Math.min(idx, data.length - 1)];
+        selectNote(nextNote.id);
+      }
+    });
+  }
+
+  // --- macOS Tahoe Rich Notes Top Menus Functionality ---
+  const menuNotesNew = document.getElementById("menu-notes-new");
+  if (menuNotesNew) {
+    menuNotesNew.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (notesNewBtn) notesNewBtn.click();
+    });
+  }
+
+  const menuNotesClose = document.getElementById("menu-notes-close");
+  if (menuNotesClose) {
+    menuNotesClose.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (texteditClose) texteditClose.click();
+    });
+  }
+
+  const getTextArea = () => document.getElementById("textedit-textarea");
+
+  const menuNotesUndo = document.getElementById("menu-notes-undo");
+  if (menuNotesUndo) {
+    menuNotesUndo.addEventListener("click", (e) => {
+      e.preventDefault();
+      const ta = getTextArea();
+      if (ta) {
+        ta.focus();
+        document.execCommand("undo", false, null);
+      }
+    });
+  }
+
+  const menuNotesRedo = document.getElementById("menu-notes-redo");
+  if (menuNotesRedo) {
+    menuNotesRedo.addEventListener("click", (e) => {
+      e.preventDefault();
+      const ta = getTextArea();
+      if (ta) {
+        ta.focus();
+        document.execCommand("redo", false, null);
+      }
+    });
+  }
+
+  const menuNotesCut = document.getElementById("menu-notes-cut");
+  if (menuNotesCut) {
+    menuNotesCut.addEventListener("click", (e) => {
+      e.preventDefault();
+      const ta = getTextArea();
+      if (ta) {
+        ta.focus();
+        document.execCommand("cut", false, null);
+      }
+    });
+  }
+
+  const menuNotesCopy = document.getElementById("menu-notes-copy");
+  if (menuNotesCopy) {
+    menuNotesCopy.addEventListener("click", (e) => {
+      e.preventDefault();
+      const ta = getTextArea();
+      if (ta) {
+        ta.focus();
+        document.execCommand("copy", false, null);
+      }
+    });
+  }
+
+  const menuNotesPaste = document.getElementById("menu-notes-paste");
+  if (menuNotesPaste) {
+    menuNotesPaste.addEventListener("click", (e) => {
+      e.preventDefault();
+      const ta = getTextArea();
+      if (ta) {
+        ta.focus();
+        navigator.clipboard.readText().then(text => {
+          const start = ta.selectionStart;
+          const end = ta.selectionEnd;
+          const val = ta.value;
+          ta.value = val.substring(0, start) + text + val.substring(end);
+          ta.setSelectionRange(start + text.length, start + text.length);
+          ta.dispatchEvent(new Event('input', { bubbles: true }));
+        }).catch(err => {
+          document.execCommand("paste", false, null);
+        });
+      }
+    });
+  }
+
+  const menuNotesSelectAll = document.getElementById("menu-notes-selectall");
+  if (menuNotesSelectAll) {
+    menuNotesSelectAll.addEventListener("click", (e) => {
+      e.preventDefault();
+      const ta = getTextArea();
+      if (ta) {
+        ta.focus();
+        ta.select();
+      }
+    });
+  }
+
+  const applyMenuFormat = (prefix, suffix) => {
+    const ta = getTextArea();
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const val = ta.value;
+    const selectedText = val.substring(start, end);
+    const replacement = `${prefix}${selectedText}${suffix}`;
+    ta.value = val.substring(0, start) + replacement + val.substring(end);
+    ta.focus();
+    ta.setSelectionRange(start + prefix.length, start + prefix.length + selectedText.length);
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    
+    if (texteditActiveFile) {
+      texteditActiveFile.content = ta.value;
+      const data = getNotesData();
+      localStorage.setItem("macready_notes", JSON.stringify(data));
+      renderNotesList();
+    }
+  };
+
+  const menuNotesBold = document.getElementById("menu-notes-bold");
+  if (menuNotesBold) {
+    menuNotesBold.addEventListener("click", (e) => {
+      e.preventDefault();
+      applyMenuFormat("**", "**");
+    });
+  }
+
+  const menuNotesItalic = document.getElementById("menu-notes-italic");
+  if (menuNotesItalic) {
+    menuNotesItalic.addEventListener("click", (e) => {
+      e.preventDefault();
+      applyMenuFormat("*", "*");
+    });
+  }
+
+  const menuNotesUnderline = document.getElementById("menu-notes-underline");
+  if (menuNotesUnderline) {
+    menuNotesUnderline.addEventListener("click", (e) => {
+      e.preventDefault();
+      applyMenuFormat("_", "_");
+    });
+  }
+
+  const menuNotesStrikethrough = document.getElementById("menu-notes-strikethrough");
+  if (menuNotesStrikethrough) {
+    menuNotesStrikethrough.addEventListener("click", (e) => {
+      e.preventDefault();
+      applyMenuFormat("~~", "~~");
+    });
+  }
+
+  const menuNotesToggleSidebar = document.getElementById("menu-notes-toggle-sidebar");
+  if (menuNotesToggleSidebar) {
+    menuNotesToggleSidebar.addEventListener("click", (e) => {
+      e.preventDefault();
+      const sidebar = document.getElementById("notes-sidebar");
+      if (sidebar) {
+        if (sidebar.style.display === "none") {
+          sidebar.style.display = "flex";
+        } else {
+          sidebar.style.display = "none";
+        }
+      }
+    });
+  }
+
+  const menuNotesFullscreen = document.getElementById("menu-notes-fullscreen");
+  if (menuNotesFullscreen) {
+    menuNotesFullscreen.addEventListener("click", (e) => {
+      e.preventDefault();
+      const win = document.getElementById("textedit-window");
+      if (win) {
+        win.classList.toggle("maximized");
+      }
+    });
+  }
+
+  // Formatting buttons
+  const boldBtn = document.getElementById("notes-bold-btn");
+  const italicBtn = document.getElementById("notes-italic-btn");
+  const bulletBtn = document.getElementById("notes-bullet-btn");
+
+  function applyFormatting(wrapperTextBefore, wrapperTextAfter) {
+    if (!texteditTextarea) return;
+    
+    const start = texteditTextarea.selectionStart;
+    const end = texteditTextarea.selectionEnd;
+    const text = texteditTextarea.value;
+    const selectedText = text.substring(start, end);
+    const replacement = wrapperTextBefore + selectedText + wrapperTextAfter;
+    
+    texteditTextarea.value = text.substring(0, start) + replacement + text.substring(end);
+    texteditTextarea.focus();
+    texteditTextarea.setSelectionRange(start + wrapperTextBefore.length, start + wrapperTextBefore.length + selectedText.length);
+    
+    const charCount = document.getElementById("textedit-char-count");
+    if (charCount) charCount.textContent = `${texteditTextarea.value.length} characters`;
+    
+    if (texteditActiveFile) {
+      texteditActiveFile.content = texteditTextarea.value;
+      const data = getNotesData();
+      localStorage.setItem("macready_notes", JSON.stringify(data));
+      renderNotesList();
+    }
+  }
+
+  if (boldBtn) boldBtn.addEventListener("click", () => applyFormatting("**", "**"));
+  if (italicBtn) italicBtn.addEventListener("click", () => applyFormatting("*", "*"));
+  if (bulletBtn) bulletBtn.addEventListener("click", () => applyFormatting("- ", ""));
+
+  // Initial Notes Rendering
+  const initialData = getNotesData();
+  if (initialData.length > 0) {
+    selectNote(initialData[0].id);
   }
 
   // D. Premium Drag & Focus Setup for existing windows
