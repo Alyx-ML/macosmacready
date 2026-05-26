@@ -408,8 +408,13 @@ function optimizeArticleImageUrl(url, isFeatured = false) {
   }
 
   if (parsed.hostname === "images.macrumors.com") {
-    parsed.searchParams.set("resize", `${width},0`);
-    return parsed.toString();
+    parsed.searchParams.delete("resize");
+    const resizedUrl = new URL("https://images.weserv.nl/");
+    resizedUrl.searchParams.set("url", `${parsed.hostname}${parsed.pathname}${parsed.search}`);
+    resizedUrl.searchParams.set("w", width);
+    resizedUrl.searchParams.set("output", "webp");
+    resizedUrl.searchParams.set("q", "82");
+    return resizedUrl.toString();
   }
 
   return url;
