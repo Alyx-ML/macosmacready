@@ -1926,14 +1926,8 @@ const MACOS_HISTORICAL = [
   }
 ];
 
-let macosHasSynced = false;
-
 function renderMacosView() {
   renderMacosData(MACOS_CHANGELOG, MACOS_HISTORICAL);
-
-  if (!macosHasSynced) {
-    fetchMacosReleaseNotes();
-  }
 }
 
 function renderMacosData(changelogs, historical) {
@@ -2015,95 +2009,6 @@ function renderMacosData(changelogs, historical) {
       });
     });
   });
-}
-
-async function fetchMacosReleaseNotes() {
-  try {
-    const targetUrl = "https://developer.apple.com/tutorials/data/documentation/macos-release-notes.json";
-    const res = await fetchViaProxy(targetUrl);
-    if (!res.ok) throw new Error("CORS Proxy failed");
-
-    // Standard Apple docc catalog structure parsing
-    const liveText = await res.text();
-    let contents = liveText;
-    try {
-      const parsedWrapper = JSON.parse(liveText);
-      if (parsedWrapper.contents) {
-        contents = parsedWrapper.contents;
-      }
-    } catch (e) {}
-
-    const payload = JSON.parse(contents);
-    
-    // Parse references to see what versions are available
-    if (payload && payload.references) {
-      const refs = payload.references;
-      const updatedChangelogs = [];
-      const updatedHistorical = [];
-
-      // Extract details from refs
-      Object.keys(refs).forEach(key => {
-        const ref = refs[key];
-        if (ref.type === "topic" && ref.kind === "article") {
-          const title = ref.title || "";
-          const abstract = ref.abstract && ref.abstract[0] && ref.abstract[0].text ? ref.abstract[0].text : "Developer documentation release changes and framework updates.";
-          
-          // Categorize and map
-          if (title.includes("macOS Tahoe") || title.includes("macOS 26")) {
-            // Find existing seed or generate a beautiful note set
-            const versionMatch = title.match(/(\d+\.\d+(\.\d+)?|\d+)/);
-            const versionStr = versionMatch ? versionMatch[0] : "26.x";
-            const seeded = MACOS_CHANGELOG.find(c => c.version === versionStr) || MACOS_CHANGELOG.find(c => c.version.startsWith(versionStr.split('.')[0]));
-
-            if (seeded) {
-              updatedChangelogs.push({
-                version: seeded.version,
-                date: seeded.date,
-                notes: seeded.notes
-              });
-            } else if (abstract) {
-              updatedChangelogs.push({
-                version: versionStr,
-                date: "Apple Developer Release Notes",
-                notes: [abstract]
-              });
-            }
-          } else if (title.includes("macOS") || title.includes("AppKit") || title.includes("Foundation")) {
-            const versionMatch = title.match(/(\d+\.\d+(\.\d+)?|\d+)/);
-            const versionStr = versionMatch ? versionMatch[0] : "SDK";
-            
-            let category = "SDK Framework";
-            if (title.includes("Sequoia") || title.includes("15")) category = "macOS 15 Sequoia";
-            else if (title.includes("Sonoma") || title.includes("14")) category = "macOS 14 Sonoma";
-            else if (title.includes("Ventura") || title.includes("13")) category = "macOS 13 Ventura";
-            else if (title.includes("Monterey") || title.includes("12")) category = "macOS 12 Monterey";
-            else if (title.includes("AppKit")) category = "AppKit Framework";
-            else if (title.includes("Foundation")) category = "Foundation Framework";
-
-            const seeded = MACOS_HISTORICAL.find(h => h.version === versionStr && h.category === category);
-            updatedHistorical.push({
-              category,
-              version: seeded ? seeded.version : versionStr,
-              date: seeded ? seeded.date : "Apple Developer Release Notes",
-              notes: seeded ? seeded.notes : [abstract]
-            });
-          }
-        }
-      });
-
-      // If we successfully parsed any notes, update render feeds!
-      if (updatedChangelogs.length > 0) {
-        // Sort changelogs descending by version number
-        updatedChangelogs.sort((a, b) => b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' }));
-        
-        renderMacosData(updatedChangelogs, updatedHistorical.length > 0 ? updatedHistorical : MACOS_HISTORICAL);
-        macosHasSynced = true;
-        return;
-      }
-    }
-  } catch (err) {
-    console.warn("Live macOS developer JSON fetch failed.", err);
-  }
 }
 
 function filterMacos(query) {
