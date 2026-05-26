@@ -8,9 +8,34 @@ const NEWS_RSS_SOURCES = [
   { name: "AppleInsider", url: "https://appleinsider.com/rss/news", category: "technology" },
   { name: "Apple Newsroom", url: "https://www.apple.com/newsroom/rss-feed.rss", category: "technology" },
   { name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/apple", category: "technology" },
-  { name: "The Verge", url: "https://www.theverge.com/rss/apple/index.xml", category: "technology" }
+  { name: "The Verge", url: "https://www.theverge.com/rss/apple/index.xml", category: "technology" },
+  { name: "PC Gamer", url: "https://www.pcgamer.com/rss/", category: "design" },
+  { name: "Eurogamer", url: "https://www.eurogamer.net/feed?format=rss", category: "design" },
+  { name: "Polygon", url: "https://www.polygon.com/rss/index.xml", category: "design" },
+  { name: "Kotaku", url: "https://kotaku.com/rss", category: "design" },
+  { name: "MacRumors Reviews", url: "https://www.macrumors.com/mac/reviews/feed/", category: "science" },
+  { name: "9to5Mac Reviews", url: "https://9to5mac.com/guides/reviews/feed/", category: "science" },
+  { name: "Six Colors", url: "https://sixcolors.com/feed/", category: "science" },
+  { name: "MacStories", url: "https://www.macstories.net/feed/", category: "culture" },
+  { name: "9to5Mac Apps", url: "https://9to5mac.com/guides/apps/feed/", category: "culture" },
+  { name: "9to5Mac Apple Intelligence", url: "https://9to5mac.com/guides/apple-intelligence/feed/", category: "ai" }
 ];
 const MAC_NEWS_TERMS = /\b(macOS|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]|WWDC)\b/i;
+const RSS_CATEGORY_TERMS = {
+  technology: /\b(macOS|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]|WWDC|Safari|Apple Intelligence)\b/i,
+  design: /\b(game|games|gaming|Steam|Xbox|PlayStation|Nintendo|Switch|PC|trailer|release|released|launch|update|patch|DLC|demo|early access|indie|developer|studio)\b/i,
+  science: /\b(review|reviews|hands-on|tested|benchmark|benchmarks|performance|long-term|versus|vs\.?|Mac|macOS|MacBook|iMac|Mac mini|Mac Studio|Mac Pro)\b/i,
+  culture: /\b(Mac app|Mac apps|macOS app|macOS apps|for Mac|on Mac|Mac version|menu bar|Safari extension|Setapp|Raycast|Alfred|BBEdit|Pixelmator|CleanMyMac|Final Cut|Logic Pro|developer tool|Apple silicon)\b/i,
+  ai: /\b(Apple Intelligence|AI|artificial intelligence|Siri|LLM|language model|machine learning|Foundation Models|Image Playground|Genmoji|Writing Tools|ChatGPT|OpenAI|Claude|Gemini|Shortcuts Playground|macOS)\b/i
+};
+const RSS_CATEGORY_LABELS = {
+  all: "Today",
+  technology: "News",
+  design: "Games",
+  science: "Reviews",
+  culture: "Apps",
+  ai: "Apple Intelligence"
+};
 
 function fetchDevProxy(url) {
   const isLocalDev = ["localhost", "127.0.0.1"].includes(window.location.hostname);
@@ -90,7 +115,7 @@ let searchQuery = "";
 let selectedArticleId = null;
 let currentReaderTheme = "classic";
 let currentView = "grid"; // "grid" or "list"
-let visibleArticlesCount = 6;
+let visibleArticlesCount = 9;
 let enabledNewsSources = new Set(NEWS_RSS_SOURCES.map(source => source.name));
 let queuedArticleUrls = new Set();
 
@@ -148,7 +173,11 @@ function initData() {
   if (storedSources) {
     try {
       const sourceNames = JSON.parse(storedSources);
-      enabledNewsSources = new Set(sourceNames.filter(name => NEWS_RSS_SOURCES.some(source => source.name === name)));
+      const currentSourceNames = NEWS_RSS_SOURCES.map(source => source.name);
+      enabledNewsSources = new Set(sourceNames.filter(name => currentSourceNames.includes(name)));
+      currentSourceNames.forEach(name => {
+        if (!sourceNames.includes(name)) enabledNewsSources.add(name);
+      });
     } catch (e) {
       console.error(e);
     }
@@ -248,7 +277,8 @@ async function loadNewsFromRSS() {
   renderFeed();
 
   const fetched = [];
-  await Promise.allSettled(NEWS_RSS_SOURCES.map(async source => {
+  const activeSources = NEWS_RSS_SOURCES.filter(source => enabledNewsSources.has(source.name));
+  await Promise.allSettled(activeSources.map(async source => {
     const jsonResponse = await fetchRSSJson(source.url);
     if (jsonResponse) {
       if (!jsonResponse.ok) throw new Error(`RSS failed for ${source.name}`);
@@ -262,8 +292,9 @@ async function loadNewsFromRSS() {
         const content = item.content || rawDescription;
         const pubDate = item.pubDate || "";
         const combinedText = `${title} ${rawDescription}`;
+        const categoryTerms = RSS_CATEGORY_TERMS[source.category] || MAC_NEWS_TERMS;
 
-        if (!title || !link || !MAC_NEWS_TERMS.test(combinedText)) return;
+        if (!title || !link || !categoryTerms.test(combinedText)) return;
 
         fetched.push({
           id: `${source.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.parse(pubDate) || index}`,
@@ -300,8 +331,9 @@ async function loadNewsFromRSS() {
       const content = getRSSNodeText(item, "content\\:encoded") || rawDescription;
       const pubDate = getRSSNodeText(item, "pubDate");
       const combinedText = `${title} ${rawDescription}`;
+      const categoryTerms = RSS_CATEGORY_TERMS[source.category] || MAC_NEWS_TERMS;
 
-      if (!title || !link || !MAC_NEWS_TERMS.test(combinedText)) return;
+      if (!title || !link || !categoryTerms.test(combinedText)) return;
 
       fetched.push({
         id: `${source.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.parse(pubDate) || index}`,
@@ -323,9 +355,23 @@ async function loadNewsFromRSS() {
     });
   }));
 
-  articles = fetched
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 30);
+  const categoryOrder = ["technology", "science", "culture", "ai", "design"];
+  const categorizedLatest = categoryOrder.map(category =>
+    fetched
+      .filter(article => article.category === category)
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 12)
+  );
+  const balancedLatest = [];
+  for (let index = 0; index < 12; index += 1) {
+    categorizedLatest.forEach(categoryArticles => {
+      if (categoryArticles[index]) balancedLatest.push(categoryArticles[index]);
+    });
+  }
+
+  articles = balancedLatest
+    .filter((article, index, list) => list.findIndex(item => item.sourceUrl === article.sourceUrl) === index)
+    .slice(0, 48);
   updateCounts();
   renderFeed();
 }
@@ -344,21 +390,80 @@ function stripHTML(html) {
 }
 
 function buildRSSSubtitle(html) {
-  return stripHTML(html).slice(0, 150);
+  return buildArticleExcerpt(html, 260);
+}
+
+function buildArticleExcerpt(html, maxLength = 260) {
+  const doc = parseRSSHTML(html);
+  doc.querySelectorAll("img, figure, script, style, noscript").forEach(node => node.remove());
+  const textBlocks = [...doc.querySelectorAll("p, li")]
+    .map(node => node.textContent.replace(/\s+/g, " ").trim())
+    .filter(text => text.length > 30);
+  const text = (textBlocks.length > 0 ? textBlocks : [doc.body.textContent.replace(/\s+/g, " ").trim()])
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.length <= maxLength) return text;
+
+  const shortened = text.slice(0, maxLength);
+  const lastBreak = Math.max(shortened.lastIndexOf(". "), shortened.lastIndexOf("? "), shortened.lastIndexOf("! "));
+  if (lastBreak > 120) return shortened.slice(0, lastBreak + 1);
+
+  const lastSpace = shortened.lastIndexOf(" ");
+  return `${shortened.slice(0, lastSpace > 120 ? lastSpace : maxLength).trim()}...`;
 }
 
 function buildRSSArticleContent(html, link, sourceName) {
   const doc = parseRSSHTML(html);
-  doc.querySelectorAll("img, figure, script, style").forEach(node => node.remove());
-  const textBlocks = [...doc.querySelectorAll("p, li")]
-    .map(node => node.textContent.replace(/\s+/g, " ").trim())
-    .filter(Boolean);
-  const rawParagraphs = textBlocks.length > 0
-    ? textBlocks
-    : [doc.body.textContent.replace(/\s+/g, " ").trim()].filter(Boolean);
-  const paragraphs = rawParagraphs.flatMap(splitLongArticleParagraph);
+  const paragraphs = extractReadableBlocks(doc.body);
 
-  return `${paragraphs.map(text => `<p>${text}</p>`).join("")}<p><a href="${link}" target="_blank" rel="noopener">Source: ${sourceName}</a></p>`;
+  return `${paragraphs.map(block => `<${block.tag}>${block.text}</${block.tag}>`).join("")}<p><a href="${link}" target="_blank" rel="noopener">Source: ${sourceName}</a></p>`;
+}
+
+function extractReadableBlocks(root) {
+  if (!root) return [];
+
+  root.querySelectorAll("img, figure, script, style, noscript, iframe, form, button, nav, aside, .inlinead, .ad-container, .related-guide, .author-gear, .article__content, #comments").forEach(node => node.remove());
+
+  const blocks = [...root.querySelectorAll("h2, h3, p, li, blockquote")]
+    .map(node => ({
+      tag: /^h[23]$/i.test(node.tagName) ? "h2" : "p",
+      text: cleanArticleText(node.textContent)
+    }))
+    .filter(block => block.text.length > 0)
+    .filter(block => !isArticleBoilerplate(block.text));
+
+  const compacted = [];
+  blocks.forEach(block => {
+    const previous = compacted[compacted.length - 1];
+    if (previous && previous.text === block.text) return;
+    compacted.push(block);
+  });
+
+  return compacted.flatMap(block =>
+    splitLongArticleParagraph(block.text).map(text => ({ tag: block.tag, text: escapeHTML(text) }))
+  );
+}
+
+function cleanArticleText(text) {
+  return (text || "")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .trim();
+}
+
+function isArticleBoilerplate(text) {
+  return /^(source:|read on|continue reading|go to the linked site|go to the podcast page|advertisement|sponsor|subscribe|share this|related articles)/i.test(text);
+}
+
+function escapeHTML(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function splitLongArticleParagraph(text) {
@@ -383,8 +488,10 @@ function splitLongArticleParagraph(text) {
 }
 
 function extractRSSImage(item, html) {
-  const mediaContent = item.querySelector("content, thumbnail");
-  const mediaUrl = mediaContent?.getAttribute("url");
+  const mediaUrl = [
+    ...item.querySelectorAll("enclosure, content, thumbnail, image, itunes\\:image")
+  ].map(node => node.getAttribute("url") || node.getAttribute("href") || node.textContent?.trim())
+    .find(url => /^https?:\/\//.test(url || ""));
   if (mediaUrl) return mediaUrl;
 
   return extractRSSImageFromHTML(html);
@@ -392,8 +499,12 @@ function extractRSSImage(item, html) {
 
 function extractRSSImageFromHTML(html) {
   const doc = parseRSSHTML(html);
-  const imgSrc = doc.querySelector("img")?.getAttribute("src");
-  return imgSrc || "preset-1";
+  const imageUrl = [...doc.querySelectorAll("img, source")]
+    .map(node => node.getAttribute("src") || node.getAttribute("data-src") || node.getAttribute("data-lazy-src") || node.getAttribute("data-orig-file") || node.getAttribute("srcset"))
+    .filter(Boolean)
+    .map(value => value.split(",")[0].trim().split(/\s+/)[0])
+    .find(url => /^https?:\/\//.test(url));
+  return imageUrl || "preset-1";
 }
 
 function optimizeArticleImageUrl(url, isFeatured = false) {
@@ -645,7 +756,7 @@ function switchApp(appName, pushHistory = true) {
   currentApp = appName;
   openedApps.add(appName);
   if (appName === "news" || appName === "reviews") {
-    visibleArticlesCount = 6;
+    visibleArticlesCount = 9;
   }
   
   // 1. Manage history
@@ -722,7 +833,7 @@ function switchApp(appName, pushHistory = true) {
 
   // App-specific customization
   if (appName === "news") {
-    if (appTitle) appTitle.textContent = "Today's Stories";
+    if (appTitle) appTitle.textContent = "Today's Overview";
     if (searchInput) searchInput.placeholder = "Search Articles...";
     if (newStoryBtn) newStoryBtn.style.display = "flex";
     if (segmentControl) segmentControl.style.display = "flex";
@@ -745,7 +856,7 @@ function switchApp(appName, pushHistory = true) {
     renderFeed();
   }
   else if (appName === "reviews") {
-    if (appTitle) appTitle.textContent = "Hardware & Software Reviews";
+    if (appTitle) appTitle.textContent = "Mac Reviews";
     if (searchInput) searchInput.placeholder = "Search Reviews...";
     if (segmentControl) segmentControl.style.display = "flex";
 
@@ -923,8 +1034,8 @@ function renderFeed() {
     } else {
       const coverUrl = optimizeArticleImageUrl(article.cover, isFeatured);
       const imagePriority = isFeatured ? `fetchpriority="high"` : `loading="lazy"`;
-      const imageSource = index > 3 ? `data-src="${coverUrl}"` : `src="${coverUrl}"`;
-      coverHtml = `<div class="card-cover"><img ${imageSource} alt="${article.title}" ${imagePriority} decoding="async"></div>`;
+      const imageSource = index > 8 ? `data-src="${coverUrl}"` : `src="${coverUrl}"`;
+      coverHtml = `<div class="card-cover"><img ${imageSource} alt="${article.title}" ${imagePriority} decoding="async" onerror="this.closest('.card-cover').classList.add('missing-cover'); this.remove();"></div>`;
     }
 
     html += `
@@ -985,6 +1096,21 @@ function renderFeed() {
       card.style.setProperty("--mouse-y", `${y}px`);
     });
   });
+}
+
+function getCategoryTitle(category) {
+  return RSS_CATEGORY_LABELS[category] || `${category.charAt(0).toUpperCase()}${category.slice(1)}`;
+}
+
+function getCategoryHeading(category) {
+  const headings = {
+    technology: "Latest Mac News",
+    design: "Latest Games",
+    science: "Mac Reviews",
+    culture: "Latest macOS Apps",
+    ai: "Apple Intelligence News for macOS"
+  };
+  return headings[category] || `${getCategoryTitle(category)} Stories`;
 }
 
 // Toggle Article Bookmark
@@ -1123,7 +1249,7 @@ function pushNotification(title, message, options = {}) {
 // --- 6. Quick Look Article Reader View Actions ---
 let currentFontSizeClass = "font-size-medium";
 
-function openArticle(id) {
+async function openArticle(id) {
   const article = articles.find(a => a.id === id);
   if (!article) return;
 
@@ -1138,6 +1264,7 @@ function openArticle(id) {
   document.getElementById("reader-date").textContent = article.date;
   document.getElementById("reader-avatar").textContent = article.avatar;
   document.getElementById("reader-text").innerHTML = stripSourceLinks(article.content);
+  expandReaderArticleContent(article);
   const originalLink = document.getElementById("reader-open-original");
   if (originalLink) originalLink.href = article.sourceUrl;
 
@@ -1264,6 +1391,78 @@ function openArticle(id) {
       }
     };
   }
+}
+
+async function expandReaderArticleContent(article) {
+  if (!article || article.expandedContent || !needsExpandedArticleContent(article.content)) return;
+
+  try {
+    const response = await fetchDevProxy(article.sourceUrl);
+    if (!response.ok) return;
+
+    const html = await response.text();
+    const expanded = buildSourceArticleContent(html, article.sourceUrl, article.sourceName);
+    if (!expanded || !isExpandedArticleContentBetter(article.content, expanded)) return;
+
+    article.expandedContent = expanded;
+    article.content = expanded;
+
+    if (selectedArticleId === article.id) {
+      const readerText = document.getElementById("reader-text");
+      if (readerText) {
+        readerText.innerHTML = stripSourceLinks(expanded);
+        updateReaderReadTime(article);
+      }
+    }
+  } catch (error) {
+    console.warn(`Article expansion failed for ${article.sourceName}`, error);
+  }
+}
+
+function needsExpandedArticleContent(html) {
+  const doc = parseRSSHTML(stripSourceLinks(html || ""));
+  const paragraphCount = doc.querySelectorAll("p").length;
+  const wordCount = getWordCount(doc.body.textContent || "");
+  return paragraphCount < 3 || wordCount < 120;
+}
+
+function isExpandedArticleContentBetter(currentHTML, expandedHTML) {
+  return getWordCount(stripHTML(expandedHTML)) > Math.max(120, getWordCount(stripHTML(currentHTML)) * 1.5);
+}
+
+function buildSourceArticleContent(html, link, sourceName) {
+  const doc = parseRSSHTML(html);
+  const root = [
+    "article [itemprop='articleBody']",
+    ".container.med.post-content",
+    ".post-content",
+    ".entry-content",
+    "article .entry-content",
+    "article .post-content",
+    "article .article-content",
+    "article .c-entry-content",
+    "article .story-body",
+    "article",
+    "main"
+  ].map(selector => doc.querySelector(selector)).find(Boolean);
+
+  const blocks = extractReadableBlocks(root);
+  if (blocks.length === 0) return "";
+
+  return `${blocks.map(block => `<${block.tag}>${block.text}</${block.tag}>`).join("")}<p><a href="${link}" target="_blank" rel="noopener">Source: ${sourceName}</a></p>`;
+}
+
+function updateReaderReadTime(article) {
+  const richtext = document.getElementById("reader-text");
+  const metaLine = document.getElementById("reader-editorial-meta");
+  if (!richtext || !metaLine) return;
+
+  const readTime = Math.ceil(getWordCount(richtext.textContent || "") / 200) || 1;
+  metaLine.innerHTML = `By <span style="font-weight: 700;">${article.author}</span> &bull; ${article.date} &bull; ${readTime} min read`;
+}
+
+function getWordCount(text) {
+  return (text || "").trim().split(/\s+/).filter(Boolean).length;
 }
 
 function stripSourceLinks(content) {
@@ -5110,7 +5309,7 @@ function bindEvents() {
         currentCategory = "all"; // Reset category filters on core library shift
         if (appTitle) {
           appTitle.textContent = 
-            navType === "today" ? "Today's Stories" :
+            navType === "today" ? "Today's Overview" :
             navType === "bookmarks" ? "Bookmarked Stories" :
             navType === "queue" ? "Reading Queue" : "My Custom Stories";
         }
@@ -5119,8 +5318,7 @@ function bindEvents() {
         currentCategory = categoryType;
         
         if (appTitle) {
-          appTitle.textContent = 
-            categoryType.charAt(0).toUpperCase() + categoryType.slice(1) + " Stories";
+          appTitle.textContent = getCategoryHeading(categoryType);
         }
       }
 
@@ -5128,7 +5326,7 @@ function bindEvents() {
       const sidebar = document.getElementById("sidebar");
       if (sidebar) sidebar.classList.remove("mobile-open");
 
-      visibleArticlesCount = 6;
+      visibleArticlesCount = 9;
       renderFeed();
     });
   });
@@ -5140,7 +5338,7 @@ function bindEvents() {
       currentCategory = "all";
       currentLibrary = "today";
       searchQuery = "";
-      visibleArticlesCount = 6;
+      visibleArticlesCount = 9;
       
       const searchInput = document.getElementById("story-search");
       if (searchInput) searchInput.value = "";
@@ -5153,7 +5351,7 @@ function bindEvents() {
       if (todayNav) todayNav.classList.add("active");
       
       const appTitle = document.querySelector(".app-title");
-      if (appTitle) appTitle.textContent = "Today's Stories";
+      if (appTitle) appTitle.textContent = "Today's Overview";
 
       renderFeed();
     });
@@ -5232,7 +5430,7 @@ function bindEvents() {
     searchInput.addEventListener("input", (e) => {
       const val = e.target.value;
       searchQuery = val;
-      visibleArticlesCount = 6;
+      visibleArticlesCount = 9;
       
       if (val.trim() !== "") {
         clearSearchBtn.classList.remove("hidden");
@@ -5260,7 +5458,7 @@ function bindEvents() {
       searchInput.value = "";
       searchQuery = "";
       clearSearchBtn.classList.add("hidden");
-      visibleArticlesCount = 6;
+      visibleArticlesCount = 9;
 
       if (currentApp === "news" || currentApp === "reviews") {
         renderFeed();
@@ -6015,10 +6213,70 @@ function bindEvents() {
     playGlassChime();
     closeSpotlight();
 
+    const openUtilityWindow = (utility) => {
+      if (utility === "terminal") {
+        const win = document.getElementById("terminal-window");
+        if (win) {
+          win.classList.remove("hidden-window", "minimized");
+          addAppToDock("terminal");
+          bringWindowToFront(win);
+          const input = document.getElementById("terminal-input");
+          if (input) input.focus();
+        }
+      } else if (utility === "calculator") {
+        const win = document.getElementById("calculator-window");
+        if (win) {
+          win.classList.remove("hidden-window", "minimized");
+          addAppToDock("calculator");
+          bringWindowToFront(win);
+        }
+      } else if (utility === "textedit") {
+        openTextEditFile({ name: "Untitled.txt", content: "" });
+      } else if (utility === "account") {
+        openAccountWindow();
+      } else if (utility === "settings") {
+        openSpotlightSettingsTab("wallpaper");
+      }
+    };
+
+    const runSpotlightCommand = (command) => {
+      if (command === "new-note") {
+        openTextEditFile({ name: `Untitled ${Date.now()}.txt`, content: "" });
+      } else if (command === "refresh-news") {
+        loadNewsFromRSS();
+        pushNotification("News Refresh Started", "Latest stories are being loaded.");
+      } else if (command === "refresh-games") {
+        loadAllGamesData({ force: true });
+        pushNotification("SteamDB Refresh Started", "Latest game data is being loaded.");
+      } else if (command === "open-launchpad") {
+        toggleLaunchpad();
+      } else if (command === "open-editor") {
+        openStoryEditor();
+      } else if (command === "lock") {
+        lockSystem();
+      }
+    };
+
     if (item.type === "story") {
       openArticle(item.value);
     } else if (item.type === "app") {
       switchApp(item.value);
+    } else if (item.type === "utility") {
+      openUtilityWindow(item.value);
+    } else if (item.type === "note") {
+      const note = getNotesData().find(n => n.id === item.value);
+      if (note) openTextEditFile(note);
+    } else if (item.type === "settings-tab") {
+      openSpotlightSettingsTab(item.value);
+    } else if (item.type === "wallpaper") {
+      if (item.value === "gaming-cycle") {
+        refreshGamingWallpaper({ notify: true });
+      } else {
+        setWallpaper(item.value);
+        pushNotification("Wallpaper Changed", `Desktop wallpaper set to ${item.title}.`);
+      }
+    } else if (item.type === "command") {
+      runSpotlightCommand(item.value);
     } else if (item.type === "steam-game") {
       switchApp("games");
       openSteamGameDetail(item.value);
@@ -6048,6 +6306,39 @@ function bindEvents() {
         goForward();
       }
     }
+  };
+
+  const openSpotlightSettingsTab = (tab) => {
+    const settingsWin = document.getElementById("settings-window");
+    if (!settingsWin) return;
+    settingsWin.classList.remove("hidden-window", "minimized");
+    bringWindowToFront(settingsWin);
+    const indicator = document.getElementById("dock-settings-indicator");
+    if (indicator) indicator.classList.add("active-dot");
+    document.querySelectorAll(".settings-sidebar .sidebar-item").forEach(item => {
+      const isTarget = item.getAttribute("data-settings-tab") === tab;
+      item.classList.toggle("active", isTarget);
+    });
+    document.querySelectorAll(".settings-content .settings-pane").forEach(pane => {
+      pane.classList.remove("active");
+    });
+    const targetPane = document.getElementById(`pane-${tab}`);
+    if (targetPane) targetPane.classList.add("active");
+  };
+
+  const getSpotlightWallpaperItems = () => {
+    return [...document.querySelectorAll(".wallpaper-card[data-wallpaper]")].map(card => {
+      const value = card.getAttribute("data-wallpaper");
+      const label = card.querySelector(".wallpaper-label span")?.textContent.trim() ||
+        card.querySelector(".wallpaper-label")?.textContent.trim();
+      return {
+        title: label,
+        desc: "Set desktop wallpaper",
+        value,
+        type: "wallpaper",
+        icon: value === "gaming-cycle" ? "🎮" : "🖼️"
+      };
+    });
   };
 
   const renderSpotlightResults = (categories) => {
@@ -6107,15 +6398,31 @@ function bindEvents() {
     const q = spotlightInput.value.toLowerCase().trim();
     spotlightResults = [];
     
+    const matchesSpotlightQuery = (item) => {
+      const text = `${item.title} ${item.desc} ${item.keywords || ""}`.toLowerCase();
+      return text.includes(q);
+    };
+
     const apps = [
-      { title: "News & Stories", desc: "Explore apple news and dynamic updates", value: "news", type: "app", icon: "📰" },
-      { title: "SteamDB Games", desc: "Track sales and active steam database apps", value: "games", type: "app", icon: "🎮" },
-      { title: "App Store", desc: "Download verified system tools and simulated apps", value: "app-store", type: "app", icon: "💎" },
-      { title: "Finder & Files", desc: "Browse folders, local file lists, and desktop files", value: "finder", type: "app", icon: "📂" },
-      { title: "Crossover Update", desc: "Check system updates, packages, and crossover details", value: "crossover", type: "app", icon: "🧪" }
+      { title: "News & Stories", desc: "Explore Apple news and dynamic updates", value: "news", type: "app", icon: "📰", keywords: "today articles stories reviews headlines rss" },
+      { title: "SteamDB Games", desc: "Track sales and active Steam database apps", value: "games", type: "app", icon: "🎮", keywords: "games steam gaming database mac games" },
+      { title: "App Store", desc: "Download verified system tools and simulated apps", value: "app-store", type: "app", icon: "💎", keywords: "store apps downloads software" },
+      { title: "Finder & Files", desc: "Browse folders, local file lists, and desktop files", value: "finder", type: "app", icon: "📂", keywords: "files folders finder desktop" },
+      { title: "Crossover Update", desc: "Check system updates, packages, and crossover details", value: "crossover", type: "app", icon: "🧪", keywords: "updates bottles crossover wine" }
+    ];
+
+    const utilities = [
+      { title: "System Settings", desc: "Open wallpaper, general, and accessibility controls", value: "settings", type: "utility", icon: "⚙️", keywords: "settings preferences wallpaper appearance accessibility" },
+      { title: "User Account", desc: "Open account, hardware profile, and security details", value: "account", type: "utility", icon: "👤", keywords: "account profile hardware passkey security sign out" },
+      { title: "Notes", desc: "Open Notes and text files", value: "textedit", type: "utility", icon: "📝", keywords: "notes textedit text file writing" },
+      { title: "Terminal", desc: "Open the command line simulator", value: "terminal", type: "utility", icon: "▣", keywords: "terminal command shell console" },
+      { title: "Calculator", desc: "Open calculator", value: "calculator", type: "utility", icon: "🧮", keywords: "calculator math numbers" }
     ];
 
     const settings = [
+      { title: "Wallpaper Settings", desc: "Open the wallpaper picker", value: "wallpaper", type: "settings-tab", icon: "🖼️", keywords: "desktop background gaming wallpaper" },
+      { title: "General Settings", desc: "Open appearance, theme, language, and display controls", value: "general", type: "settings-tab", icon: "⚙️", keywords: "appearance accent theme language dark mode" },
+      { title: "Accessibility Settings", desc: "Open text size, motion, and contrast controls", value: "accessibility", type: "settings-tab", icon: "◐", keywords: "accessibility text size reduce motion contrast" },
       { title: "Toggle Dark Mode", desc: "Toggle light-mode or dark-mode layout instantly", value: "darkmode", type: "system", icon: "🌗" },
       { title: "Toggle Night Light", desc: "Switch eye-strain warmth overlay filter", value: "nightlight", type: "system", icon: "🔆" },
       { title: "Switch View Layout", desc: "Cycle between Grid Gallery and List details", value: "layout", type: "system", icon: "🎛️" },
@@ -6130,8 +6437,21 @@ function bindEvents() {
       { title: "Go Forward", desc: "Navigate forward in browser simulation history", value: "forward", type: "system", icon: "▶️" }
     ];
 
+    const commands = [
+      { title: "New Note", desc: "Create a blank note", value: "new-note", type: "command", icon: "✎", keywords: "notes create write textedit" },
+      { title: "Refresh News", desc: "Reload latest news stories", value: "refresh-news", type: "command", icon: "↻", keywords: "rss stories reload articles" },
+      { title: "Refresh Steam Games", desc: "Reload SteamDB game data", value: "refresh-games", type: "command", icon: "↻", keywords: "games steam reload refresh" },
+      { title: "Open Launchpad", desc: "Show all apps", value: "open-launchpad", type: "command", icon: "▦", keywords: "apps launcher launchpad grid" },
+      { title: "Open Story Editor", desc: "Create or edit a story card", value: "open-editor", type: "command", icon: "✚", keywords: "story article editor create" },
+      { title: "Lock Screen", desc: "Lock MacReady", value: "lock", type: "command", icon: "⌘", keywords: "lock screen secure" }
+    ];
+
     const matchedApps = [];
+    const matchedUtilities = [];
+    const matchedNotes = [];
+    const matchedWallpaper = [];
     const matchedSettings = [];
+    const matchedCommands = [];
     const matchedStories = [];
     const matchedSteamGames = [];
     const matchedStoreApps = [];
@@ -6145,15 +6465,47 @@ function bindEvents() {
     } else {
       // Filter Apps
       apps.forEach(app => {
-        if (app.title.toLowerCase().includes(q) || app.desc.toLowerCase().includes(q)) {
+        if (matchesSpotlightQuery(app)) {
           matchedApps.push(app);
+        }
+      });
+
+      utilities.forEach(utility => {
+        if (matchesSpotlightQuery(utility)) {
+          matchedUtilities.push(utility);
+        }
+      });
+
+      getNotesData().forEach(note => {
+        const noteText = `${note.name} ${note.content || ""}`.toLowerCase();
+        if (noteText.includes(q)) {
+          const cleanContent = (note.content || "").replace(/[\n\r]+/g, " ").trim();
+          matchedNotes.push({
+            title: note.name,
+            desc: cleanContent ? cleanContent.substring(0, 72) : "Open note",
+            value: note.id,
+            type: "note",
+            icon: "📝"
+          });
+        }
+      });
+
+      getSpotlightWallpaperItems().forEach(wallpaper => {
+        if (matchesSpotlightQuery(wallpaper)) {
+          matchedWallpaper.push(wallpaper);
         }
       });
 
       // Filter Settings
       settings.forEach(setting => {
-        if (setting.title.toLowerCase().includes(q) || setting.desc.toLowerCase().includes(q)) {
+        if (matchesSpotlightQuery(setting)) {
           matchedSettings.push(setting);
+        }
+      });
+
+      commands.forEach(command => {
+        if (matchesSpotlightQuery(command)) {
+          matchedCommands.push(command);
         }
       });
 
@@ -6165,7 +6517,7 @@ function bindEvents() {
               (article.category && article.category.toLowerCase().includes(q))) {
             matchedStories.push({
               title: article.title,
-              desc: `${article.author} · ${article.category.toUpperCase()}`,
+              desc: `${article.author} · ${getCategoryTitle(article.category)}`,
               value: article.id,
               type: "story",
               icon: "📰"
@@ -6232,12 +6584,20 @@ function bindEvents() {
     if (q) {
       if (matchedApps.length > 0) {
         bestMatch = matchedApps[0];
+      } else if (matchedUtilities.length > 0) {
+        bestMatch = matchedUtilities[0];
+      } else if (matchedNotes.length > 0) {
+        bestMatch = matchedNotes[0];
+      } else if (matchedWallpaper.length > 0) {
+        bestMatch = matchedWallpaper[0];
+      } else if (matchedSettings.length > 0) {
+        bestMatch = matchedSettings[0];
+      } else if (matchedCommands.length > 0) {
+        bestMatch = matchedCommands[0];
       } else if (matchedStoreApps.length > 0) {
         bestMatch = matchedStoreApps[0];
       } else if (matchedSteamGames.length > 0) {
         bestMatch = matchedSteamGames[0];
-      } else if (matchedSettings.length > 0) {
-        bestMatch = matchedSettings[0];
       } else if (matchedStories.length > 0) {
         bestMatch = matchedStories[0];
       }
@@ -6259,6 +6619,39 @@ function bindEvents() {
           items: items.length > 0 ? items : matchedApps
         });
         finalResults = finalResults.concat(items.length > 0 ? items : matchedApps);
+      }
+    }
+
+    if (matchedUtilities.length > 0) {
+      const items = matchedUtilities.filter(x => x !== bestMatch);
+      if (items.length > 0 || !bestMatch) {
+        categories.push({
+          title: "Utilities",
+          items: items.length > 0 ? items : matchedUtilities
+        });
+        finalResults = finalResults.concat(items.length > 0 ? items : matchedUtilities);
+      }
+    }
+
+    if (matchedNotes.length > 0) {
+      const items = matchedNotes.filter(x => x !== bestMatch);
+      if (items.length > 0 || !bestMatch) {
+        categories.push({
+          title: "Notes",
+          items: items.length > 0 ? items : matchedNotes
+        });
+        finalResults = finalResults.concat(items.length > 0 ? items : matchedNotes);
+      }
+    }
+
+    if (matchedWallpaper.length > 0) {
+      const items = matchedWallpaper.filter(x => x !== bestMatch);
+      if (items.length > 0 || !bestMatch) {
+        categories.push({
+          title: "Wallpapers",
+          items: items.length > 0 ? items : matchedWallpaper
+        });
+        finalResults = finalResults.concat(items.length > 0 ? items : matchedWallpaper);
       }
     }
 
@@ -6299,10 +6692,21 @@ function bindEvents() {
       const items = matchedSettings.filter(x => x !== bestMatch);
       if (items.length > 0 || !bestMatch) {
         categories.push({
-          title: "System Actions",
+          title: "Settings",
           items: items.length > 0 ? items : matchedSettings
         });
         finalResults = finalResults.concat(items.length > 0 ? items : matchedSettings);
+      }
+    }
+
+    if (matchedCommands.length > 0) {
+      const items = matchedCommands.filter(x => x !== bestMatch);
+      if (items.length > 0 || !bestMatch) {
+        categories.push({
+          title: "Actions",
+          items: items.length > 0 ? items : matchedCommands
+        });
+        finalResults = finalResults.concat(items.length > 0 ? items : matchedCommands);
       }
     }
 

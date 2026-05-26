@@ -1141,6 +1141,10 @@ body.light-mode .news-card:hover {
   background: #121217;
 }
 
+.card-cover.missing-cover {
+  background: linear-gradient(135deg, rgba(var(--accent-color-rgb), 0.65), rgba(18, 18, 28, 0.94));
+}
+
 .card-cover img {
   width: 100%;
   height: 100%;
@@ -1271,7 +1275,7 @@ body.light-mode .card-source {
   line-height: 1.45;
   margin-bottom: 16px;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1339,7 +1343,7 @@ body.light-mode .card-source {
   font-size: 14px;
   line-height: 1.45;
   margin-bottom: 16px;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 4;
 }
 
 .news-grid:not(.list-view) .news-card.featured .card-author-row {
