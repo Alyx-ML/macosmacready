@@ -334,10 +334,13 @@ function getRSSNodeText(item, selector) {
   return item.querySelector(selector)?.textContent?.trim() || "";
 }
 
+function parseRSSHTML(html) {
+  return new DOMParser().parseFromString(html || "", "text/html");
+}
+
 function stripHTML(html) {
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = html || "";
-  return wrapper.textContent.replace(/\s+/g, " ").trim();
+  const doc = parseRSSHTML(html);
+  return doc.body.textContent.replace(/\s+/g, " ").trim();
 }
 
 function buildRSSSubtitle(html) {
@@ -345,15 +348,14 @@ function buildRSSSubtitle(html) {
 }
 
 function buildRSSArticleContent(html, link, sourceName) {
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = html || "";
-  wrapper.querySelectorAll("img, figure, script, style").forEach(node => node.remove());
-  const textBlocks = [...wrapper.querySelectorAll("p, li")]
+  const doc = parseRSSHTML(html);
+  doc.querySelectorAll("img, figure, script, style").forEach(node => node.remove());
+  const textBlocks = [...doc.querySelectorAll("p, li")]
     .map(node => node.textContent.replace(/\s+/g, " ").trim())
     .filter(Boolean);
   const rawParagraphs = textBlocks.length > 0
     ? textBlocks
-    : [wrapper.textContent.replace(/\s+/g, " ").trim()].filter(Boolean);
+    : [doc.body.textContent.replace(/\s+/g, " ").trim()].filter(Boolean);
   const paragraphs = rawParagraphs.flatMap(splitLongArticleParagraph);
 
   return `${paragraphs.map(text => `<p>${text}</p>`).join("")}<p><a href="${link}" target="_blank" rel="noopener">Source: ${sourceName}</a></p>`;
@@ -389,9 +391,8 @@ function extractRSSImage(item, html) {
 }
 
 function extractRSSImageFromHTML(html) {
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = html || "";
-  const imgSrc = wrapper.querySelector("img")?.getAttribute("src");
+  const doc = parseRSSHTML(html);
+  const imgSrc = doc.querySelector("img")?.getAttribute("src");
   return imgSrc || "preset-1";
 }
 
@@ -1249,8 +1250,7 @@ function openArticle(id) {
 }
 
 function stripSourceLinks(content) {
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = content;
+  const wrapper = parseRSSHTML(content).body;
   wrapper.querySelectorAll("a").forEach(link => {
     if (link.textContent.trim().toLowerCase().startsWith("source:")) {
       const paragraph = link.closest("p");
@@ -1751,15 +1751,15 @@ async function updateCrossoverFeeds() {
         const creator = item.querySelector("creator")?.textContent || item.querySelector("author")?.textContent || "CodeWeavers Staff";
         const description = item.querySelector("description")?.textContent || "";
         
-        const tempDiv = document.createElement("div");
-        tempDiv.innerHTML = description;
-        const excerpt = tempDiv.textContent.slice(0, 140) + "...";
+        const tempDoc = parseRSSHTML(description);
+        const excerpt = tempDoc.body.textContent.slice(0, 140) + "...";
         
         // Find standard cover image from content or description
         let image = "https://media.codeweavers.com/pub/crossover/website/images/og-images/blog_og_1200x630.png";
-        const firstImg = tempDiv.querySelector("img");
-        if (firstImg && firstImg.src) {
-          image = firstImg.src;
+        const firstImg = tempDoc.querySelector("img");
+        const firstImgSrc = firstImg?.getAttribute("src");
+        if (firstImgSrc) {
+          image = firstImgSrc;
           // Clean up relative paths
           if (image.startsWith("/")) {
             image = "https://www.codeweavers.com" + image;
