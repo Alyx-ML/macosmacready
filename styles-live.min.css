@@ -8429,10 +8429,10 @@ body.light-mode .glass-select-option:hover {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  background: rgba(0, 0, 0, 0.03);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
+  background: rgba(5, 8, 18, 0.14);
+  backdrop-filter: blur(7px) saturate(112%);
+  -webkit-backdrop-filter: blur(7px) saturate(112%);
+  transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.32s;
 }
 
 #siri-focus-backdrop.show {
@@ -8447,9 +8447,9 @@ body.light-mode .glass-select-option:hover {
   right: 16px;
   bottom: auto !important;
   left: auto !important;
-  transform: translateY(-10px) scale(0.98);
+  transform: translateY(-16px) scale(0.96);
   transform-origin: top right;
-  width: 380px;
+  width: 320px;
   max-height: calc(100vh - 74px);
   border-radius: 16px;
   padding: 10px 12px 12px;
@@ -8457,9 +8457,9 @@ body.light-mode .glass-select-option:hover {
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
-  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-              transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), 
-              visibility 0.22s;
+  transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.34s cubic-bezier(0.16, 1, 0.3, 1), 
+              visibility 0.32s;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -8469,6 +8469,10 @@ body.light-mode .glass-select-option:hover {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+#siri-hud .siri-titlebar {
+  display: none !important;
 }
 
 #siri-hud.show {

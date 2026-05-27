@@ -10665,7 +10665,7 @@ function positionSiriHud() {
   if (!siriHud || !siriToggle) return;
 
   const rect = siriToggle.getBoundingClientRect();
-  const panelWidth = Math.min(380, window.innerWidth - 24);
+  const panelWidth = Math.min(320, window.innerWidth - 24);
   const right = Math.max(12, window.innerWidth - rect.right);
   const top = Math.max(34, rect.bottom + 8);
 
