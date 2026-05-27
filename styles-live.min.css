@@ -8429,9 +8429,7 @@ body.light-mode .glass-select-option:hover {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  background: rgba(5, 8, 18, 0.14);
-  backdrop-filter: blur(7px) saturate(112%);
-  -webkit-backdrop-filter: blur(7px) saturate(112%);
+  background: transparent;
   transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.32s;
 }
 
@@ -8439,6 +8437,20 @@ body.light-mode .glass-select-option:hover {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+}
+
+#siri-focus-backdrop::before {
+  content: "";
+  position: fixed;
+  top: var(--siri-focus-top, 38px);
+  right: var(--siri-focus-right, 16px);
+  width: var(--siri-focus-width, 320px);
+  height: var(--siri-focus-height, 250px);
+  border-radius: 20px;
+  background: rgba(5, 8, 18, 0.12);
+  backdrop-filter: blur(6px) saturate(112%);
+  -webkit-backdrop-filter: blur(6px) saturate(112%);
+  pointer-events: none;
 }
 
 #siri-hud {

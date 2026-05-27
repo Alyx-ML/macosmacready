@@ -10662,6 +10662,7 @@ function closeSiriHud() {
 function positionSiriHud() {
   const siriHud = document.getElementById("siri-hud");
   const siriToggle = document.getElementById("menu-siri-toggle");
+  const siriBackdrop = document.getElementById("siri-focus-backdrop");
   if (!siriHud || !siriToggle) return;
 
   const rect = siriToggle.getBoundingClientRect();
@@ -10672,6 +10673,13 @@ function positionSiriHud() {
   siriHud.style.width = `${panelWidth}px`;
   siriHud.style.top = `${top}px`;
   siriHud.style.right = `${right}px`;
+
+  if (siriBackdrop) {
+    siriBackdrop.style.setProperty("--siri-focus-top", `${Math.max(0, top - 8)}px`);
+    siriBackdrop.style.setProperty("--siri-focus-right", `${Math.max(0, right - 8)}px`);
+    siriBackdrop.style.setProperty("--siri-focus-width", `${panelWidth + 16}px`);
+    siriBackdrop.style.setProperty("--siri-focus-height", `${Math.min(340, window.innerHeight - top - 18)}px`);
+  }
 }
 
 function animateSiriWave() {
