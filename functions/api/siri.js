@@ -1,0 +1,150 @@
+const AI_MODEL = "@cf/openai/gpt-oss-20b";
+
+const WEATHER_CODES = {
+  0: "clear",
+  1: "mainly clear",
+  2: "partly cloudy",
+  3: "overcast",
+  45: "foggy",
+  48: "foggy",
+  51: "light drizzle",
+  53: "drizzle",
+  55: "heavy drizzle",
+  61: "light rain",
+  63: "rain",
+  65: "heavy rain",
+  71: "light snow",
+  73: "snow",
+  75: "heavy snow",
+  80: "light showers",
+  81: "showers",
+  82: "heavy showers",
+  95: "thunderstorms"
+};
+
+export async function onRequestPost({ request, env }) {
+  const body = await request.json().catch(() => ({}));
+  const message = String(body.message || "").trim().slice(0, 1200);
+  const context = body.context && typeof body.context === "object" ? body.context : {};
+
+  if (!message) {
+    return json({ reply: "Ask me a question or tell me what you want to do." }, 400);
+  }
+
+  if (isWeatherQuery(message)) {
+    return json({ reply: await answerWeather(message, request) });
+  }
+
+  if (!env.AI) {
+    return json({ reply: "Siri AI is not configured yet. Add a Cloudflare Workers AI binding named AI." }, 500);
+  }
+
+  const result = await env.AI.run(AI_MODEL, {
+    instructions: [
+      "You are Siri inside MacReady, a macOS-style web desktop.",
+      "Answer in plain language. Be concise, helpful, and calm.",
+      "Do not pretend to have live data unless it is provided in the context.",
+      "If the user asks for current weather, tell them to include a city if no city was provided.",
+      "Use the app context only when it helps."
+    ].join(" "),
+    input: `Context: ${JSON.stringify(context).slice(0, 2500)}\n\nUser: ${message}`,
+    max_tokens: 320,
+    temperature: 0.4
+  });
+
+  return json({ reply: extractAiText(result) });
+}
+
+export function onRequestGet() {
+  return json({ reply: "Siri is ready. Send a POST request with a message." });
+}
+
+function json(payload, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8"
+    }
+  });
+}
+
+function extractAiText(result) {
+  if (typeof result?.response === "string") return result.response.trim();
+  if (typeof result?.text === "string") return result.text.trim();
+  if (typeof result?.output_text === "string") return result.output_text.trim();
+  if (Array.isArray(result?.output)) {
+    const text = result.output
+      .flatMap(item => item.content || [])
+      .map(part => part.text || part.content || "")
+      .join("")
+      .trim();
+    if (text) return text;
+  }
+  if (Array.isArray(result?.result?.response)) return result.result.response.join("").trim();
+  return "I could not produce a response.";
+}
+
+function isWeatherQuery(message) {
+  return /\b(weather|forecast|temperature|raining|rain today|sunny today)\b/i.test(message);
+}
+
+async function answerWeather(message, request) {
+  const explicitLocation = extractWeatherLocation(message);
+  const location = explicitLocation
+    ? await geocodeLocation(explicitLocation)
+    : getCloudflareLocation(request);
+
+  if (!location) {
+    return "Tell me the city, for example: weather in London.";
+  }
+
+  const forecastUrl = new URL("https://api.open-meteo.com/v1/forecast");
+  forecastUrl.searchParams.set("latitude", location.latitude);
+  forecastUrl.searchParams.set("longitude", location.longitude);
+  forecastUrl.searchParams.set("current", "temperature_2m,apparent_temperature,weather_code,wind_speed_10m");
+  forecastUrl.searchParams.set("timezone", "auto");
+
+  const forecast = await fetch(forecastUrl).then(response => response.json());
+  const current = forecast.current;
+
+  if (!current) {
+    return `I could not get the weather for ${location.name}.`;
+  }
+
+  const condition = WEATHER_CODES[current.weather_code] || "mixed conditions";
+  return `Weather in ${location.name}: ${Math.round(current.temperature_2m)}°C and ${condition}. It feels like ${Math.round(current.apparent_temperature)}°C, with wind around ${Math.round(current.wind_speed_10m)} km/h.`;
+}
+
+function extractWeatherLocation(message) {
+  const match = message.match(/\b(?:weather|forecast|temperature)(?:\s+today)?\s+(?:in|for|at)\s+([a-zA-Z\s,.'-]{2,80})/i);
+  return match ? match[1].replace(/[?.!]+$/, "").trim() : "";
+}
+
+async function geocodeLocation(name) {
+  const geocodeUrl = new URL("https://geocoding-api.open-meteo.com/v1/search");
+  geocodeUrl.searchParams.set("name", name);
+  geocodeUrl.searchParams.set("count", "1");
+  geocodeUrl.searchParams.set("language", "en");
+  geocodeUrl.searchParams.set("format", "json");
+
+  const data = await fetch(geocodeUrl).then(response => response.json());
+  const place = data?.results?.[0];
+  if (!place) return null;
+
+  return {
+    name: [place.name, place.admin1, place.country].filter(Boolean).join(", "),
+    latitude: String(place.latitude),
+    longitude: String(place.longitude)
+  };
+}
+
+function getCloudflareLocation(request) {
+  const cf = request.cf || {};
+  if (!cf.latitude || !cf.longitude) return null;
+
+  return {
+    name: [cf.city, cf.region, cf.country].filter(Boolean).join(", ") || "your area",
+    latitude: String(cf.latitude),
+    longitude: String(cf.longitude)
+  };
+}

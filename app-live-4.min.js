@@ -10931,6 +10931,74 @@ function startVoiceVolumeMonitor() {
   }, 100);
 }
 
+async function requestCloudflareSiri(query) {
+  const response = await fetch("/api/siri", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: query,
+      context: getSiriAssistantContext()
+    })
+  });
+
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload?.reply || "Siri could not reach the AI service.");
+  }
+
+  return {
+    text: payload.reply || "I could not produce a response."
+  };
+}
+
+function getSiriAssistantContext() {
+  const visibleArticles = articles
+    .filter(shouldRenderArticle)
+    .slice(0, 8)
+    .map(article => ({
+      title: article.title,
+      source: article.sourceName,
+      category: getCategoryTitle(article.category || "technology")
+    }));
+
+  const visibleGames = gamesCache
+    .slice(0, 8)
+    .map(game => ({
+      name: game.name,
+      genres: game.genres || [],
+      rating: game.macRating || game.rating || ""
+    }));
+
+  return {
+    app: currentApp,
+    category: currentCategory,
+    library: currentLibrary,
+    articles: visibleArticles,
+    games: visibleGames,
+    signedIn: isSignedIn,
+    username: currentUser?.username || "Guest"
+  };
+}
+
+function renderSiriResponse(response, responseText) {
+  siriWaveState = "speaking";
+
+  if (responseText) {
+    responseText.style.display = "block";
+    typewriterEffect(responseText, response.text, () => {
+      siriWaveState = "listening";
+    });
+  }
+
+  if (response.action) {
+    setTimeout(() => {
+      response.action();
+    }, 500);
+  }
+}
+
 function submitSiriQuery(query) {
   const statusText = document.getElementById("siri-status-text");
   const responseText = document.getElementById("siri-response-text");
@@ -10947,23 +11015,23 @@ function submitSiriQuery(query) {
   }
   if (siriInput) siriInput.value = "";
 
-  setTimeout(() => {
-    const response = processSiriCommand(query);
-    siriWaveState = "speaking";
-    
-    if (responseText) {
-      responseText.style.display = "block";
-      typewriterEffect(responseText, response.text, () => {
-        // Once done speaking, return waves to listening/idle state
-        siriWaveState = "listening";
-      });
+  setTimeout(async () => {
+    const localResponse = processSiriCommand(query);
+
+    if (!localResponse.needsAI) {
+      renderSiriResponse(localResponse, responseText);
+      return;
     }
-    
-    // Execute OS Action trigger if present
-    if (response.action) {
-      setTimeout(() => {
-        response.action();
-      }, 500);
+
+    if (statusText) statusText.textContent = "Thinking...";
+
+    try {
+      const aiResponse = await requestCloudflareSiri(query);
+      renderSiriResponse(aiResponse, responseText);
+    } catch (error) {
+      renderSiriResponse({
+        text: error?.message || "Siri could not reach the AI service."
+      }, responseText);
     }
   }, 280);
 }
@@ -11150,18 +11218,18 @@ function processSiriCommand(rawQuery) {
 
   if (includesAny(["hello", "hi ", "hey siri"])) {
     return {
-      text: "Hi. Ask me to open an app, search stories, search games, or change settings."
+      needsAI: true
     };
   }
 
   if (articleQuery) {
     return {
-      text: `No exact match for "${articleQuery}". Try a story title, game name, app name, setting, or action.`
+      needsAI: true
     };
   }
 
   return {
-    text: "Ask me to open an app, search news, search games, open settings, or change appearance."
+    needsAI: true
   };
 }
 
