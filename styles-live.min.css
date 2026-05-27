@@ -8442,11 +8442,11 @@ body.light-mode .glass-select-option:hover {
 #siri-hud {
   position: fixed;
   top: 38px;
-  right: 16px;
+  right: auto !important;
   bottom: auto !important;
-  left: auto !important;
-  transform: translateY(-16px) scale(0.96);
-  transform-origin: top right;
+  left: 0;
+  transform: none !important;
+  transform-origin: top center;
   width: 320px;
   max-height: calc(100vh - 74px);
   border-radius: 16px;
@@ -8455,9 +8455,7 @@ body.light-mode .glass-select-option:hover {
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
-  transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), 
-              transform 0.34s cubic-bezier(0.16, 1, 0.3, 1), 
-              visibility 0.32s;
+  transition: opacity 0.24s ease, visibility 0.24s ease;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -8467,6 +8465,11 @@ body.light-mode .glass-select-option:hover {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  will-change: opacity, transform;
+}
+
+#siri-hud.siri-positioning {
+  transition: none !important;
 }
 
 #siri-hud .siri-titlebar {
@@ -8476,7 +8479,7 @@ body.light-mode .glass-select-option:hover {
 #siri-hud.show {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0) scale(1);
+  transform: none !important;
   pointer-events: auto;
 }
 

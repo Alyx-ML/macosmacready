@@ -10601,16 +10601,19 @@ function openSiriHud() {
 
   siriActive = true;
   closeAllDropdowns();
+  siriHud.classList.remove("show");
+  siriHud.classList.add("siri-positioning");
   positionSiriHud();
   if (siriBackdrop) {
-    siriBackdrop.classList.remove("hidden-window");
     void siriBackdrop.offsetWidth;
     siriBackdrop.classList.add("show");
   }
-  siriHud.classList.remove("hidden-window");
-  // Force reflow
   void siriHud.offsetWidth;
-  siriHud.classList.add("show");
+  requestAnimationFrame(() => {
+    if (!siriActive) return;
+    siriHud.classList.remove("siri-positioning");
+    siriHud.classList.add("show");
+  });
 
   if (siriStatus) {
     siriStatus.textContent = "What would you like to do?";
@@ -10647,14 +10650,10 @@ function closeSiriHud() {
 
   setTimeout(() => {
     if (!siriActive) {
-      siriHud.classList.add("hidden-window");
       if (siriWaveId) {
         cancelAnimationFrame(siriWaveId);
         siriWaveId = null;
       }
-    }
-    if (!siriActive && siriBackdrop) {
-      siriBackdrop.classList.add("hidden-window");
     }
   }, 350);
 }
@@ -10666,12 +10665,16 @@ function positionSiriHud() {
 
   const rect = siriToggle.getBoundingClientRect();
   const panelWidth = Math.min(320, window.innerWidth - 24);
-  const right = Math.max(12, window.innerWidth - rect.right);
+  const left = Math.min(
+    Math.max(12, rect.left + rect.width / 2 - panelWidth / 2),
+    window.innerWidth - panelWidth - 12
+  );
   const top = Math.max(34, rect.bottom + 8);
 
   siriHud.style.width = `${panelWidth}px`;
   siriHud.style.top = `${top}px`;
-  siriHud.style.right = `${right}px`;
+  siriHud.style.setProperty("left", `${left}px`, "important");
+  siriHud.style.setProperty("right", "auto", "important");
 }
 
 function animateSiriWave() {
