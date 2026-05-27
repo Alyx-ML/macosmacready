@@ -10951,7 +10951,7 @@ async function requestCloudflareSiri(query) {
   }
 
   return {
-    text: payload.reply || "I could not produce a response."
+    text: payload.reply || "Siri received an empty answer from the AI service."
   };
 }
 

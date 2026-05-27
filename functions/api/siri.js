@@ -118,7 +118,38 @@ function extractAiText(result) {
     if (text) return text;
   }
   if (Array.isArray(result?.result?.response)) return result.result.response.join("").trim();
-  return "I could not produce a response.";
+  const nestedText = findGeneratedText(result);
+  if (nestedText) return nestedText;
+  return "Siri received the request, but the AI service returned an empty answer.";
+}
+
+function findGeneratedText(value, key = "", depth = 0) {
+  if (depth > 5 || value == null) return "";
+
+  if (typeof value === "string") {
+    const usefulKey = /^(response|text|content|output_text|answer)$/i.test(key);
+    return usefulKey && value.trim() ? value.trim() : "";
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const text = findGeneratedText(item, key, depth + 1);
+      if (text) return text;
+    }
+    return "";
+  }
+
+  if (typeof value === "object") {
+    const preferredKeys = ["response", "text", "content", "output_text", "answer", "message", "choices", "output", "result"];
+    for (const preferredKey of preferredKeys) {
+      if (preferredKey in value) {
+        const text = findGeneratedText(value[preferredKey], preferredKey, depth + 1);
+        if (text) return text;
+      }
+    }
+  }
+
+  return "";
 }
 
 function isWeatherQuery(message) {
