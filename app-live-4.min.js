@@ -49,7 +49,7 @@ const RSS_CATEGORY_LABELS = {
   culture: "Apps",
   ai: "Apple Intelligence"
 };
-const GENERATED_NEWS_URL = "data/news.generated.json";
+const GENERATED_NEWS_URL = "public/data/news.generated.json";
 
 function fetchDevProxy(url) {
   const isLocalDev = ["localhost", "127.0.0.1"].includes(window.location.hostname);
