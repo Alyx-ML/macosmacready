@@ -10762,9 +10762,10 @@ async function toggleSiriMic() {
     }
   };
 
-  recognition.onerror = () => {
+  recognition.onerror = (event) => {
+    const message = getSiriVoiceErrorMessage(event?.error);
     stopSiriSpeechRecognition();
-    if (statusText) statusText.textContent = "Voice input needs microphone permission.";
+    if (statusText) statusText.textContent = message;
   };
 
   recognition.onend = () => {
@@ -10772,13 +10773,55 @@ async function toggleSiriMic() {
   };
 
   try {
+    await startSiriMicStream();
     recognition.start();
   } catch (error) {
     console.error("Speech recognition error:", error);
     stopSiriSpeechRecognition();
     micEnabled = false;
     micBtn.classList.remove("active");
+    if (statusText) statusText.textContent = getSiriVoiceErrorMessage(error?.name || error?.message);
   }
+}
+
+async function startSiriMicStream() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    throw new Error("media-devices-unavailable");
+  }
+
+  if (micStream && micAnalyser && micDataArray) return;
+
+  micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  micContext = new (window.AudioContext || window.webkitAudioContext)();
+  if (micContext.state === "suspended") {
+    await micContext.resume();
+  }
+
+  const source = micContext.createMediaStreamSource(micStream);
+  micAnalyser = micContext.createAnalyser();
+  micAnalyser.fftSize = 256;
+  micDataArray = new Uint8Array(micAnalyser.frequencyBinCount);
+  source.connect(micAnalyser);
+}
+
+function getSiriVoiceErrorMessage(errorCode = "") {
+  const code = String(errorCode).toLowerCase();
+  if (code.includes("not-allowed") || code.includes("service-not-allowed") || code.includes("permission")) {
+    return "Voice input needs microphone permission.";
+  }
+  if (code.includes("audio-capture") || code.includes("notfound") || code.includes("notreadable")) {
+    return "No microphone is available.";
+  }
+  if (code.includes("no-speech")) {
+    return "I didn't catch that.";
+  }
+  if (code.includes("network")) {
+    return "Voice recognition could not connect.";
+  }
+  if (code.includes("media-devices-unavailable")) {
+    return "Voice input is not available in this browser.";
+  }
+  return "Voice input stopped.";
 }
 
 function stopSiriSpeechRecognition() {
