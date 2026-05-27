@@ -1,4 +1,4 @@
-const AI_MODEL = "@cf/openai/gpt-oss-20b";
+const AI_MODEL = "@cf/moonshotai/kimi-k2.6";
 
 const WEATHER_CODES = {
   0: "clear",
@@ -40,14 +40,25 @@ export async function onRequestPost({ request, env }) {
   }
 
   const result = await env.AI.run(AI_MODEL, {
-    instructions: [
-      "You are Siri inside MacReady, a macOS-style web desktop.",
-      "Answer in plain language. Be concise, helpful, and calm.",
-      "Do not pretend to have live data unless it is provided in the context.",
-      "If the user asks for current weather, tell them to include a city if no city was provided.",
-      "Use the app context only when it helps."
-    ].join(" "),
-    input: `Context: ${JSON.stringify(context).slice(0, 2500)}\n\nUser: ${message}`,
+    messages: [
+      {
+        role: "system",
+        content: [
+          "You are Siri inside MacReady, a macOS-style web desktop.",
+          "Answer in plain language. Be concise, helpful, and calm.",
+          "Start directly with the answer.",
+          "Do not describe the user's request.",
+          "Do not include reasoning, analysis, or hidden notes.",
+          "Do not pretend to have live data unless it is provided in the context.",
+          "If the user asks for current weather, tell them to include a city if no city was provided.",
+          "Use the app context only when it helps."
+        ].join(" ")
+      },
+      {
+        role: "user",
+        content: `Context: ${JSON.stringify(context).slice(0, 2500)}\n\nUser: ${message}`
+      }
+    ],
     max_tokens: 320,
     temperature: 0.4
   });
@@ -72,6 +83,16 @@ function extractAiText(result) {
   if (typeof result?.response === "string") return result.response.trim();
   if (typeof result?.text === "string") return result.text.trim();
   if (typeof result?.output_text === "string") return result.output_text.trim();
+  if (typeof result?.content === "string") return result.content.trim();
+  if (typeof result?.message?.content === "string") return result.message.content.trim();
+  if (typeof result?.choices?.[0]?.message?.content === "string") return result.choices[0].message.content.trim();
+  if (typeof result?.choices?.[0]?.text === "string") return result.choices[0].text.trim();
+  if (typeof result?.result?.response === "string") return result.result.response.trim();
+  if (typeof result?.result?.text === "string") return result.result.text.trim();
+  if (typeof result?.result?.content === "string") return result.result.content.trim();
+  if (typeof result?.result?.choices?.[0]?.message?.content === "string") {
+    return result.result.choices[0].message.content.trim();
+  }
   if (Array.isArray(result?.output)) {
     const text = result.output
       .flatMap(item => item.content || [])
@@ -117,7 +138,7 @@ async function answerWeather(message, request) {
 
 function extractWeatherLocation(message) {
   const match = message.match(/\b(?:weather|forecast|temperature)(?:\s+today)?\s+(?:in|for|at)\s+([a-zA-Z\s,.'-]{2,80})/i);
-  return match ? match[1].replace(/[?.!]+$/, "").trim() : "";
+  return match ? match[1].replace(/\btoday\b/gi, "").replace(/[?.!]+$/, "").trim() : "";
 }
 
 async function geocodeLocation(name) {
