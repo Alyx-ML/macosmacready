@@ -10497,7 +10497,7 @@ const SIRI_SPEECH_LANG = "en-US";
 function initSiriAssistant() {
   const siriToggle = document.getElementById("menu-siri-toggle");
   const siriHud = document.getElementById("siri-hud");
-  const siriClose = document.getElementById("siri-hud-close");
+  const siriBackdrop = document.getElementById("siri-focus-backdrop");
   const siriInput = document.getElementById("siri-input");
   const siriMicToggle = document.getElementById("siri-mic-toggle");
   const siriSuggestions = document.querySelectorAll(".siri-suggestions .siri-tag");
@@ -10547,8 +10547,8 @@ function initSiriAssistant() {
     });
   }
 
-  if (siriClose) {
-    siriClose.addEventListener("click", () => {
+  if (siriBackdrop) {
+    siriBackdrop.addEventListener("click", () => {
       closeSiriHud();
     });
   }
@@ -10584,10 +10584,15 @@ function initSiriAssistant() {
       }
     });
   }
+
+  window.addEventListener("resize", () => {
+    if (siriActive) positionSiriHud();
+  });
 }
 
 function openSiriHud() {
   const siriHud = document.getElementById("siri-hud");
+  const siriBackdrop = document.getElementById("siri-focus-backdrop");
   const siriStatus = document.getElementById("siri-status-text");
   const siriResponse = document.getElementById("siri-response-text");
   const siriInput = document.getElementById("siri-input");
@@ -10596,6 +10601,12 @@ function openSiriHud() {
 
   siriActive = true;
   closeAllDropdowns();
+  positionSiriHud();
+  if (siriBackdrop) {
+    siriBackdrop.classList.remove("hidden-window");
+    void siriBackdrop.offsetWidth;
+    siriBackdrop.classList.add("show");
+  }
   siriHud.classList.remove("hidden-window");
   // Force reflow
   void siriHud.offsetWidth;
@@ -10622,10 +10633,12 @@ function openSiriHud() {
 
 function closeSiriHud() {
   const siriHud = document.getElementById("siri-hud");
+  const siriBackdrop = document.getElementById("siri-focus-backdrop");
   if (!siriHud) return;
 
   siriActive = false;
   siriHud.classList.remove("show");
+  if (siriBackdrop) siriBackdrop.classList.remove("show");
   disableMicStream();
   if (siriVoiceMonitorInterval) {
     clearInterval(siriVoiceMonitorInterval);
@@ -10640,7 +10653,25 @@ function closeSiriHud() {
         siriWaveId = null;
       }
     }
+    if (!siriActive && siriBackdrop) {
+      siriBackdrop.classList.add("hidden-window");
+    }
   }, 350);
+}
+
+function positionSiriHud() {
+  const siriHud = document.getElementById("siri-hud");
+  const siriToggle = document.getElementById("menu-siri-toggle");
+  if (!siriHud || !siriToggle) return;
+
+  const rect = siriToggle.getBoundingClientRect();
+  const panelWidth = Math.min(380, window.innerWidth - 24);
+  const right = Math.max(12, window.innerWidth - rect.right);
+  const top = Math.max(34, rect.bottom + 8);
+
+  siriHud.style.width = `${panelWidth}px`;
+  siriHud.style.top = `${top}px`;
+  siriHud.style.right = `${right}px`;
 }
 
 function animateSiriWave() {

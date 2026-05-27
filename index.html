@@ -2327,18 +2327,10 @@
       </div>
     </div>
 
-    <!-- Centered macOS Siri HUD Panel -->
-    <div id="siri-hud" class="liquid-glass">
-      <!-- Traffic Light Close Button & Window Control -->
-      <div class="siri-titlebar" style="display: flex; align-items: center; justify-content: space-between; padding: 0 0 12px 0; border-bottom: none; user-select: none;">
-        <div class="traffic-lights" style="display: flex; gap: 8px;">
-          <button class="traffic-light red" id="siri-hud-close" title="Close" style="background: #ff5f56 !important; width: 12px !important; height: 12px !important; border-radius: 50% !important; border: none !important; cursor: pointer !important;"></button>
-          <button class="traffic-light yellow" style="background: #ffbd2e !important; width: 12px !important; height: 12px !important; border-radius: 50% !important; border: none !important; opacity: 0.5 !important; pointer-events: none !important;"></button>
-          <button class="traffic-light green" style="background: #27c93f !important; width: 12px !important; height: 12px !important; border-radius: 50% !important; border: none !important; opacity: 0.5 !important; pointer-events: none !important;"></button>
-        </div>
-        <div class="window-title" aria-hidden="true"></div>
-      </div>
+    <div id="siri-focus-backdrop" aria-hidden="true"></div>
 
+    <!-- macOS Siri HUD Panel -->
+    <div id="siri-hud" class="liquid-glass">
       <!-- Cohesive System Accent Glow Orb -->
       <div class="siri-glow-orb" style="background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 70%);"></div>
       
@@ -2391,6 +2383,6 @@
     </div>
 
   <!-- Client-side logic loader -->
-  <script defer src="app-live-4.min.js?v=siri-layout-voice-3"></script>
+  <script defer src="app-live-4.min.js?v=siri-popover-4"></script>
 </body>
 </html>
