@@ -10491,6 +10491,7 @@ let micEnabled = false;
 let siriSpeechRecognition = null;
 let siriActive = false;
 let siriVoiceMonitorInterval = null;
+const SIRI_SPEECH_LANG = "en-US";
 
 function initSiriAssistant() {
   const siriToggle = document.getElementById("menu-siri-toggle");
@@ -10736,7 +10737,7 @@ async function toggleSiriMic() {
 
   const recognition = new SpeechRecognition();
   siriSpeechRecognition = recognition;
-  recognition.lang = "en-GB";
+  recognition.lang = SIRI_SPEECH_LANG;
   recognition.continuous = false;
   recognition.interimResults = true;
   recognition.maxAlternatives = 1;
@@ -10774,6 +10775,7 @@ async function toggleSiriMic() {
 
   try {
     await startSiriMicStream();
+    await prepareSiriSpeechRecognition(SpeechRecognition, recognition, statusText);
     recognition.start();
   } catch (error) {
     console.error("Speech recognition error:", error);
@@ -10782,6 +10784,32 @@ async function toggleSiriMic() {
     micBtn.classList.remove("active");
     if (statusText) statusText.textContent = getSiriVoiceErrorMessage(error?.name || error?.message);
   }
+}
+
+async function prepareSiriSpeechRecognition(SpeechRecognition, recognition, statusText) {
+  if (!("processLocally" in recognition)) return;
+
+  recognition.processLocally = true;
+
+  if (typeof SpeechRecognition.available !== "function") return;
+
+  const availability = await SpeechRecognition.available({
+    langs: [SIRI_SPEECH_LANG],
+    processLocally: true
+  });
+
+  if (availability === "available") return;
+
+  if ((availability === "downloadable" || availability === "downloading") && typeof SpeechRecognition.install === "function") {
+    if (statusText) statusText.textContent = "Preparing voice recognition...";
+    await SpeechRecognition.install({
+      langs: [SIRI_SPEECH_LANG],
+      processLocally: true
+    });
+    return;
+  }
+
+  throw new Error("local-speech-unavailable");
 }
 
 async function startSiriMicStream() {
@@ -10817,6 +10845,9 @@ function getSiriVoiceErrorMessage(errorCode = "") {
   }
   if (code.includes("network")) {
     return "Voice recognition could not connect.";
+  }
+  if (code.includes("local-speech-unavailable")) {
+    return "Local voice recognition is not available.";
   }
   if (code.includes("media-devices-unavailable")) {
     return "Voice input is not available in this browser.";

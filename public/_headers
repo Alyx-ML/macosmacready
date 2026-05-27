@@ -1,2 +1,2 @@
 /*
-  Permissions-Policy: microphone=(self)
+  Permissions-Policy: microphone=(self), on-device-speech-recognition=(self)
