@@ -5,6 +5,7 @@
   "main": "index.html",
   "scripts": {
     "dev": "vite",
+    "news:update": "cargo run --manifest-path tools/news_builder/Cargo.toml --release",
     "build": "vite build",
     "preview": "vite preview"
   },

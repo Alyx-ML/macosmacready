@@ -1,6 +1,7 @@
 node_modules/
 dist/
 dist_backup/
+tools/news_builder/target/
 .DS_Store
 *.log
 .env

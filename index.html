@@ -6,7 +6,30 @@
   <meta name="description" content="MacReady is a macOS-style hub for Apple news, Mac games, app discovery, reviews, and desktop utilities.">
   <title>MacReady</title>
   <script>
+    // Safe LocalStorage wrapper to prevent sandboxed browser environment crashes
+    (function() {
+      try {
+        localStorage.getItem("test");
+      } catch (e) {
+        const memoryStorage = {};
+        const mockStorage = {
+          getItem: function(key) { return memoryStorage[key] || null; },
+          setItem: function(key, value) { memoryStorage[key] = String(value); },
+          removeItem: function(key) { delete memoryStorage[key]; },
+          clear: function() { for (const k in memoryStorage) delete memoryStorage[k]; },
+          key: function(i) { return Object.keys(memoryStorage)[i] || null; },
+          get length() { return Object.keys(memoryStorage).length; }
+        };
+        Object.defineProperty(window, "localStorage", {
+          value: mockStorage,
+          writable: true,
+          configurable: true
+        });
+      }
+    })();
+
     const initialWallpaperName = localStorage.getItem("tahoe_wallpaper");
+    
     let initialGamingWallpaperSource = localStorage.getItem("tahoe_gaming_wallpaper_source");
     if (initialGamingWallpaperSource && !/^\d+$/.test(initialGamingWallpaperSource)) {
       localStorage.removeItem("tahoe_gaming_wallpaper_source");
@@ -22,7 +45,7 @@
   </script>
   <link rel="icon" type="image/webp" href="public/assets/imgs/finderfavicon.webp">
   <link rel="preload" as="image" href="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" imagesrcset="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp 960w, public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
-  <link rel="stylesheet" href="styles-live.min.css?v=heritage-previews-4">
+  <link rel="stylesheet" href="styles-live.min.css?v=settings-close-clean-1">
   <!-- Google Fonts for gorgeous typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -75,14 +98,23 @@
         
         <!-- Search icon -->
         <button class="menu-icon" id="menu-search-toggle" title="Spotlight Search">
-          <svg class="menu-search-icon" viewBox="0 0 16 16" aria-hidden="true">
-            <circle cx="7" cy="7" r="4.45"></circle>
-            <path d="M10.35 10.35L13.2 13.2"></path>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.4)); opacity: 0.95;">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
         </button>
         <!-- Control Center Button -->
         <button class="menu-icon" id="control-center-toggle" title="Control Center">
           <img src="public/assets/imgs/control-centre.svg" alt="Control Center" class="menu-icon-img">
+        </button>
+        <!-- Siri / Copilot Assistant Button -->
+        <button class="menu-icon" id="menu-siri-toggle" title="MacReady AI Assistant">
+          <svg class="menu-siri-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));">
+            <circle cx="12" cy="12" r="9" stroke="#ffffff" stroke-width="1.8" fill="rgba(255, 255, 255, 0.1)"></circle>
+            <path d="M8 12c.5-1.5 1.5-2.5 4-2.5s3.5 1 4 2.5-1.5 2.5-4 2.5-3.5-1-4-2.5z" stroke="#ffffff" stroke-width="1.2" fill="none" opacity="0.85"></path>
+            <path d="M10 12c.3-.8.8-1.2 2-1.2s1.7.4 2 1.2-.8 1.2-2 1.2-1.7-.4-2-1.2z" stroke="#ffffff" stroke-width="1" fill="none" opacity="0.6"></path>
+            <circle cx="12" cy="12" r="1.5" fill="#ffffff"></circle>
+          </svg>
         </button>
         <!-- Time and Date (Clickable to open Notifications / Widgets) -->
         <button class="menu-item" id="date-time-toggle" aria-live="polite"></button>
@@ -309,10 +341,7 @@
                   Apps
                 </li>
                 <li class="sidebar-item" data-category="ai">
-                  <svg class="category-symbol-icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-                    <path d="M12 3.35c2.25 0 3.35 2.55 2.2 4.25 1.7-1.15 4.25-.05 4.25 2.2 0 1.75-1.65 2.75-3.25 2.2 1.6.55 3.25 1.55 3.25 3.3 0 2.25-2.55 3.35-4.25 2.2 1.15 1.7.05 4.25-2.2 4.25s-3.35-2.55-2.2-4.25c-1.7 1.15-4.25.05-4.25-2.2 0-1.75 1.65-2.75 3.25-3.3-1.6.55-3.25-.45-3.25-2.2 0-2.25 2.55-3.35 4.25-2.2C8.65 5.9 9.75 3.35 12 3.35Z"></path>
-                    <circle cx="12" cy="12" r="1.85"></circle>
-                  </svg>
+                  <img class="category-symbol-icon apple-intelligence-symbol" src="assets/imgs/icons8-apple-intelligence-30.svg" alt="" aria-hidden="true">
                   Apple Intelligence
                 </li>
               </ul>
@@ -486,19 +515,40 @@
               </h4>
               <ul class="sidebar-menu" id="games-compat-menu">
                 <li class="sidebar-item active" data-game-compat="all">
-                  <span class="dot-category design"></span>
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                  </svg>
                   All Games
                 </li>
                 <li class="sidebar-item" data-game-compat="native">
-                  <span class="dot-category tech"></span>
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                    <rect x="9" y="9" width="6" height="6"></rect>
+                    <line x1="9" y1="1" x2="9" y2="4"></line>
+                    <line x1="15" y1="1" x2="15" y2="4"></line>
+                    <line x1="9" y1="20" x2="9" y2="23"></line>
+                    <line x1="15" y1="20" x2="15" y2="23"></line>
+                    <line x1="20" y1="9" x2="23" y2="9"></line>
+                    <line x1="20" y1="15" x2="23" y2="15"></line>
+                    <line x1="1" y1="9" x2="4" y2="9"></line>
+                    <line x1="1" y1="15" x2="4" y2="15"></line>
+                  </svg>
                   Native
                 </li>
                 <li class="sidebar-item" data-game-compat="perfect">
-                  <span class="dot-category science"></span>
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="m9 12 2 2 4-4"></path>
+                  </svg>
                   Perfect
                 </li>
                 <li class="sidebar-item" data-game-compat="playable">
-                  <span class="dot-category culture"></span>
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                  </svg>
                   Playable
                 </li>
               </ul>
@@ -513,31 +563,57 @@
               </h4>
               <ul class="sidebar-menu" id="games-genre-menu">
                 <li class="sidebar-item active" data-game-genre="all">
-                  <span class="dot-category design" style="background-color: var(--accent-color);"></span>
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="6" width="20" height="12" rx="3"></rect>
+                    <path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"></path>
+                  </svg>
                   All Genres
                 </li>
                 <li class="sidebar-item" data-game-genre="Action">
-                  <span class="dot-category tech" style="background-color: #ff2d55;"></span>
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"></polyline>
+                    <line x1="13" y1="19" x2="19" y2="13"></line>
+                    <line x1="16" y1="16" x2="20" y2="20"></line>
+                    <line x1="19" y1="21" x2="21" y2="19"></line>
+                  </svg>
                   Action
                 </li>
                 <li class="sidebar-item" data-game-genre="RPG">
-                  <span class="dot-category culture" style="background-color: #ff9500;"></span>
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
                   RPG
                 </li>
                 <li class="sidebar-item" data-game-genre="Adventure">
-                  <span class="dot-category science" style="background-color: #5856d6;"></span>
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                  </svg>
                   Adventure
                 </li>
                 <li class="sidebar-item" data-game-genre="Strategy">
-                  <span class="dot-category design" style="background-color: #007aff;"></span>
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z"></path>
+                    <path d="M5 20h14"></path>
+                  </svg>
                   Strategy
                 </li>
                 <li class="sidebar-item" data-game-genre="Simulation">
-                  <span class="dot-category build" style="background-color: #ffcc00;"></span>
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                  </svg>
                   Simulation
                 </li>
                 <li class="sidebar-item" data-game-genre="Sports">
-                  <span class="dot-category sport" style="background-color: #4cd964;"></span>
+                  <svg class="sidebar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                    <path d="M4 22h16"></path>
+                    <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"></path>
+                    <path d="M12 2a6 6 0 0 1 6 6v3.34c0 3.2-2.5 5.86-5.7 6.02L12 17.5l-.3-.14C8.5 17.2 6 14.54 6 11.34V8a6 6 0 0 1 6-6z"></path>
+                  </svg>
                   Sports
                 </li>
               </ul>
@@ -2003,6 +2079,19 @@
                 </select>
               </div>
             </div>
+
+            <!-- Siri Assistant Toggle settings -->
+            <div class="settings-section" style="margin-top: 18px;">
+              <h3 class="section-title">AI Assistant</h3>
+              <p class="section-subtitle">Show or hide the MacReady AI Assistant from the top menu bar.</p>
+              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 14px;">
+                <span style="font-size: 13px; font-weight: 500; color: inherit;">Show Assistant in Menu Bar</span>
+                <label class="macos-switch">
+                  <input type="checkbox" id="settings-siri-toggle-switch" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+            </div>
           </div>
           
           <!-- Accessibility Pane -->
@@ -2238,7 +2327,70 @@
       </div>
     </div>
 
+    <!-- Centered macOS Siri HUD Panel -->
+    <div id="siri-hud" class="liquid-glass">
+      <!-- Traffic Light Close Button & Window Control -->
+      <div class="siri-titlebar" style="display: flex; align-items: center; justify-content: space-between; padding: 0 0 12px 0; border-bottom: none; user-select: none;">
+        <div class="traffic-lights" style="display: flex; gap: 8px;">
+          <button class="traffic-light red" id="siri-hud-close" title="Close" style="background: #ff5f56 !important; width: 12px !important; height: 12px !important; border-radius: 50% !important; border: none !important; cursor: pointer !important;"></button>
+          <button class="traffic-light yellow" style="background: #ffbd2e !important; width: 12px !important; height: 12px !important; border-radius: 50% !important; border: none !important; opacity: 0.5 !important; pointer-events: none !important;"></button>
+          <button class="traffic-light green" style="background: #27c93f !important; width: 12px !important; height: 12px !important; border-radius: 50% !important; border: none !important; opacity: 0.5 !important; pointer-events: none !important;"></button>
+        </div>
+        <div class="window-title" aria-hidden="true"></div>
+      </div>
+
+      <!-- Cohesive System Accent Glow Orb -->
+      <div class="siri-glow-orb" style="background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 70%);"></div>
+      
+      <!-- Unified Clean Wave Animation Canvas -->
+      <div class="siri-wave-container">
+        <svg class="siri-wave-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="wave-accent-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="rgba(255, 255, 255, 0)" />
+              <stop offset="50%" stop-color="rgba(255, 255, 255, 0.95)" />
+              <stop offset="100%" stop-color="rgba(255, 255, 255, 0)" />
+            </linearGradient>
+            <linearGradient id="wave-accent-grad-sub" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="rgba(255, 255, 255, 0)" />
+              <stop offset="50%" stop-color="rgba(255, 255, 255, 0.55)" />
+              <stop offset="100%" stop-color="rgba(255, 255, 255, 0)" />
+            </linearGradient>
+          </defs>
+          <path id="wave-path-1" d="M 0 60 Q 100 60 200 60 T 400 60" fill="none" stroke="url(#wave-accent-grad)" stroke-width="2.5"></path>
+          <path id="wave-path-2" d="M 0 60 Q 100 60 200 60 T 400 60" fill="none" stroke="url(#wave-accent-grad-sub)" stroke-width="1.8" opacity="0.6"></path>
+          <path id="wave-path-3" d="M 0 60 Q 100 60 200 60 T 400 60" fill="none" stroke="url(#wave-accent-grad)" stroke-width="1.2" opacity="0.4"></path>
+        </svg>
+      </div>
+
+      <!-- Conversational Content Display -->
+      <div class="siri-content">
+        <div class="siri-status" id="siri-status-text">How can I help you, Guest?</div>
+        <div class="siri-response" id="siri-response-text" style="display: none;"></div>
+        
+        <!-- Input Group -->
+        <div class="siri-input-group">
+          <input type="text" id="siri-input" placeholder="Ask or search..." autocomplete="off">
+          <button class="siri-mic-btn" id="siri-mic-toggle" title="Enable Voice Mode">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="22"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Quick Help Suggestions -->
+        <div class="siri-suggestions">
+          <span class="siri-tag" data-query="Search Mac news">Search News</span>
+          <span class="siri-tag" data-query="Open Games">Open Games</span>
+          <span class="siri-tag" data-query="Open Wallpaper Settings">Wallpaper</span>
+          <span class="siri-tag" data-query="What can you do?">Help</span>
+        </div>
+      </div>
+    </div>
+
   <!-- Client-side logic loader -->
-  <script defer src="app-live-4.min.js?v=apple-intelligence-1"></script>
+  <script defer src="app-live-4.min.js?v=news-json-pipeline-1"></script>
 </body>
 </html>
