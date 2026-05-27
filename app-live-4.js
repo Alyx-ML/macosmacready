@@ -10931,8 +10931,10 @@ function startVoiceVolumeMonitor() {
   }, 100);
 }
 
+const SIRI_API_ENDPOINT = "https://macosmacready.fpt4g789c6.workers.dev/api/siri";
+
 async function requestCloudflareSiri(query) {
-  const response = await fetch("/api/siri", {
+  const response = await fetch(SIRI_API_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -10977,8 +10979,8 @@ function getSiriAssistantContext() {
     library: currentLibrary,
     articles: visibleArticles,
     games: visibleGames,
-    signedIn: isSignedIn,
-    username: currentUser?.username || "Guest"
+    signedIn: currentUsername !== "Guest",
+    username: currentUsername || "Guest"
   };
 }
 

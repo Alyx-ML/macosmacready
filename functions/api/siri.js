@@ -70,13 +70,29 @@ export function onRequestGet() {
   return json({ reply: "Siri is ready. Send a POST request with a message." });
 }
 
+export function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders()
+  });
+}
+
 function json(payload, status = 200) {
   return new Response(JSON.stringify(payload), {
     status,
     headers: {
-      "Content-Type": "application/json; charset=utf-8"
+      "Content-Type": "application/json; charset=utf-8",
+      ...corsHeaders()
     }
   });
+}
+
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "https://alyx-ml.github.io",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type"
+  };
 }
 
 function extractAiText(result) {

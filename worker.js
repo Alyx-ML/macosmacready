@@ -5,6 +5,11 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/api/siri") {
+      if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: {
+        "Access-Control-Allow-Origin": "https://alyx-ml.github.io",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      } });
       if (request.method === "POST") return siriPost({ request, env });
       if (request.method === "GET") return siriGet();
       return new Response("Method Not Allowed", { status: 405 });
