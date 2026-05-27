@@ -11072,10 +11072,17 @@ function processSiriCommand(rawQuery) {
 
   const includesAny = (terms) => terms.some(term => q.includes(term));
   const searchText = rawQuery.replace(/\b(search|find|show me|look for|open)\b/gi, "").trim();
+  const isQuestion = /^(what|who|why|how|when|where|which|can|could|should|would|is|are|do|does|did)\b/i.test(rawQuery.trim()) || rawQuery.includes("?");
 
   if (includesAny(["what can you do", "help", "commands"])) {
     return {
       text: "I can open apps, search stories, search games, open settings, change appearance, refresh feeds, and open matching articles."
+    };
+  }
+
+  if (isQuestion) {
+    return {
+      needsAI: true
     };
   }
 
