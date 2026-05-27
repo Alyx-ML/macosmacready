@@ -10491,6 +10491,7 @@ let micEnabled = false;
 let siriSpeechRecognition = null;
 let siriActive = false;
 let siriVoiceMonitorInterval = null;
+let siriRecognitionStartTimer = null;
 const SIRI_SPEECH_LANG = "en-US";
 
 function initSiriAssistant() {
@@ -10743,6 +10744,7 @@ async function toggleSiriMic() {
   recognition.maxAlternatives = 1;
 
   recognition.onstart = () => {
+    clearSiriRecognitionStartTimer();
     micEnabled = true;
     micBtn.classList.add("active");
     if (statusText) statusText.textContent = "Listening...";
@@ -10776,6 +10778,13 @@ async function toggleSiriMic() {
   try {
     await startSiriMicStream();
     await prepareSiriSpeechRecognition(SpeechRecognition, recognition, statusText);
+    if (statusText) statusText.textContent = "Listening...";
+    siriRecognitionStartTimer = setTimeout(() => {
+      if (siriSpeechRecognition === recognition && !micEnabled) {
+        stopSiriSpeechRecognition();
+        if (statusText) statusText.textContent = "Voice recognition did not start.";
+      }
+    }, 3500);
     recognition.start();
   } catch (error) {
     console.error("Speech recognition error:", error);
@@ -10787,29 +10796,10 @@ async function toggleSiriMic() {
 }
 
 async function prepareSiriSpeechRecognition(SpeechRecognition, recognition, statusText) {
-  if (!("processLocally" in recognition)) return;
-
-  recognition.processLocally = true;
-
-  if (typeof SpeechRecognition.available !== "function") return;
-
-  const availability = await SpeechRecognition.available({
-    langs: [SIRI_SPEECH_LANG],
-    processLocally: true
-  });
-
-  if (availability === "available") return;
-
-  if ((availability === "downloadable" || availability === "downloading") && typeof SpeechRecognition.install === "function") {
-    if (statusText) statusText.textContent = "Preparing voice recognition...";
-    await SpeechRecognition.install({
-      langs: [SIRI_SPEECH_LANG],
-      processLocally: true
-    });
-    return;
+  if (statusText) statusText.textContent = "Preparing voice recognition...";
+  if ("processLocally" in recognition) {
+    recognition.processLocally = false;
   }
-
-  throw new Error("local-speech-unavailable");
 }
 
 async function startSiriMicStream() {
@@ -10857,6 +10847,7 @@ function getSiriVoiceErrorMessage(errorCode = "") {
 
 function stopSiriSpeechRecognition() {
   const micBtn = document.getElementById("siri-mic-toggle");
+  clearSiriRecognitionStartTimer();
   micEnabled = false;
   if (micBtn) micBtn.classList.remove("active");
   if (siriSpeechRecognition) {
@@ -10870,6 +10861,13 @@ function stopSiriSpeechRecognition() {
     }
   }
   disableMicStream();
+}
+
+function clearSiriRecognitionStartTimer() {
+  if (siriRecognitionStartTimer) {
+    clearTimeout(siriRecognitionStartTimer);
+    siriRecognitionStartTimer = null;
+  }
 }
 
 function disableMicStream() {
