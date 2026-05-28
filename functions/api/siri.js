@@ -184,6 +184,14 @@ function isWeatherQuery(message) {
 
 async function answerWeather(message, request) {
   const explicitLocation = extractWeatherLocation(message);
+  if (isCurrentLocationPhrase(explicitLocation)) {
+    const location = getCloudflareLocation(request);
+    if (!location) {
+      return "I could not detect your location. Tell me the city, for example: weather in London.";
+    }
+    return answerWeatherForLocation(location);
+  }
+
   if (!explicitLocation) {
     return "Tell me the city, for example: weather in London.";
   }
@@ -193,6 +201,10 @@ async function answerWeather(message, request) {
     return `I could not find the weather location ${explicitLocation}.`;
   }
 
+  return answerWeatherForLocation(location);
+}
+
+async function answerWeatherForLocation(location) {
   const forecastUrl = new URL("https://api.open-meteo.com/v1/forecast");
   forecastUrl.searchParams.set("latitude", location.latitude);
   forecastUrl.searchParams.set("longitude", location.longitude);
@@ -208,6 +220,10 @@ async function answerWeather(message, request) {
 
   const condition = WEATHER_CODES[current.weather_code] || "mixed conditions";
   return `Weather in ${location.name}: ${Math.round(current.temperature_2m)}°C and ${condition}. It feels like ${Math.round(current.apparent_temperature)}°C, with wind around ${Math.round(current.wind_speed_10m)} km/h.`;
+}
+
+function isCurrentLocationPhrase(value) {
+  return /^(my location|current location|my area|here|near me)$/i.test(String(value || "").trim());
 }
 
 function extractWeatherLocation(message) {
