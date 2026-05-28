@@ -28,15 +28,15 @@ export async function onRequestPost({ request, env }) {
   const context = body.context && typeof body.context === "object" ? body.context : {};
 
   if (!message) {
-    return json({ reply: "Ask me a question or tell me what you want to do." }, 400);
+    return json({ reply: "Ask me a question or tell me what you want to do." }, 400, request);
   }
 
   if (isWeatherQuery(message)) {
-    return json({ reply: await answerWeather(message, request) });
+    return json({ reply: await answerWeather(message, request) }, 200, request);
   }
 
   if (!env.AI) {
-    return json({ reply: "Siri AI is not configured yet. Add a Cloudflare Workers AI binding named AI." }, 500);
+    return json({ reply: "Siri AI is not configured yet. Add a Cloudflare Workers AI binding named AI." }, 500, request);
   }
 
   const result = await env.AI.run(AI_MODEL, {
@@ -63,36 +63,46 @@ export async function onRequestPost({ request, env }) {
     temperature: 0.4
   });
 
-  return json({ reply: extractAiText(result) });
+  return json({ reply: extractAiText(result) }, 200, request);
 }
 
 export function onRequestGet() {
   return json({ reply: "Siri is ready. Send a POST request with a message." });
 }
 
-export function onRequestOptions() {
+export function onRequestOptions({ request } = {}) {
   return new Response(null, {
     status: 204,
-    headers: corsHeaders()
+    headers: corsHeaders(request)
   });
 }
 
-function json(payload, status = 200) {
+function json(payload, status = 200, request) {
   return new Response(JSON.stringify(payload), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      ...corsHeaders()
+      ...corsHeaders(request)
     }
   });
 }
 
-function corsHeaders() {
+function corsHeaders(request) {
   return {
-    "Access-Control-Allow-Origin": "https://alyx-ml.github.io",
+    "Access-Control-Allow-Origin": getAllowedOrigin(request),
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type"
   };
+}
+
+function getAllowedOrigin(request) {
+  const origin = request?.headers?.get("Origin") || "";
+  const allowedOrigins = new Set([
+    "https://alyx-ml.github.io",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+  ]);
+  return allowedOrigins.has(origin) ? origin : "https://alyx-ml.github.io";
 }
 
 function extractAiText(result) {

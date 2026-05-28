@@ -7,7 +7,7 @@ export default {
 
     if (url.pathname === "/api/siri") {
       if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: {
-        "Access-Control-Allow-Origin": "https://alyx-ml.github.io",
+        "Access-Control-Allow-Origin": getAllowedOrigin(request),
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type"
       } });
@@ -17,7 +17,7 @@ export default {
     }
 
     if (url.pathname === "/api/transcribe") {
-      if (request.method === "OPTIONS") return transcribeOptions();
+      if (request.method === "OPTIONS") return transcribeOptions({ request });
       if (request.method === "POST") return transcribePost({ request, env });
       return new Response("Method Not Allowed", { status: 405 });
     }
@@ -25,3 +25,13 @@ export default {
     return env.ASSETS.fetch(request);
   }
 };
+
+function getAllowedOrigin(request) {
+  const origin = request.headers.get("Origin") || "";
+  const allowedOrigins = new Set([
+    "https://alyx-ml.github.io",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+  ]);
+  return allowedOrigins.has(origin) ? origin : "https://alyx-ml.github.io";
+}
