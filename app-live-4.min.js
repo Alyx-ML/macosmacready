@@ -1188,7 +1188,7 @@ function renderFeed() {
           <h3 class="card-title font-title">${article.title}</h3>
           <p class="card-excerpt">${article.subtitle}</p>
           <div class="card-meta">
-            <a class="card-source" href="${article.sourceUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Original Source: ${article.sourceName}</a>
+            <a class="card-source" href="${article.sourceUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${article.sourceName}</a>
             <span class="card-date">${article.date}</span>
           </div>
         </div>
