@@ -1,4 +1,4 @@
-const TRANSCRIBE_MODEL = "@cf/openai/whisper-large-v3-turbo";
+const TRANSCRIBE_MODEL = "@cf/openai/whisper";
 const MAX_AUDIO_BYTES = 8 * 1024 * 1024;
 
 export async function onRequestPost({ request, env }) {
@@ -14,9 +14,17 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Voice recording is too long." }, 413, request);
   }
 
-  const result = await env.AI.run(TRANSCRIBE_MODEL, {
-    audio: [...new Uint8Array(audioBuffer)]
-  });
+  let result;
+  try {
+    result = await env.AI.run(TRANSCRIBE_MODEL, {
+      audio: [...new Uint8Array(audioBuffer)]
+    });
+  } catch (error) {
+    return json({
+      error: "Voice transcription failed.",
+      detail: String(error?.message || error || "").slice(0, 240)
+    }, 502, request);
+  }
 
   const text = extractTranscriptionText(result);
   if (!text) {
