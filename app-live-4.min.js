@@ -11399,6 +11399,8 @@ let siriAudioChunks = [];
 let siriActive = false;
 let siriVoiceMonitorInterval = null;
 let siriRecordingStopTimer = null;
+let siriResponseTimer = null;
+let siriRequestId = 0;
 
 function initSiriAssistant() {
   const siriToggle = document.getElementById("menu-siri-toggle");
@@ -11546,6 +11548,11 @@ function closeSiriHud() {
   if (!siriHud) return;
 
   siriActive = false;
+  siriRequestId++;
+  if (siriResponseTimer) {
+    clearTimeout(siriResponseTimer);
+    siriResponseTimer = null;
+  }
   siriHud.classList.remove("show");
   if (siriBackdrop) siriBackdrop.classList.remove("show");
   cancelSiriVoiceRecording();
@@ -11957,18 +11964,21 @@ function getSiriAssistantContext() {
   };
 }
 
-function renderSiriResponse(response, responseText) {
+function renderSiriResponse(response, responseText, requestId = siriRequestId) {
+  if (requestId !== siriRequestId) return;
   siriWaveState = "speaking";
 
   if (responseText) {
     responseText.style.display = "block";
     typewriterEffect(responseText, response.text, () => {
+      if (requestId !== siriRequestId) return;
       siriWaveState = "listening";
-    });
+    }, requestId);
   }
 
   if (response.action) {
     setTimeout(() => {
+      if (requestId !== siriRequestId) return;
       response.action();
     }, 500);
   }
@@ -11981,6 +11991,12 @@ function submitSiriQuery(query) {
 
   if (!query || !query.trim()) return;
 
+  const requestId = ++siriRequestId;
+  if (siriResponseTimer) {
+    clearTimeout(siriResponseTimer);
+    siriResponseTimer = null;
+  }
+
   // Set Wave to Thinking
   siriWaveState = "thinking";
   if (statusText) statusText.textContent = `"${query}"`;
@@ -11991,10 +12007,11 @@ function submitSiriQuery(query) {
   if (siriInput) siriInput.value = "";
 
   setTimeout(async () => {
+    if (requestId !== siriRequestId) return;
     const localResponse = processSiriCommand(query);
 
     if (!localResponse.needsAI) {
-      renderSiriResponse(localResponse, responseText);
+      renderSiriResponse(localResponse, responseText, requestId);
       return;
     }
 
@@ -12002,11 +12019,11 @@ function submitSiriQuery(query) {
 
     try {
       const aiResponse = await requestCloudflareSiri(query);
-      renderSiriResponse(aiResponse, responseText);
+      renderSiriResponse(aiResponse, responseText, requestId);
     } catch (error) {
       renderSiriResponse({
         text: error?.message || "Siri could not reach the AI service."
-      }, responseText);
+      }, responseText, requestId);
     }
   }, 280);
 }
@@ -12235,17 +12252,23 @@ function triggerCompatSidebarFilter(compatName) {
   });
 }
 
-function typewriterEffect(element, text, callback) {
+function typewriterEffect(element, text, callback, requestId = siriRequestId) {
+  if (siriResponseTimer) {
+    clearTimeout(siriResponseTimer);
+    siriResponseTimer = null;
+  }
   element.textContent = "";
   let i = 0;
   const speed = 25; // 25ms per character typing speed
   
   function type() {
+    if (requestId !== siriRequestId) return;
     if (i < text.length) {
       element.textContent += text.charAt(i);
       i++;
-      setTimeout(type, speed);
+      siriResponseTimer = setTimeout(type, speed);
     } else {
+      siriResponseTimer = null;
       if (callback) callback();
     }
   }
