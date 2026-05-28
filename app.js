@@ -1106,10 +1106,15 @@ function renderFeed() {
           <h3 class="card-title font-title">${article.title}</h3>
           <p class="card-excerpt">${article.subtitle}</p>
           
-          <div class="card-author-row">
+          <div class="card-author-row" style="margin-bottom: 8px;">
             <div class="card-avatar">${article.avatar}</div>
             <span class="card-author-name">${article.author}</span>
           </div>
+
+          <a href="${article.sourceUrl}" target="_blank" rel="noopener" class="btn-read-more-glass" onclick="event.stopPropagation()">
+            <span>Read More</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.75; vertical-align: middle;"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+          </a>
         </div>
       </article>
     `;
@@ -1307,6 +1312,8 @@ function openArticle(id) {
   document.getElementById("reader-text").innerHTML = stripSourceLinks(article.content);
   const originalLink = document.getElementById("reader-open-original");
   if (originalLink) originalLink.href = article.sourceUrl;
+  const heroReadMore = document.getElementById("reader-hero-read-more");
+  if (heroReadMore) heroReadMore.href = article.sourceUrl;
 
   // Reset font class
   const richtext = document.getElementById("reader-text");
@@ -1417,11 +1424,7 @@ function openArticle(id) {
       }
       lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
 
-      // 2. Scroll fading for subtitle and metadata line (over first 120px)
-      const fadePercent = Math.min(currentScroll / 120, 1);
-      const opacityVal = 1 - fadePercent;
-      if (subtitleEl) subtitleEl.style.opacity = opacityVal;
-      if (metaLine) metaLine.style.opacity = opacityVal * 0.65;
+
 
       // 3. Scroll progress
       const totalHeight = bodyPane.scrollHeight - bodyPane.clientHeight;

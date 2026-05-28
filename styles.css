@@ -658,6 +658,9 @@ body.light-mode .window-titlebar {
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s;
 }
+.toolbar-btn[hidden] {
+  display: none !important;
+}
 .toolbar-btn:hover {
   background: var(--bg-glass-hover);
 }
@@ -1109,7 +1112,7 @@ body.light-mode .sidebar-item.active .apple-intelligence-symbol {
   display: flex;
   flex-direction: column;
   position: relative;
-  min-height: 320px;
+  min-height: 355px;
 }
 body.light-mode .news-card {
   background: rgba(255, 255, 255, 0.3);
@@ -1305,10 +1308,43 @@ body.light-mode .card-source {
   justify-content: center;
 }
 
-.card-author-name {
-  font-size: 11px;
-  font-weight: 500;
-  opacity: 0.8;
+.btn-read-more-glass {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  text-decoration: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-top: 8px;
+  align-self: flex-start;
+  font-family: var(--font-ui), sans-serif;
+}
+
+.btn-read-more-glass:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+body.light-mode .btn-read-more-glass {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #1c1c1e;
+}
+
+body.light-mode .btn-read-more-glass:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 /* Featured Card Layout (Desktop Asymmetric grid) */
@@ -1334,6 +1370,11 @@ body.light-mode .card-source {
   order: 3;
   margin-top: 2px;
   margin-bottom: 0;
+}
+
+.news-grid:not(.list-view) .news-card.featured .btn-read-more-glass {
+  order: 4;
+  margin-top: 12px;
 }
 
 .news-grid:not(.list-view) .news-card.featured .card-title {
@@ -1965,8 +2006,11 @@ body.light-mode .events-countdown-banner {
 }
 
 .countdown-text-group {
-  display: flex;
-  flex-direction: column;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  column-gap: 12px;
 }
 .countdown-label {
   font-size: 8px;
@@ -1975,6 +2019,8 @@ body.light-mode .events-countdown-banner {
   opacity: 0.6;
 }
 .countdown-value {
+  justify-self: end;
+  text-align: right;
   font-size: 11px;
   font-weight: 700;
   color: #fff;
@@ -2946,6 +2992,7 @@ body.light-mode .reader-read-more-btn {
 .reader-hero {
   position: relative;
   width: 100%;
+  margin-bottom: 24px;
   background: transparent;
 }
 
@@ -2965,10 +3012,11 @@ body.light-mode .reader-hero-gradient {
 .reader-meta-title-block {
   position: relative;
   z-index: 1;
-  padding: 20px 28px 22px;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 0 20px 0;
   background: transparent;
   background-image: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .reader-title {
@@ -3011,9 +3059,9 @@ body.light-mode .reader-editorial-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 700px;
+  max-width: 680px;
   margin: 0 auto;
-  padding: 0 28px 34px;
+  padding: 0 0 34px 0;
   border-bottom: none;
 }
 body.light-mode .reader-meta-row {
@@ -3051,11 +3099,11 @@ body.light-mode .reader-meta-row {
 
 /* Typographic Article Body Styling */
 .reader-richtext {
-  max-width: 700px;
+  max-width: 680px;
   margin: 0 auto;
-  padding: 28px 28px 24px;
-  font-size: 15px;
-  line-height: 1.72;
+  padding: 24px 0 24px 0;
+  font-size: 18px;
+  line-height: 1.65;
   color: rgba(255, 255, 255, 0.88);
 }
 body.light-mode .reader-richtext {
@@ -3063,12 +3111,12 @@ body.light-mode .reader-richtext {
 }
 
 /* Size modifications dynamic */
-.font-size-small { font-size: 14px; }
-.font-size-medium { font-size: 15px; }
-.font-size-large { font-size: 17px; }
+.font-size-small { font-size: 16px; }
+.font-size-medium { font-size: 18px; }
+.font-size-large { font-size: 20px; }
 
 .reader-richtext p {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .reader-richtext h2 {

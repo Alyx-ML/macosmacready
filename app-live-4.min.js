@@ -130,6 +130,8 @@ if (currentUsername === "MacReady") {
   localStorage.removeItem("macready_username");
 }
 let currentUserEmail = localStorage.getItem("macready_email") || "";
+const ADMIN_ACCOUNT_USERNAMES = new Set(["Admin", "MacReady Admin"]);
+const ADMIN_ACCOUNT_EMAILS = new Set(["admin@macready.local"]);
 let articles = [];
 let currentCategory = "all"; // "all" or specific categories
 let currentLibrary = "today"; // "today", "bookmarks", "queue", "custom"
@@ -529,6 +531,68 @@ function cleanArticleText(text) {
 
 function isArticleBoilerplate(text) {
   return /^(source:|read on|continue reading|go to the linked site|go to the podcast page|advertisement|sponsor|subscribe|share this|related articles)/i.test(text);
+}
+
+const ARTICLE_LEADING_LABELS = new Set([
+  "ai",
+  "app store",
+  "apple",
+  "apple intelligence",
+  "apple silicon",
+  "apple tv",
+  "apple watch",
+  "apps",
+  "chatgpt",
+  "claude",
+  "codex",
+  "deals",
+  "featured",
+  "gemini",
+  "google",
+  "ios",
+  "ipad",
+  "ipados",
+  "iphone",
+  "mac",
+  "macos",
+  "messages",
+  "microsoft",
+  "openai",
+  "reviews",
+  "siri",
+  "vision pro",
+  "watchos"
+]);
+
+function removeLeadingArticleLabels(root) {
+  if (!root) return;
+
+  let node = root.firstElementChild;
+  let removedCount = 0;
+
+  while (node && removedCount < 12) {
+    if (node.tagName !== "P") return;
+
+    const text = cleanArticleText(node.textContent);
+    if (!isLeadingArticleLabel(text)) return;
+
+    const next = node.nextElementSibling;
+    node.remove();
+    node = next;
+    removedCount += 1;
+  }
+}
+
+function isLeadingArticleLabel(text) {
+  if (!text) return true;
+  const normalized = text.toLowerCase();
+  if (ARTICLE_LEADING_LABELS.has(normalized)) return true;
+  if (text.length > 36 || /[.!?;:]/.test(text)) return false;
+
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length === 0 || words.length > 4) return false;
+
+  return words.every(word => /^[A-Z0-9][A-Za-z0-9&+-]*$/.test(word) || /^[A-Z]{2,}$/.test(word));
 }
 
 function escapeHTML(text) {
@@ -1241,7 +1305,11 @@ function switchApp(appName, pushHistory = true) {
   const segmentControl = document.querySelector(".segment-control");
 
   // Defaults
-  if (newStoryBtn) newStoryBtn.style.display = "none";
+  if (newStoryBtn) {
+    newStoryBtn.hidden = true;
+    newStoryBtn.setAttribute("aria-hidden", "true");
+    newStoryBtn.style.setProperty("display", "none", "important");
+  }
   if (segmentControl) segmentControl.style.display = "none";
 
   if (searchInput) {
@@ -1255,7 +1323,7 @@ function switchApp(appName, pushHistory = true) {
   if (appName === "news") {
     if (appTitle) appTitle.textContent = "Today's Overview";
     if (searchInput) searchInput.placeholder = "Search Articles...";
-    if (newStoryBtn) newStoryBtn.style.display = "flex";
+    updateAdminControls();
     if (segmentControl) segmentControl.style.display = "flex";
 
     // Setup news segment buttons state
@@ -1468,6 +1536,10 @@ function renderFeed() {
             <a class="card-source" href="${article.sourceUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${article.sourceName}</a>
             <span class="card-date">${article.date}</span>
           </div>
+          <a href="${article.sourceUrl}" target="_blank" rel="noopener" class="btn-read-more-glass" onclick="event.stopPropagation()">
+            <span>Read More</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.75; vertical-align: middle;"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+          </a>
         </div>
       </article>
     `;
@@ -1681,6 +1753,8 @@ async function openArticle(id) {
   document.getElementById("reader-text").innerHTML = stripSourceLinks(article.content);
   const originalLink = document.getElementById("reader-open-original");
   if (originalLink) originalLink.href = article.sourceUrl;
+  const heroReadMore = document.getElementById("reader-hero-read-more");
+  if (heroReadMore) heroReadMore.href = article.sourceUrl;
 
   // Reset font class
   const richtext = document.getElementById("reader-text");
@@ -1791,11 +1865,7 @@ async function openArticle(id) {
       }
       lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
 
-      // 2. Scroll fading for subtitle and metadata line (over first 120px)
-      const fadePercent = Math.min(currentScroll / 120, 1);
-      const opacityVal = 1 - fadePercent;
-      if (subtitleEl) subtitleEl.style.opacity = opacityVal;
-      if (metaLine) metaLine.style.opacity = opacityVal * 0.65;
+
 
       // 3. Scroll progress
       const totalHeight = bodyPane.scrollHeight - bodyPane.clientHeight;
@@ -1891,6 +1961,7 @@ function stripSourceLinks(content) {
       }
     }
   });
+  removeLeadingArticleLabels(wrapper);
   return wrapper.innerHTML;
 }
 
@@ -2127,7 +2198,35 @@ function updateProximityChevrons(x, width) {
 }
 
 // --- 7. Custom Story Builder Form Sheet ---
+function isAdminAccount() {
+  const username = (currentUsername || "").trim();
+  const email = (currentUserEmail || "").trim().toLowerCase();
+  return ADMIN_ACCOUNT_USERNAMES.has(username) || ADMIN_ACCOUNT_EMAILS.has(email);
+}
+
+function updateAdminControls() {
+  const newStoryBtn = document.getElementById("btn-new-story");
+  const menuNewStory = document.getElementById("menu-new-story");
+  const canWriteStories = currentApp === "news" && isAdminAccount();
+
+  if (newStoryBtn) {
+    newStoryBtn.hidden = !canWriteStories;
+    newStoryBtn.setAttribute("aria-hidden", String(!canWriteStories));
+    if (canWriteStories) {
+      newStoryBtn.style.setProperty("display", "flex");
+    } else {
+      newStoryBtn.style.setProperty("display", "none", "important");
+    }
+  }
+
+  if (menuNewStory) {
+    menuNewStory.hidden = !isAdminAccount();
+    menuNewStory.setAttribute("aria-hidden", String(!isAdminAccount()));
+  }
+}
+
 function openStoryEditor() {
+  if (!isAdminAccount()) return;
   const editor = document.getElementById("editor-modal");
   if (editor) editor.classList.remove("hidden");
 }
@@ -11265,6 +11364,7 @@ function performSignIn(username, email, authType = "standard") {
   
   updateAppHeader();
   syncAccountDetailsToWindow();
+  updateAdminControls();
   
   pushNotification("Signed In", `Welcome back, ${username}!`, { silent: true });
   
@@ -11286,6 +11386,7 @@ function performSignOut() {
   
   updateAppHeader();
   syncAccountDetailsToWindow();
+  updateAdminControls();
   
   const accWin = document.getElementById("account-window");
   if (accWin) accWin.classList.add("hidden-window");

@@ -46,6 +46,11 @@
   <link rel="icon" type="image/webp" href="public/assets/imgs/finderfavicon.webp">
   <link rel="preload" as="image" href="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" imagesrcset="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp 960w, public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
   <link rel="stylesheet" href="styles-live.min.css?v=siri-cpu-opt-1">
+  <style>
+    #btn-new-story[hidden] {
+      display: none !important;
+    }
+  </style>
   <!-- Google Fonts for gorgeous typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -241,7 +246,7 @@
             </div>
 
             <!-- Write Custom Article Button -->
-            <button class="toolbar-btn accent-tint" id="btn-new-story" title="Write New Article">
+            <button class="toolbar-btn accent-tint" id="btn-new-story" title="Write New Article" hidden aria-hidden="true" style="display: none;">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -1128,15 +1133,20 @@
         <!-- Article Contents Pane -->
         <div class="reader-content-body" id="reader-body">
           
-          <!-- Hero Section -->
+          <!-- Cover Image cleanly at the top (full-bleed) -->
           <div class="reader-hero">
             <img src="" alt="Hero Cover" id="reader-cover-img">
-            <div class="reader-hero-gradient"></div>
-            <div class="reader-meta-title-block">
-              <h1 class="reader-title font-editorial" id="reader-title">The Future of Dynamic Fluid Visuals in Desktop Operating Systems</h1>
-              <p class="reader-subtitle" id="reader-subtitle">An exploration of depth, transparency, and glass architecture in modern user environments.</p>
-              <div class="reader-editorial-meta" id="reader-editorial-meta"></div>
-            </div>
+          </div>
+
+          <!-- Title, Subtitle & Action Metadata Block centered below -->
+          <div class="reader-meta-title-block">
+            <h1 class="reader-title font-editorial" id="reader-title">The Future of Dynamic Fluid Visuals in Desktop Operating Systems</h1>
+            <p class="reader-subtitle" id="reader-subtitle">An exploration of depth, transparency, and glass architecture in modern user environments.</p>
+            <div class="reader-editorial-meta" id="reader-editorial-meta"></div>
+            <a id="reader-hero-read-more" href="#" target="_blank" rel="noopener" class="btn-read-more-glass" style="margin-top: 14px;">
+              <span>Read Original Article</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.75; vertical-align: middle;"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+            </a>
           </div>
 
           <!-- Core Rich Text Body -->
@@ -2799,7 +2809,7 @@
     </div>
 
   <!-- Client-side logic loader -->
-  <script defer src="app-live-4.min.js?v=siri-cpu-opt-1"></script>
+  <script defer src="app-live-4.min.js?v=read-more-btn-2"></script>
 
   <!-- SVG Color Vision Deficiency Matrices -->
   <svg style="position: absolute; height: 0; width: 0; pointer-events: none;" aria-hidden="true">
