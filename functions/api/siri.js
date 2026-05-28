@@ -184,12 +184,13 @@ function isWeatherQuery(message) {
 
 async function answerWeather(message, request) {
   const explicitLocation = extractWeatherLocation(message);
-  const location = explicitLocation
-    ? await geocodeLocation(explicitLocation)
-    : getCloudflareLocation(request);
-
-  if (!location) {
+  if (!explicitLocation) {
     return "Tell me the city, for example: weather in London.";
+  }
+
+  const location = await geocodeLocation(explicitLocation);
+  if (!location) {
+    return `I could not find the weather location ${explicitLocation}.`;
   }
 
   const forecastUrl = new URL("https://api.open-meteo.com/v1/forecast");
@@ -210,8 +211,19 @@ async function answerWeather(message, request) {
 }
 
 function extractWeatherLocation(message) {
-  const match = message.match(/\b(?:weather|forecast|temperature)(?:\s+today)?\s+(?:in|for|at)\s+([a-zA-Z\s,.'-]{2,80})/i);
-  return match ? match[1].replace(/\btoday\b/gi, "").replace(/[?.!]+$/, "").trim() : "";
+  const text = String(message || "").replace(/[“”]/g, "\"").replace(/[’]/g, "'").trim();
+  const prepositionMatch = text.match(/\b(?:in|for|at)\s+([a-zA-Z\s,.'-]{2,80})/i);
+  if (prepositionMatch) return cleanWeatherLocation(prepositionMatch[1]);
+
+  const keywordMatch = text.match(/\b(?:weather|forecast|temperature)\b\s*(?:today|now|currently|like|please|is|the|for)?\s*([a-zA-Z\s,.'-]{2,80})?/i);
+  return keywordMatch ? cleanWeatherLocation(keywordMatch[1] || "") : "";
+}
+
+function cleanWeatherLocation(value) {
+  return String(value || "")
+    .replace(/\b(today|now|currently|please|weather|forecast|temperature)\b/gi, "")
+    .replace(/[?.!]+$/g, "")
+    .trim();
 }
 
 async function geocodeLocation(name) {
