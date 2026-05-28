@@ -1,4 +1,5 @@
 import { onRequestGet as siriGet, onRequestPost as siriPost } from "./functions/api/siri.js";
+import { onRequestOptions as transcribeOptions, onRequestPost as transcribePost } from "./functions/api/transcribe.js";
 
 export default {
   async fetch(request, env) {
@@ -12,6 +13,12 @@ export default {
       } });
       if (request.method === "POST") return siriPost({ request, env });
       if (request.method === "GET") return siriGet();
+      return new Response("Method Not Allowed", { status: 405 });
+    }
+
+    if (url.pathname === "/api/transcribe") {
+      if (request.method === "OPTIONS") return transcribeOptions();
+      if (request.method === "POST") return transcribePost({ request, env });
       return new Response("Method Not Allowed", { status: 405 });
     }
 

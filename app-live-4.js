@@ -781,6 +781,30 @@ function updateModeButtonLabel() {
   modeLabel.textContent = isLightMode ? "Light Mode" : "Dark Mode";
 }
 
+function initDockAutohideSettings() {
+  const switchEl = document.getElementById("settings-dock-autohide-switch");
+  if (!switchEl) return;
+
+  const autohidePref = localStorage.getItem("macready_dock_autohide");
+  if (autohidePref === "true") {
+    switchEl.checked = true;
+    document.body.classList.add("dock-autohide-enabled");
+  } else {
+    switchEl.checked = false;
+    document.body.classList.remove("dock-autohide-enabled");
+  }
+
+  switchEl.addEventListener("change", () => {
+    const isChecked = switchEl.checked;
+    localStorage.setItem("macready_dock_autohide", isChecked ? "true" : "false");
+    if (isChecked) {
+      document.body.classList.add("dock-autohide-enabled");
+    } else {
+      document.body.classList.remove("dock-autohide-enabled");
+    }
+  });
+}
+
 let dockMotionList = [];
 function initDockMagnification() {
   const dock = document.getElementById("dock");
@@ -7491,6 +7515,7 @@ function initAll() {
   startClock();
   initData();
   initDockMagnification();
+  initDockAutohideSettings();
   bindEvents();
   initAccountSystem();
   updateAppHeader();
@@ -10488,11 +10513,11 @@ let micAnalyser = null;
 let micDataArray = null;
 let micContext = null;
 let micEnabled = false;
-let siriSpeechRecognition = null;
+let siriMediaRecorder = null;
+let siriAudioChunks = [];
 let siriActive = false;
 let siriVoiceMonitorInterval = null;
-let siriRecognitionStartTimer = null;
-const SIRI_SPEECH_LANG = "en-US";
+let siriRecordingStopTimer = null;
 
 function initSiriAssistant() {
   const siriToggle = document.getElementById("menu-siri-toggle");
@@ -10642,7 +10667,7 @@ function closeSiriHud() {
   siriActive = false;
   siriHud.classList.remove("show");
   if (siriBackdrop) siriBackdrop.classList.remove("show");
-  disableMicStream();
+  cancelSiriVoiceRecording();
   if (siriVoiceMonitorInterval) {
     clearInterval(siriVoiceMonitorInterval);
     siriVoiceMonitorInterval = null;
@@ -10754,86 +10779,83 @@ function drawSiriWavePath(pathEl, amp, freq, phase, centerY) {
 async function toggleSiriMic() {
   const micBtn = document.getElementById("siri-mic-toggle");
   const statusText = document.getElementById("siri-status-text");
-  const siriInput = document.getElementById("siri-input");
   if (!micBtn) return;
   
   if (micEnabled) {
-    stopSiriSpeechRecognition();
-    if (statusText) statusText.textContent = "Listening paused.";
-    siriWaveState = "listening";
+    stopSiriVoiceRecording();
     return;
   }
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    if (statusText) statusText.textContent = "Voice input is not available in this browser.";
+  if (!window.MediaRecorder) {
+    if (statusText) statusText.textContent = "Voice recording is not available in this browser.";
     return;
   }
 
-  const recognition = new SpeechRecognition();
-  siriSpeechRecognition = recognition;
-  recognition.lang = SIRI_SPEECH_LANG;
-  recognition.continuous = false;
-  recognition.interimResults = true;
-  recognition.maxAlternatives = 1;
+  try {
+    await startSiriMicStream();
+    const mimeType = getSiriAudioMimeType();
+    siriAudioChunks = [];
+    siriMediaRecorder = new MediaRecorder(micStream, mimeType ? { mimeType } : undefined);
 
-  recognition.onstart = () => {
-    clearSiriRecognitionStartTimer();
+    siriMediaRecorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        siriAudioChunks.push(event.data);
+      }
+    };
+
+    siriMediaRecorder.onstop = async () => {
+      const chunks = siriAudioChunks.slice();
+      const recordedType = siriMediaRecorder?.mimeType || mimeType || "audio/webm";
+      siriMediaRecorder = null;
+      siriAudioChunks = [];
+      micEnabled = false;
+      micBtn.classList.remove("active");
+      disableMicStream();
+
+      if (!chunks.length) {
+        if (statusText) statusText.textContent = "No voice audio was recorded.";
+        siriWaveState = "listening";
+        return;
+      }
+
+      try {
+        if (statusText) statusText.textContent = "Transcribing...";
+        siriWaveState = "thinking";
+        const audioBlob = new Blob(chunks, { type: recordedType });
+        const transcript = await requestCloudflareTranscription(audioBlob);
+        const siriInput = document.getElementById("siri-input");
+        if (siriInput) siriInput.value = transcript;
+        submitSiriQuery(transcript);
+      } catch (error) {
+        if (statusText) statusText.textContent = error?.message || "Voice transcription failed.";
+        siriWaveState = "listening";
+      }
+    };
+
+    siriMediaRecorder.start();
     micEnabled = true;
     micBtn.classList.add("active");
     if (statusText) statusText.textContent = "Listening...";
     siriWaveState = "listening";
-  };
-
-  recognition.onresult = (event) => {
-    const transcript = Array.from(event.results)
-      .map(result => result[0]?.transcript || "")
-      .join(" ")
-      .trim();
-    if (siriInput) siriInput.value = transcript;
-
-    const finalResult = Array.from(event.results).find(result => result.isFinal);
-    if (finalResult && transcript) {
-      stopSiriSpeechRecognition();
-      submitSiriQuery(transcript);
-    }
-  };
-
-  recognition.onerror = (event) => {
-    const message = getSiriVoiceErrorMessage(event?.error);
-    stopSiriSpeechRecognition();
-    if (statusText) statusText.textContent = message;
-  };
-
-  recognition.onend = () => {
-    if (micEnabled) stopSiriSpeechRecognition();
-  };
-
-  try {
-    await startSiriMicStream();
-    await prepareSiriSpeechRecognition(SpeechRecognition, recognition, statusText);
-    if (statusText) statusText.textContent = "Listening...";
-    siriRecognitionStartTimer = setTimeout(() => {
-      if (siriSpeechRecognition === recognition && !micEnabled) {
-        stopSiriSpeechRecognition();
-        if (statusText) statusText.textContent = "Voice recognition did not start.";
-      }
-    }, 3500);
-    recognition.start();
+    siriRecordingStopTimer = setTimeout(() => {
+      stopSiriVoiceRecording();
+    }, 6500);
   } catch (error) {
-    console.error("Speech recognition error:", error);
-    stopSiriSpeechRecognition();
+    console.error("Voice recording error:", error);
+    stopSiriVoiceRecording();
     micEnabled = false;
     micBtn.classList.remove("active");
     if (statusText) statusText.textContent = getSiriVoiceErrorMessage(error?.name || error?.message);
   }
 }
 
-async function prepareSiriSpeechRecognition(SpeechRecognition, recognition, statusText) {
-  if (statusText) statusText.textContent = "Preparing voice recognition...";
-  if ("processLocally" in recognition) {
-    recognition.processLocally = false;
-  }
+function getSiriAudioMimeType() {
+  const types = [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/mp4"
+  ];
+  return types.find(type => MediaRecorder.isTypeSupported(type)) || "";
 }
 
 async function startSiriMicStream() {
@@ -10868,10 +10890,7 @@ function getSiriVoiceErrorMessage(errorCode = "") {
     return "I didn't catch that.";
   }
   if (code.includes("network")) {
-    return "Voice recognition could not connect.";
-  }
-  if (code.includes("local-speech-unavailable")) {
-    return "Local voice recognition is not available.";
+    return "Voice transcription could not connect.";
   }
   if (code.includes("media-devices-unavailable")) {
     return "Voice input is not available in this browser.";
@@ -10879,28 +10898,47 @@ function getSiriVoiceErrorMessage(errorCode = "") {
   return "Voice input stopped.";
 }
 
-function stopSiriSpeechRecognition() {
+function stopSiriVoiceRecording() {
   const micBtn = document.getElementById("siri-mic-toggle");
-  clearSiriRecognitionStartTimer();
+  clearSiriRecordingTimer();
   micEnabled = false;
   if (micBtn) micBtn.classList.remove("active");
-  if (siriSpeechRecognition) {
-    const recognition = siriSpeechRecognition;
-    siriSpeechRecognition = null;
-    recognition.onend = null;
+  if (siriMediaRecorder) {
+    const recorder = siriMediaRecorder;
     try {
-      recognition.stop();
+      if (recorder.state !== "inactive") recorder.stop();
     } catch (error) {
-      console.warn("Speech recognition already stopped.", error);
+      console.warn("Voice recording already stopped.", error);
     }
+    return;
   }
   disableMicStream();
 }
 
-function clearSiriRecognitionStartTimer() {
-  if (siriRecognitionStartTimer) {
-    clearTimeout(siriRecognitionStartTimer);
-    siriRecognitionStartTimer = null;
+function cancelSiriVoiceRecording() {
+  clearSiriRecordingTimer();
+  micEnabled = false;
+  const micBtn = document.getElementById("siri-mic-toggle");
+  if (micBtn) micBtn.classList.remove("active");
+  if (siriMediaRecorder) {
+    const recorder = siriMediaRecorder;
+    siriMediaRecorder = null;
+    recorder.ondataavailable = null;
+    recorder.onstop = null;
+    try {
+      if (recorder.state !== "inactive") recorder.stop();
+    } catch (error) {
+      console.warn("Voice recording already stopped.", error);
+    }
+  }
+  siriAudioChunks = [];
+  disableMicStream();
+}
+
+function clearSiriRecordingTimer() {
+  if (siriRecordingStopTimer) {
+    clearTimeout(siriRecordingStopTimer);
+    siriRecordingStopTimer = null;
   }
 }
 
@@ -10964,6 +11002,7 @@ function startVoiceVolumeMonitor() {
 }
 
 const SIRI_API_ENDPOINT = "https://macosmacready.fpt4g789c6.workers.dev/api/siri";
+const SIRI_TRANSCRIBE_ENDPOINT = "https://macosmacready.fpt4g789c6.workers.dev/api/transcribe";
 
 async function requestCloudflareSiri(query) {
   const response = await fetch(SIRI_API_ENDPOINT, {
@@ -10985,6 +11024,27 @@ async function requestCloudflareSiri(query) {
   return {
     text: payload.reply || "Siri received an empty answer from the AI service."
   };
+}
+
+async function requestCloudflareTranscription(audioBlob) {
+  const response = await fetch(SIRI_TRANSCRIBE_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": audioBlob.type || "application/octet-stream"
+    },
+    body: audioBlob
+  });
+
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload?.error || "Voice transcription failed.");
+  }
+
+  const transcript = String(payload?.text || "").trim();
+  if (!transcript) {
+    throw new Error("I could not hear any speech.");
+  }
+  return transcript;
 }
 
 function getSiriAssistantContext() {
