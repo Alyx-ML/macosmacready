@@ -363,16 +363,35 @@ function formatRSSDate(pubDate) {
 
 // Set macOS Accent Color
 function setAccentColor(color) {
-  // Remove existing themes
-  document.body.classList.remove(
-    "theme-blue", "theme-purple", "theme-pink",
-    "theme-amber", "theme-green", "theme-silver",
-    "theme-tiger", "theme-panther", "theme-leopard",
-    "theme-yosemite", "theme-sequoia", "theme-teal",
-    "theme-rose", "theme-puma", "theme-mavericks", "theme-mojave"
-  );
+  // Remove existing themes dynamically
+  Array.from(document.body.classList).forEach(cls => {
+    if (cls.startsWith("theme-")) {
+      document.body.classList.remove(cls);
+    }
+  });
   
-  document.body.classList.add(`theme-${color}`);
+  if (color === "custom") {
+    const customColor = localStorage.getItem("tahoe_custom_accent") || "#007aff";
+    document.body.classList.add("theme-custom");
+    
+    const hex = customColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    document.body.style.setProperty("--accent-color", customColor);
+    document.body.style.setProperty("--accent-color-rgb", `${r}, ${g}, ${b}`);
+    document.body.style.setProperty("--accent-glow", `rgba(${r}, ${g}, ${b}, 0.45)`);
+    document.body.style.setProperty("--accent-gradient", `linear-gradient(135deg, ${customColor} 0%, rgba(${Math.max(0, r-50)}, ${Math.max(0, g-50)}, ${Math.max(0, b-50)}, 1) 100%)`);
+  } else {
+    document.body.style.removeProperty("--accent-color");
+    document.body.style.removeProperty("--accent-color-rgb");
+    document.body.style.removeProperty("--accent-glow");
+    document.body.style.removeProperty("--accent-gradient");
+    
+    document.body.classList.add(`theme-${color}`);
+  }
+  
   localStorage.setItem("tahoe_theme", color);
 
   // Mark active color dot in Sidebar
@@ -383,34 +402,64 @@ function setAccentColor(color) {
     }
   });
 
-  // Also sync the settings circles dynamically
-  document.querySelectorAll(".settings-accent-circle").forEach(circle => {
-    circle.classList.remove("active");
-    if (circle.getAttribute("data-color") === color) {
-      circle.classList.add("active");
+  // Sync Dropdown Options Active State
+  const allDropdownOptions = document.querySelectorAll(".dropdown-option");
+  allDropdownOptions.forEach(opt => {
+    if (opt.getAttribute("data-value") === color) {
+      opt.classList.add("active");
+    } else {
+      opt.classList.remove("active");
     }
   });
+
+  // Sync Accent Dropdown Trigger Button Preview
+  const accentTriggerColor = document.querySelector("#accent-dropdown-trigger .dropdown-selected-color");
+  const accentTriggerText = document.querySelector("#accent-dropdown-trigger .dropdown-selected-text");
+  const matchedAccentOpt = document.querySelector(`#accent-dropdown-menu .dropdown-option[data-value="${color}"]`);
+  if (accentTriggerColor && accentTriggerText && matchedAccentOpt) {
+    accentTriggerColor.className = "dropdown-selected-color";
+    const customPreview = document.getElementById("custom-color-preview");
+    if (color === "custom") {
+      const hex = localStorage.getItem("tahoe_custom_accent") || "#007aff";
+      accentTriggerColor.style.background = hex;
+      accentTriggerText.textContent = `Custom (${hex.toUpperCase()})`;
+      if (customPreview) {
+        customPreview.style.background = hex;
+      }
+    } else {
+      accentTriggerColor.removeAttribute("style");
+      accentTriggerColor.classList.add(`accent-${color}`);
+      accentTriggerText.textContent = matchedAccentOpt.querySelector(".option-text").textContent;
+      if (customPreview) {
+        customPreview.style.background = "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)";
+      }
+    }
+  }
+
+  // Sync Gradient Dropdown Trigger Button Preview
+  const gradientTriggerColor = document.querySelector("#gradient-dropdown-trigger .dropdown-selected-color");
+  const gradientTriggerText = document.querySelector("#gradient-dropdown-trigger .dropdown-selected-text");
+  const matchedGradientOpt = document.querySelector(`#gradient-dropdown-menu .dropdown-option[data-value="${color}"]`);
+  if (gradientTriggerColor && gradientTriggerText && matchedGradientOpt) {
+    gradientTriggerColor.className = "dropdown-selected-color";
+    gradientTriggerColor.removeAttribute("style");
+    gradientTriggerColor.classList.add(`accent-${color}`);
+    gradientTriggerText.textContent = matchedGradientOpt.querySelector(".option-text").textContent;
+  }
 
   // Update widget control panel status label
   const accentStatus = document.getElementById("accent-status");
   if (accentStatus) {
     const names = {
-      blue: "Blue",
-      purple: "Purple",
-      pink: "Pink",
-      amber: "Amber",
-      green: "Green",
-      silver: "Silver",
-      teal: "Teal",
-      rose: "Rose",
-      tiger: "Tiger (Aqua)",
-      panther: "Panther (Graphite)",
-      leopard: "Snow Leopard",
-      yosemite: "Yosemite",
-      sequoia: "Sequoia",
-      puma: "Cheetah/Puma Blue",
-      mavericks: "Mavericks Oceanic",
-      mojave: "Mojave Gold"
+      blue: "Blue", sky: "Sky Blue", teal: "Teal", mint: "Mint Green",
+      green: "Green", yellow: "Yellow", amber: "Amber Orange", pink: "Pink",
+      rose: "Rose Red", purple: "Purple", indigo: "Indigo", bronze: "Bronze Gold",
+      slate: "Slate", silver: "Silver", custom: "Custom Hex",
+      puma: "Cheetah/Puma Blue", tiger: "Tiger Aqua", panther: "Panther Graphite",
+      leopard: "Snow Leopard", yosemite: "Yosemite Sunset", elcapitan: "El Capitan Grey",
+      sierra: "Sierra Lake", mojave: "Mojave Golden", catalina: "Catalina Ocean",
+      bigsur: "Big Sur Sunset", monterey: "Monterey Purple", ventura: "Ventura Orange",
+      sonoma: "Sonoma Gold", sequoia: "Sequoia Forest"
     };
     accentStatus.textContent = names[color] || (color.charAt(0).toUpperCase() + color.slice(1));
   }
@@ -462,6 +511,240 @@ function updateModeButtonLabel() {
 
   const isLightMode = document.body.classList.contains("light-mode");
   modeLabel.textContent = isLightMode ? "Light Mode" : "Dark Mode";
+}
+
+function initCustomDropdowns() {
+  const accentTrigger = document.getElementById("accent-dropdown-trigger");
+  const accentMenu = document.getElementById("accent-dropdown-menu");
+  const gradientTrigger = document.getElementById("gradient-dropdown-trigger");
+  const gradientMenu = document.getElementById("gradient-dropdown-menu");
+  
+  if (!accentTrigger || !accentMenu || !gradientTrigger || !gradientMenu) return;
+
+  // A. Toggle Menu Open/Close
+  accentTrigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.getElementById("gradient-dropdown")?.classList.remove("open");
+    document.getElementById("accent-dropdown")?.classList.toggle("open");
+  });
+
+  gradientTrigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.getElementById("accent-dropdown")?.classList.remove("open");
+    document.getElementById("gradient-dropdown")?.classList.toggle("open");
+  });
+
+  // Close menus on click outside
+  document.addEventListener("click", () => {
+    document.getElementById("accent-dropdown")?.classList.remove("open");
+    document.getElementById("gradient-dropdown")?.classList.remove("open");
+  });
+
+  // B. Accent Menu Option Selection
+  const inlinePicker = document.getElementById("custom-inline-picker");
+  accentMenu.querySelectorAll(".dropdown-option").forEach(option => {
+    option.addEventListener("click", (e) => {
+      const val = option.getAttribute("data-value");
+      if (val === "custom") {
+        e.stopPropagation();
+        inlinePicker?.classList.toggle("hidden");
+        // Sync picker to current stored color if available
+        const savedCustom = localStorage.getItem("tahoe_custom_accent") || "#007aff";
+        syncInlinePicker(savedCustom);
+        return;
+      }
+      e.stopPropagation();
+      setAccentColor(val);
+      document.getElementById("accent-dropdown")?.classList.remove("open");
+      inlinePicker?.classList.add("hidden");
+    });
+  });
+
+  // Custom Inline Color Picker Drag & Event Listeners
+  const slGrid = document.getElementById("picker-sl-grid");
+  const pointer = document.getElementById("picker-pointer");
+  const hueRange = document.getElementById("picker-hue-range");
+  const hexInput = document.getElementById("picker-hex-input");
+  const applyBtn = document.getElementById("btn-picker-apply");
+
+  let currentH = 210;
+  let currentS = 100;
+  let currentV = 100;
+
+  function hsvToHex(h, s, v) {
+    s /= 100;
+    v /= 100;
+    let c = v * s;
+    let x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    let m = v - c;
+    let r = 0, g = 0, b = 0;
+    if (h >= 0 && h < 60) { r = c; g = x; b = 0; }
+    else if (h >= 60 && h < 120) { r = x; g = c; b = 0; }
+    else if (h >= 120 && h < 180) { r = 0; g = c; b = x; }
+    else if (h >= 180 && h < 240) { r = 0; g = x; b = c; }
+    else if (h >= 240 && h < 300) { r = x; g = 0; b = c; }
+    else if (h >= 300 && h <= 360) { r = c; g = 0; b = x; }
+    
+    let rHex = Math.round((r + m) * 255).toString(16).padStart(2, '0');
+    let gHex = Math.round((g + m) * 255).toString(16).padStart(2, '0');
+    let bHex = Math.round((b + m) * 255).toString(16).padStart(2, '0');
+    return `${rHex}${gHex}${bHex}`.toUpperCase();
+  }
+
+  function hexToHsv(hex) {
+    hex = hex.replace(/^#/, '');
+    if (hex.length === 3) {
+      hex = hex.split('').map(c => c + c).join('');
+    }
+    let r = parseInt(hex.substring(0, 2), 16) / 255;
+    let g = parseInt(hex.substring(2, 4), 16) / 255;
+    let b = parseInt(hex.substring(4, 6), 16) / 255;
+    
+    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, v = max;
+    
+    let d = max - min;
+    s = max === 0 ? 0 : d / max;
+    
+    if (max !== min) {
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    
+    return {
+      h: Math.round(h * 360),
+      s: Math.round(s * 100),
+      v: Math.round(v * 100)
+    };
+  }
+
+  function updateFromHSV() {
+    const baseColorHex = hsvToHex(currentH, 100, 100);
+    if (slGrid) {
+      slGrid.style.background = `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, #${baseColorHex})`;
+    }
+    
+    if (pointer && slGrid) {
+      const rect = slGrid.getBoundingClientRect();
+      const x = (currentS / 100) * rect.width;
+      const y = ((100 - currentV) / 100) * rect.height;
+      pointer.style.left = `${x}px`;
+      pointer.style.top = `${y}px`;
+    }
+    
+    const hexVal = hsvToHex(currentH, currentS, currentV);
+    if (hexInput) {
+      hexInput.value = hexVal;
+    }
+    
+    const fullHex = `#${hexVal}`;
+    localStorage.setItem("tahoe_custom_accent", fullHex);
+    setAccentColor("custom");
+  }
+
+  function handleGridMove(e) {
+    if (!slGrid) return;
+    const rect = slGrid.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+    
+    x = Math.max(0, Math.min(x, rect.width));
+    y = Math.max(0, Math.min(y, rect.height));
+    
+    currentS = Math.round((x / rect.width) * 100);
+    currentV = Math.round(((rect.height - y) / rect.height) * 100);
+    
+    updateFromHSV();
+  }
+
+  let isDraggingGrid = false;
+
+  slGrid?.addEventListener("mousedown", (e) => {
+    isDraggingGrid = true;
+    handleGridMove(e);
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (isDraggingGrid) {
+      handleGridMove(e);
+    }
+  });
+
+  document.addEventListener("mouseup", () => {
+    isDraggingGrid = false;
+  });
+
+  hueRange?.addEventListener("input", () => {
+    currentH = parseInt(hueRange.value);
+    updateFromHSV();
+  });
+
+  hexInput?.addEventListener("input", () => {
+    const rawVal = hexInput.value.replace(/[^0-9A-Fa-f]/g, '');
+    if (rawVal.length === 6) {
+      const hsv = hexToHsv(rawVal);
+      currentH = hsv.h;
+      currentS = hsv.s;
+      currentV = hsv.v;
+      if (hueRange) hueRange.value = currentH;
+      updateFromHSV();
+    }
+  });
+
+  applyBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.getElementById("accent-dropdown")?.classList.remove("open");
+  });
+
+  function syncInlinePicker(hex) {
+    const hsv = hexToHsv(hex);
+    currentH = hsv.h;
+    currentS = hsv.s;
+    currentV = hsv.v;
+    if (hueRange) hueRange.value = currentH;
+    
+    setTimeout(() => {
+      updateFromHSV();
+    }, 50);
+  }
+
+  // C. Gradient Menu Option Selection
+  gradientMenu.querySelectorAll(".dropdown-option").forEach(option => {
+    option.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const val = option.getAttribute("data-value");
+      setAccentColor(val);
+      document.getElementById("gradient-dropdown")?.classList.remove("open");
+    });
+  });
+}
+
+function initDockAutohideSettings() {
+  const switchEl = document.getElementById("settings-dock-autohide-switch");
+  if (!switchEl) return;
+
+  const autohidePref = localStorage.getItem("macready_dock_autohide");
+  if (autohidePref === "true") {
+    switchEl.checked = true;
+    document.body.classList.add("dock-autohide-enabled");
+  } else {
+    switchEl.checked = false;
+    document.body.classList.remove("dock-autohide-enabled");
+  }
+
+  switchEl.addEventListener("change", () => {
+    const isChecked = switchEl.checked;
+    localStorage.setItem("macready_dock_autohide", isChecked ? "true" : "false");
+    if (isChecked) {
+      document.body.classList.add("dock-autohide-enabled");
+    } else {
+      document.body.classList.remove("dock-autohide-enabled");
+    }
+  });
 }
 
 // --- 3. Dynamic Dock Magnification Mathematics ---
@@ -6899,9 +7182,11 @@ function initCollapsibleSidebarSections() {
 
 // --- 15. Entry point on Document Ready ---
 document.addEventListener("DOMContentLoaded", () => {
+  initCustomDropdowns();
   startClock();
   initData();
   initDockMagnification();
+  initDockAutohideSettings();
   bindEvents();
   initAccountSystem();
   updateAppHeader();
@@ -6980,6 +7265,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initSettingsWindow();
   initLockScreen();
   initUtilityApps();
+  initPwaManager();
   initLaunchpad();
 });
 
@@ -7921,6 +8207,89 @@ function initSettingsWindow() {
     });
   });
 
+  // J. Reduce Motion Toggle
+  const reduceMotionToggle = document.getElementById("toggle-reduce-motion");
+  if (reduceMotionToggle) {
+    const isChecked = localStorage.getItem("tahoe_reduce_motion") === "true";
+    reduceMotionToggle.checked = isChecked;
+    document.body.classList.toggle("reduce-motion", isChecked);
+    
+    reduceMotionToggle.addEventListener("change", (e) => {
+      const checked = e.target.checked;
+      document.body.classList.toggle("reduce-motion", checked);
+      localStorage.setItem("tahoe_reduce_motion", checked ? "true" : "false");
+      
+      pushNotification(
+        checked ? "Reduce Motion Enabled" : "Reduce Motion Disabled",
+        checked ? "Animations replaced with cross-fades." : "Standard bouncy animations active."
+      );
+    });
+  }
+
+  // K. Color Filters Dropdown
+  const filterTrigger = document.getElementById("color-filter-trigger");
+  const filterMenu = document.getElementById("color-filter-menu");
+  const filterDropdown = document.getElementById("color-filter-dropdown");
+  
+  if (filterTrigger && filterMenu && filterDropdown) {
+    filterTrigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      filterDropdown.classList.toggle("open");
+    });
+    
+    document.addEventListener("click", () => {
+      filterDropdown.classList.remove("open");
+    });
+    
+    filterMenu.querySelectorAll(".dropdown-option").forEach(option => {
+      option.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const val = option.getAttribute("data-value");
+        setColorFilter(val);
+        filterDropdown.classList.remove("open");
+      });
+    });
+    
+    const savedFilter = localStorage.getItem("tahoe_color_filter") || "none";
+    setColorFilter(savedFilter);
+  }
+  
+  function setColorFilter(filter) {
+    document.body.classList.remove("color-filter-protanopia", "color-filter-deuteranopia", "color-filter-tritanopia");
+    if (filter !== "none") {
+      document.body.classList.add(`color-filter-${filter}`);
+    }
+    localStorage.setItem("tahoe_color_filter", filter);
+    
+    if (filterMenu) {
+      filterMenu.querySelectorAll(".dropdown-option").forEach(opt => {
+        if (opt.getAttribute("data-value") === filter) {
+          opt.classList.add("active");
+        } else {
+          opt.classList.remove("active");
+        }
+      });
+    }
+    
+    const triggerText = document.querySelector("#color-filter-trigger .dropdown-selected-text");
+    if (triggerText) {
+      const names = {
+        none: "None",
+        protanopia: "Protanopia",
+        deuteranopia: "Deuteranopia",
+        tritanopia: "Tritanopia"
+      };
+      triggerText.textContent = names[filter] || filter;
+    }
+    
+    if (filter !== "none") {
+      pushNotification(
+        "Color Filter Applied",
+        `Screen adjusted for ${filter.charAt(0).toUpperCase() + filter.slice(1)}.`
+      );
+    }
+  }
+
   // Hook into Quick Settings Darkmode click to sync Settings pane cards
   const qsDark = document.getElementById("qs-darkmode");
   if (qsDark) {
@@ -7973,10 +8342,10 @@ function updateGlobalMenuBar() {
         };
         activeAppLabel.textContent = appNames[currentApp] || "News";
       } else {
-        activeAppLabel.textContent = "Finder";
+        activeAppLabel.textContent = "";
       }
     } else {
-      activeAppLabel.textContent = "Finder";
+      activeAppLabel.textContent = "";
     }
   }
   
@@ -8135,7 +8504,14 @@ function openIframeApp(title, url, icon, appId) {
     overflow: hidden;
   `;
 
-  const iconHtml = icon ? `<span>${icon}</span>` : "";
+  let iconHtml = "";
+  if (icon) {
+    if (icon.trim().startsWith("<svg")) {
+      iconHtml = `<span style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; vertical-align: middle;">${icon.replace(/width="[0-9]+"/g, 'width="14"').replace(/height="[0-9]+"/g, 'height="14"')}</span>`;
+    } else {
+      iconHtml = `<span>${icon}</span>`;
+    }
+  }
   win.innerHTML = `
     <div class="window-titlebar" style="background: rgba(30, 30, 40, 0.4); display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); position: relative; justify-content: space-between;">
       <div class="traffic-lights" style="display: flex; gap: 8px; width: 80px;">
@@ -8315,6 +8691,13 @@ function initLaunchpad() {
             win.classList.remove("minimized");
             const ind = document.getElementById("dock-settings-indicator");
             if (ind) ind.classList.add("active-dot");
+            playGlassChime();
+          }
+        } else if (utility === "pwa-manager") {
+          const win = document.getElementById("pwa-store-window");
+          if (win) {
+            win.classList.remove("hidden-window", "minimized");
+            bringWindowToFront(win);
             playGlassChime();
           }
         }
@@ -8507,6 +8890,11 @@ function addAppToDock(appId) {
   } else if (appId === "system7") {
     iconHtmlContent = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' class="dock-icon" width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='6' ry='6' fill='#1e88e5'/><rect x='10' y='2' width='28' height='16' fill='#ffffff'/><rect x='30' y='5' width='5' height='10' fill='#1e88e5'/><rect x='8' y='24' width='32' height='22' rx='2' ry='2' fill='#ffffff'/><line x1='12' y1='30' x2='36' y2='30' stroke='#757575' stroke-width='2'/><line x1='12' y1='35' x2='36' y2='35' stroke='#757575' stroke-width='2'/><line x1='12' y1='40' x2='36' y2='40' stroke='#757575' stroke-width='2'/></svg>`;
     tooltipName = "System 7";
+  } else if (appId.startsWith("pwa-")) {
+    const customPwas = JSON.parse(localStorage.getItem("tahoe_custom_pwas") || "[]");
+    const pwa = customPwas.find(p => p.id === appId) || FEATURED_PWAS.find(p => p.id === appId) || { name: "Web App", emoji: "🌐", color: "#007aff" };
+    iconHtmlContent = `<div class="pwa-dock-icon" style="background: ${pwa.color}; display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 10px; font-size: 22px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), 0 3px 6px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.25);">${pwa.emoji}</div>`;
+    tooltipName = pwa.name;
   }
 
   wrapper.innerHTML = `
@@ -8526,6 +8914,14 @@ function addAppToDock(appId) {
     else if (appId === "marathon") winId = "iframe-win-marathon";
     else if (appId === "lisa") winId = "iframe-win-apple-lisa";
     else if (appId === "system7") winId = "iframe-win-system-7";
+    else if (appId.startsWith("pwa-")) {
+      const customPwas = JSON.parse(localStorage.getItem("tahoe_custom_pwas") || "[]");
+      const pwa = customPwas.find(p => p.id === appId) || FEATURED_PWAS.find(p => p.id === appId);
+      if (pwa) {
+        openIframeApp(pwa.name, pwa.url, pwa.emoji, pwa.id);
+      }
+      return;
+    }
 
     const win = document.getElementById(winId);
     if (win) {
@@ -8560,6 +8956,293 @@ function addAppToDock(appId) {
     if (typeof window.refreshDockMagnification === "function") {
       window.refreshDockMagnification();
     }
+  }
+}
+
+// --- macOS Tahoe Custom PWA Manager Engine ---
+const FEATURED_PWAS = [
+  { id: "pwa-googlesearch", name: "Google Search", url: "https://www.google.com/search?igu=1", emoji: "🔍", color: "#4285f4" },
+  { id: "pwa-wikipedia", name: "Wikipedia Mobile", url: "https://en.m.wikipedia.org", emoji: "📖", color: "#6366f1" },
+  { id: "pwa-tetris", name: "Retro Arcade Tetris", url: "https://chvin.github.io/react-tetris/", emoji: "🧱", color: "#ef4444" },
+  { id: "pwa-elevatorsaga", name: "Elevator Saga", url: "https://play.elevatorsaga.com/", emoji: "🛗", color: "#10b981" },
+  { id: "pwa-telegram", name: "Telegram Web", url: "https://web.telegram.org/a/", emoji: "💬", color: "#24A1DE" },
+  { id: "pwa-discord", name: "Discord App", url: "https://discord.com/app", emoji: "👾", color: "#5865F2" },
+  { id: "pwa-whatsapp", name: "WhatsApp Web", url: "https://web.whatsapp.com", emoji: "🟢", color: "#25D366" },
+  { id: "pwa-notion", name: "Notion Workspaces", url: "https://www.notion.so", emoji: "📓", color: "#000000" },
+  { id: "pwa-googlemaps", name: "Google Maps Mobile", url: "https://www.google.com/maps", emoji: "🗺️", color: "#34A853" },
+  { id: "pwa-retrogames", name: "Retro Console Games", url: "https://www.retrogames.cc/", emoji: "🕹️", color: "#e11d48" },
+  { id: "pwa-spotify", name: "Spotify Player", url: "https://open.spotify.com", emoji: "🎵", color: "#1DB954" },
+  { id: "pwa-github", name: "GitHub Codespaces", url: "https://github.com", emoji: "🐙", color: "#24292e" },
+  { id: "pwa-stackoverflow", name: "StackOverflow", url: "https://stackoverflow.com", emoji: "🥞", color: "#f48024" },
+  { id: "pwa-codepen", name: "CodePen Playgrounds", url: "https://codepen.io", emoji: "✒️", color: "#111111" }
+];
+
+const PWA_LIBRARY = {
+  discover: [
+    { id: "pwa-googlesearch", name: "Google Search", url: "https://www.google.com/search?igu=1", emoji: "🔍", color: "#4285f4", desc: "Live web search engine." },
+    { id: "pwa-wikipedia", name: "Wikipedia Mobile", url: "https://en.m.wikipedia.org", emoji: "📖", color: "#6366f1", desc: "Free web-based encyclopedia." },
+    { id: "pwa-tetris", name: "Retro Arcade Tetris", url: "https://chvin.github.io/react-tetris/", emoji: "🧱", color: "#ef4444", desc: "Playable classic brick game." },
+    { id: "pwa-elevatorsaga", name: "Elevator Saga", url: "https://play.elevatorsaga.com/", emoji: "🛗", color: "#10b981", desc: "Programming elevator simulation." }
+  ],
+  social: [
+    { id: "pwa-telegram", name: "Telegram Web", url: "https://web.telegram.org/a/", emoji: "💬", color: "#24A1DE", desc: "Fast & secure instant messenger." },
+    { id: "pwa-discord", name: "Discord App", url: "https://discord.com/app", emoji: "👾", color: "#5865F2", desc: "Hang out with friends and communities." },
+    { id: "pwa-whatsapp", name: "WhatsApp Web", url: "https://web.whatsapp.com", emoji: "🟢", color: "#25D366", desc: "Secure messaging and calling." }
+  ],
+  productivity: [
+    { id: "pwa-notion", name: "Notion Workspaces", url: "https://www.notion.so", emoji: "📓", color: "#000000", desc: "Wiki, docs & project organization." },
+    { id: "pwa-wikipedia", name: "Wikipedia Mobile", url: "https://en.m.wikipedia.org", emoji: "📖", color: "#6366f1", desc: "Free web-based encyclopedia." },
+    { id: "pwa-googlesearch", name: "Google Search", url: "https://www.google.com/search?igu=1", emoji: "🔍", color: "#4285f4", desc: "Live web search engine." },
+    { id: "pwa-googlemaps", name: "Google Maps Mobile", url: "https://www.google.com/maps", emoji: "🗺️", color: "#34A853", desc: "Live GPS routing and street maps." }
+  ],
+  entertainment: [
+    { id: "pwa-tetris", name: "Retro Arcade Tetris", url: "https://chvin.github.io/react-tetris/", emoji: "🧱", color: "#ef4444", desc: "Playable classic brick game." },
+    { id: "pwa-elevatorsaga", name: "Elevator Saga", url: "https://play.elevatorsaga.com/", emoji: "🛗", color: "#10b981", desc: "Programming elevator simulation." },
+    { id: "pwa-retrogames", name: "Retro Console Games", url: "https://www.retrogames.cc/", emoji: "🕹️", color: "#e11d48", desc: "Play standard emulator ROMs." },
+    { id: "pwa-spotify", name: "Spotify Player", url: "https://open.spotify.com", emoji: "🎵", color: "#1DB954", desc: "Stream millions of songs and podcasts." }
+  ],
+  developer: [
+    { id: "pwa-github", name: "GitHub Codespaces", url: "https://github.com", emoji: "🐙", color: "#24292e", desc: "Collab, host code & track issues." },
+    { id: "pwa-stackoverflow", name: "StackOverflow", url: "https://stackoverflow.com", emoji: "🥞", color: "#f48024", desc: "Developer community Q&A." },
+    { id: "pwa-codepen", name: "CodePen Playgrounds", url: "https://codepen.io", emoji: "✒️", color: "#111111", desc: "Social sandbox editor for developers." }
+  ]
+};
+
+function getCustomPwas() {
+  const saved = localStorage.getItem("tahoe_custom_pwas");
+  if (saved) {
+    try { return JSON.parse(saved); } catch(e) { return []; }
+  }
+  return [];
+}
+
+function saveCustomPwas(pwas) {
+  localStorage.setItem("tahoe_custom_pwas", JSON.stringify(pwas));
+}
+
+function initPwaManager() {
+  const storeWin = document.getElementById("pwa-store-window");
+  if (!storeWin) return;
+
+  // Make Store Window draggable
+  if (typeof makeWindowDraggable === "function") {
+    makeWindowDraggable(storeWin);
+  }
+
+  // Close & Minimize handles
+  const closeBtn = document.getElementById("pwa-store-close");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      storeWin.classList.add("hidden-window");
+    });
+  }
+  const minBtn = document.getElementById("pwa-store-minimize");
+  if (minBtn) {
+    minBtn.addEventListener("click", () => {
+      storeWin.classList.add("hidden-window");
+    });
+  }
+
+  // Sidebar Tab Switching Logic
+  const sidebarItems = storeWin.querySelectorAll(".pwa-store-sidebar-item");
+  const panes = storeWin.querySelectorAll(".pwa-store-pane");
+
+  sidebarItems.forEach(item => {
+    item.addEventListener("click", () => {
+      sidebarItems.forEach(sib => sib.classList.remove("active"));
+      item.classList.add("active");
+
+      const targetTab = item.getAttribute("data-store-tab");
+      panes.forEach(pane => {
+        pane.style.display = "none";
+        pane.classList.remove("active");
+      });
+
+      const targetPane = document.getElementById(`store-pane-${targetTab}`);
+      if (targetPane) {
+        targetPane.style.display = "block";
+        targetPane.classList.add("active");
+      }
+    });
+  });
+
+  // Render all Category Grids
+  renderGrids();
+
+  // Install custom PWA form handler inside the Store Window
+  const installForm = document.getElementById("pwa-store-install-form");
+  if (installForm) {
+    installForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("pwa-store-name-input").value.trim();
+      const url = document.getElementById("pwa-store-url-input").value.trim();
+      const emoji = document.getElementById("pwa-store-emoji-input").value.trim();
+      const color = document.getElementById("pwa-store-color-input").value;
+
+      if (!name || !url || !emoji) return;
+
+      const id = `pwa-${Date.now()}`;
+      const newPwa = { id, name, url, emoji, color };
+
+      const customPwas = getCustomPwas();
+      customPwas.push(newPwa);
+      saveCustomPwas(customPwas);
+
+      // Reset form
+      installForm.reset();
+      document.getElementById("pwa-store-color-input").value = "#007aff";
+
+      // Refresh installed grids
+      renderGrids();
+      
+      // Auto-launch the newly installed PWA and add to dock
+      openIframeApp(newPwa.name, newPwa.url, newPwa.emoji, newPwa.id);
+
+      pushNotification(
+        "App Installed Successfully",
+        `"${name}" has been added to your system and docked.`
+      );
+      
+      // Switch tab to Installed
+      const installedTabItem = storeWin.querySelector('[data-store-tab="installed"]');
+      if (installedTabItem) installedTabItem.click();
+    });
+  }
+
+  // System Settings Preferences Tab - Cache Clearing
+  const clearCacheBtn = document.getElementById("btn-clear-pwa-cache");
+  if (clearCacheBtn) {
+    clearCacheBtn.addEventListener("click", () => {
+      const customs = getCustomPwas();
+      customs.forEach(pwa => {
+        const existingId = `iframe-win-${pwa.name.replace(/\s+/g, '-').toLowerCase()}`;
+        const win = document.getElementById(existingId);
+        if (win) win.remove();
+        removeAppFromDock(pwa.id);
+      });
+      localStorage.removeItem("tahoe_custom_pwas");
+      renderGrids();
+      pushNotification("Cache Purged", "All installed local PWAs have been removed.");
+    });
+  }
+
+  const resetDefaultsBtn = document.getElementById("btn-reset-pwa-default");
+  if (resetDefaultsBtn) {
+    resetDefaultsBtn.addEventListener("click", () => {
+      const customs = getCustomPwas();
+      customs.forEach(pwa => {
+        removeAppFromDock(pwa.id);
+      });
+      localStorage.setItem("tahoe_custom_pwas", JSON.stringify([]));
+      renderGrids();
+      pushNotification("System Reset", "PWA settings restored to default.");
+    });
+  }
+
+  function renderGrids() {
+    // Render each library category grid
+    Object.keys(PWA_LIBRARY).forEach(cat => {
+      const grid = document.getElementById(`pwa-${cat}-grid`);
+      if (!grid) return;
+
+      grid.innerHTML = "";
+      const customPwas = getCustomPwas();
+
+      PWA_LIBRARY[cat].forEach(pwa => {
+        const isInstalled = customPwas.some(p => p.url === pwa.url);
+
+        const card = document.createElement("div");
+        card.className = "pwa-card";
+        card.style = "background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.1);";
+        card.innerHTML = `
+          <div class="pwa-card-icon" style="background: ${pwa.color}; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.2);">${pwa.emoji}</div>
+          <div class="pwa-card-name" style="font-size: 13px; font-weight: 600; color: #fff; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${pwa.name}</div>
+          <div style="font-size: 10px; opacity: 0.5; height: 28px; overflow: hidden; line-height: 1.3;">${pwa.desc || 'Native web utility.'}</div>
+          <button class="btn-pwa-action ${isInstalled ? 'installed' : ''}" ${isInstalled ? 'disabled' : ''} style="width: 100%; border: none; outline: none; border-radius: 6px; padding: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; background: ${isInstalled ? 'rgba(255,255,255,0.08)' : '#10b981'}; color: ${isInstalled ? 'rgba(255,255,255,0.4)' : '#fff'};">
+            ${isInstalled ? 'Installed' : 'Install'}
+          </button>
+        `;
+
+        if (!isInstalled) {
+          card.querySelector(".btn-pwa-action").addEventListener("click", () => {
+            const activeCustoms = getCustomPwas();
+            activeCustoms.push(pwa);
+            saveCustomPwas(activeCustoms);
+            renderGrids();
+
+            // Auto-launch
+            openIframeApp(pwa.name, pwa.url, pwa.emoji, pwa.id);
+
+            pushNotification(
+              "App Installed Successfully",
+              `"${pwa.name}" has been added to your system and docked.`
+            );
+          });
+        }
+
+        grid.appendChild(card);
+      });
+    });
+
+    // Render Installed Tab
+    const installedList = document.getElementById("pwa-store-installed-list");
+    if (!installedList) return;
+
+    installedList.innerHTML = "";
+    const customPwas = getCustomPwas();
+
+    if (customPwas.length === 0) {
+      installedList.innerHTML = `<div style="text-align: center; font-size: 13px; opacity: 0.5; padding: 30px 0;">No custom web apps installed yet. Install from other categories or add your own!</div>`;
+      return;
+    }
+
+    customPwas.forEach(pwa => {
+      const row = document.createElement("div");
+      row.className = "pwa-installed-row";
+      row.style = "display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 14px; transition: all 0.2s;";
+      row.innerHTML = `
+        <div class="pwa-installed-info" style="display: flex; align-items: center; gap: 12px;">
+          <div class="pwa-installed-icon" style="background: ${pwa.color}; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.2);">${pwa.emoji}</div>
+          <div>
+            <div class="pwa-installed-name" style="font-size: 13px; font-weight: 600; color: #fff;">${pwa.name}</div>
+            <div class="pwa-installed-url" style="font-size: 11px; opacity: 0.4;">${pwa.url.substring(0, 50)}${pwa.url.length > 50 ? '...' : ''}</div>
+          </div>
+        </div>
+        <div class="pwa-installed-actions" style="display: flex; gap: 8px;">
+          <button class="btn-pwa-row-action btn-pwa-row-launch" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500;">Launch</button>
+          <button class="btn-pwa-row-action btn-pwa-row-delete" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500;">Delete</button>
+        </div>
+      `;
+
+      // Launch button
+      row.querySelector(".btn-pwa-row-launch").addEventListener("click", () => {
+        openIframeApp(pwa.name, pwa.url, pwa.emoji, pwa.id);
+      });
+
+      // Delete button
+      row.querySelector(".btn-pwa-row-delete").addEventListener("click", () => {
+        // Remove app window if open
+        const existingId = `iframe-win-${pwa.name.replace(/\s+/g, '-').toLowerCase()}`;
+        const win = document.getElementById(existingId);
+        if (win) win.remove();
+
+        // Remove from dock
+        removeAppFromDock(pwa.id);
+
+        // Update list
+        const activeCustoms = getCustomPwas().filter(p => p.id !== pwa.id);
+        saveCustomPwas(activeCustoms);
+
+        renderGrids();
+
+        pushNotification(
+          "App Uninstalled",
+          `"${pwa.name}" has been removed from the system and dock.`
+        );
+      });
+
+      installedList.appendChild(row);
+    });
   }
 }
 

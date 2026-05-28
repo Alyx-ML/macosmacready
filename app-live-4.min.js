@@ -680,16 +680,35 @@ function formatRSSDate(pubDate) {
 
 // Set macOS Accent Color
 function setAccentColor(color) {
-  // Remove existing themes
-  document.body.classList.remove(
-    "theme-blue", "theme-purple", "theme-pink",
-    "theme-amber", "theme-green", "theme-silver",
-    "theme-tiger", "theme-panther", "theme-leopard",
-    "theme-yosemite", "theme-sequoia", "theme-teal",
-    "theme-rose", "theme-puma", "theme-mavericks", "theme-mojave"
-  );
+  // Remove existing themes dynamically
+  Array.from(document.body.classList).forEach(cls => {
+    if (cls.startsWith("theme-")) {
+      document.body.classList.remove(cls);
+    }
+  });
   
-  document.body.classList.add(`theme-${color}`);
+  if (color === "custom") {
+    const customColor = localStorage.getItem("tahoe_custom_accent") || "#007aff";
+    document.body.classList.add("theme-custom");
+    
+    const hex = customColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    document.body.style.setProperty("--accent-color", customColor);
+    document.body.style.setProperty("--accent-color-rgb", `${r}, ${g}, ${b}`);
+    document.body.style.setProperty("--accent-glow", `rgba(${r}, ${g}, ${b}, 0.45)`);
+    document.body.style.setProperty("--accent-gradient", `linear-gradient(135deg, ${customColor} 0%, rgba(${Math.max(0, r-50)}, ${Math.max(0, g-50)}, ${Math.max(0, b-50)}, 1) 100%)`);
+  } else {
+    document.body.style.removeProperty("--accent-color");
+    document.body.style.removeProperty("--accent-color-rgb");
+    document.body.style.removeProperty("--accent-glow");
+    document.body.style.removeProperty("--accent-gradient");
+    
+    document.body.classList.add(`theme-${color}`);
+  }
+  
   localStorage.setItem("tahoe_theme", color);
 
   // Mark active color dot in Sidebar
@@ -700,34 +719,64 @@ function setAccentColor(color) {
     }
   });
 
-  // Also sync the settings circles dynamically
-  document.querySelectorAll(".settings-accent-circle").forEach(circle => {
-    circle.classList.remove("active");
-    if (circle.getAttribute("data-color") === color) {
-      circle.classList.add("active");
+  // Sync Dropdown Options Active State
+  const allDropdownOptions = document.querySelectorAll(".dropdown-option");
+  allDropdownOptions.forEach(opt => {
+    if (opt.getAttribute("data-value") === color) {
+      opt.classList.add("active");
+    } else {
+      opt.classList.remove("active");
     }
   });
+
+  // Sync Accent Dropdown Trigger Button Preview
+  const accentTriggerColor = document.querySelector("#accent-dropdown-trigger .dropdown-selected-color");
+  const accentTriggerText = document.querySelector("#accent-dropdown-trigger .dropdown-selected-text");
+  const matchedAccentOpt = document.querySelector(`#accent-dropdown-menu .dropdown-option[data-value="${color}"]`);
+  if (accentTriggerColor && accentTriggerText && matchedAccentOpt) {
+    accentTriggerColor.className = "dropdown-selected-color";
+    const customPreview = document.getElementById("custom-color-preview");
+    if (color === "custom") {
+      const hex = localStorage.getItem("tahoe_custom_accent") || "#007aff";
+      accentTriggerColor.style.background = hex;
+      accentTriggerText.textContent = `Custom (${hex.toUpperCase()})`;
+      if (customPreview) {
+        customPreview.style.background = hex;
+      }
+    } else {
+      accentTriggerColor.removeAttribute("style");
+      accentTriggerColor.classList.add(`accent-${color}`);
+      accentTriggerText.textContent = matchedAccentOpt.querySelector(".option-text").textContent;
+      if (customPreview) {
+        customPreview.style.background = "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)";
+      }
+    }
+  }
+
+  // Sync Gradient Dropdown Trigger Button Preview
+  const gradientTriggerColor = document.querySelector("#gradient-dropdown-trigger .dropdown-selected-color");
+  const gradientTriggerText = document.querySelector("#gradient-dropdown-trigger .dropdown-selected-text");
+  const matchedGradientOpt = document.querySelector(`#gradient-dropdown-menu .dropdown-option[data-value="${color}"]`);
+  if (gradientTriggerColor && gradientTriggerText && matchedGradientOpt) {
+    gradientTriggerColor.className = "dropdown-selected-color";
+    gradientTriggerColor.removeAttribute("style");
+    gradientTriggerColor.classList.add(`accent-${color}`);
+    gradientTriggerText.textContent = matchedGradientOpt.querySelector(".option-text").textContent;
+  }
 
   // Update widget control panel status label
   const accentStatus = document.getElementById("accent-status");
   if (accentStatus) {
     const names = {
-      blue: "Blue",
-      purple: "Purple",
-      pink: "Pink",
-      amber: "Amber",
-      green: "Green",
-      silver: "Silver",
-      teal: "Teal",
-      rose: "Rose",
-      tiger: "Tiger (Aqua)",
-      panther: "Panther (Graphite)",
-      leopard: "Snow Leopard",
-      yosemite: "Yosemite",
-      sequoia: "Sequoia",
-      puma: "Cheetah/Puma Blue",
-      mavericks: "Mavericks Oceanic",
-      mojave: "Mojave Gold"
+      blue: "Blue", sky: "Sky Blue", teal: "Teal", mint: "Mint Green",
+      green: "Green", yellow: "Yellow", amber: "Amber Orange", pink: "Pink",
+      rose: "Rose Red", purple: "Purple", indigo: "Indigo", bronze: "Bronze Gold",
+      slate: "Slate", silver: "Silver", custom: "Custom Hex",
+      puma: "Cheetah/Puma Blue", tiger: "Tiger Aqua", panther: "Panther Graphite",
+      leopard: "Snow Leopard", yosemite: "Yosemite Sunset", elcapitan: "El Capitan Grey",
+      sierra: "Sierra Lake", mojave: "Mojave Golden", catalina: "Catalina Ocean",
+      bigsur: "Big Sur Sunset", monterey: "Monterey Purple", ventura: "Ventura Orange",
+      sonoma: "Sonoma Gold", sequoia: "Sequoia Forest"
     };
     accentStatus.textContent = names[color] || (color.charAt(0).toUpperCase() + color.slice(1));
   }
@@ -779,6 +828,216 @@ function updateModeButtonLabel() {
 
   const isLightMode = document.body.classList.contains("light-mode");
   modeLabel.textContent = isLightMode ? "Light Mode" : "Dark Mode";
+}
+
+function initCustomDropdowns() {
+  const accentTrigger = document.getElementById("accent-dropdown-trigger");
+  const accentMenu = document.getElementById("accent-dropdown-menu");
+  const gradientTrigger = document.getElementById("gradient-dropdown-trigger");
+  const gradientMenu = document.getElementById("gradient-dropdown-menu");
+  
+  if (!accentTrigger || !accentMenu || !gradientTrigger || !gradientMenu) return;
+
+  // A. Toggle Menu Open/Close
+  accentTrigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.getElementById("gradient-dropdown")?.classList.remove("open");
+    document.getElementById("accent-dropdown")?.classList.toggle("open");
+  });
+
+  gradientTrigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.getElementById("accent-dropdown")?.classList.remove("open");
+    document.getElementById("gradient-dropdown")?.classList.toggle("open");
+  });
+
+  // Close menus on click outside
+  document.addEventListener("click", () => {
+    document.getElementById("accent-dropdown")?.classList.remove("open");
+    document.getElementById("gradient-dropdown")?.classList.remove("open");
+  });
+
+  // B. Accent Menu Option Selection
+  const inlinePicker = document.getElementById("custom-inline-picker");
+  accentMenu.querySelectorAll(".dropdown-option").forEach(option => {
+    option.addEventListener("click", (e) => {
+      const val = option.getAttribute("data-value");
+      if (val === "custom") {
+        e.stopPropagation();
+        inlinePicker?.classList.toggle("hidden");
+        // Sync picker to current stored color if available
+        const savedCustom = localStorage.getItem("tahoe_custom_accent") || "#007aff";
+        syncInlinePicker(savedCustom);
+        return;
+      }
+      e.stopPropagation();
+      setAccentColor(val);
+      document.getElementById("accent-dropdown")?.classList.remove("open");
+      inlinePicker?.classList.add("hidden");
+    });
+  });
+
+  // Custom Inline Color Picker Drag & Event Listeners
+  const slGrid = document.getElementById("picker-sl-grid");
+  const pointer = document.getElementById("picker-pointer");
+  const hueRange = document.getElementById("picker-hue-range");
+  const hexInput = document.getElementById("picker-hex-input");
+  const applyBtn = document.getElementById("btn-picker-apply");
+
+  let currentH = 210;
+  let currentS = 100;
+  let currentV = 100;
+
+  function hsvToHex(h, s, v) {
+    s /= 100;
+    v /= 100;
+    let c = v * s;
+    let x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    let m = v - c;
+    let r = 0, g = 0, b = 0;
+    if (h >= 0 && h < 60) { r = c; g = x; b = 0; }
+    else if (h >= 60 && h < 120) { r = x; g = c; b = 0; }
+    else if (h >= 120 && h < 180) { r = 0; g = c; b = x; }
+    else if (h >= 180 && h < 240) { r = 0; g = x; b = c; }
+    else if (h >= 240 && h < 300) { r = x; g = 0; b = c; }
+    else if (h >= 300 && h <= 360) { r = c; g = 0; b = x; }
+    
+    let rHex = Math.round((r + m) * 255).toString(16).padStart(2, '0');
+    let gHex = Math.round((g + m) * 255).toString(16).padStart(2, '0');
+    let bHex = Math.round((b + m) * 255).toString(16).padStart(2, '0');
+    return `${rHex}${gHex}${bHex}`.toUpperCase();
+  }
+
+  function hexToHsv(hex) {
+    hex = hex.replace(/^#/, '');
+    if (hex.length === 3) {
+      hex = hex.split('').map(c => c + c).join('');
+    }
+    let r = parseInt(hex.substring(0, 2), 16) / 255;
+    let g = parseInt(hex.substring(2, 4), 16) / 255;
+    let b = parseInt(hex.substring(4, 6), 16) / 255;
+    
+    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, v = max;
+    
+    let d = max - min;
+    s = max === 0 ? 0 : d / max;
+    
+    if (max !== min) {
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    
+    return {
+      h: Math.round(h * 360),
+      s: Math.round(s * 100),
+      v: Math.round(v * 100)
+    };
+  }
+
+  function updateFromHSV() {
+    const baseColorHex = hsvToHex(currentH, 100, 100);
+    if (slGrid) {
+      slGrid.style.background = `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, #${baseColorHex})`;
+    }
+    
+    if (pointer && slGrid) {
+      const rect = slGrid.getBoundingClientRect();
+      const x = (currentS / 100) * rect.width;
+      const y = ((100 - currentV) / 100) * rect.height;
+      pointer.style.left = `${x}px`;
+      pointer.style.top = `${y}px`;
+    }
+    
+    const hexVal = hsvToHex(currentH, currentS, currentV);
+    if (hexInput) {
+      hexInput.value = hexVal;
+    }
+    
+    const fullHex = `#${hexVal}`;
+    localStorage.setItem("tahoe_custom_accent", fullHex);
+    setAccentColor("custom");
+  }
+
+  function handleGridMove(e) {
+    if (!slGrid) return;
+    const rect = slGrid.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+    
+    x = Math.max(0, Math.min(x, rect.width));
+    y = Math.max(0, Math.min(y, rect.height));
+    
+    currentS = Math.round((x / rect.width) * 100);
+    currentV = Math.round(((rect.height - y) / rect.height) * 100);
+    
+    updateFromHSV();
+  }
+
+  let isDraggingGrid = false;
+
+  slGrid?.addEventListener("mousedown", (e) => {
+    isDraggingGrid = true;
+    handleGridMove(e);
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (isDraggingGrid) {
+      handleGridMove(e);
+    }
+  });
+
+  document.addEventListener("mouseup", () => {
+    isDraggingGrid = false;
+  });
+
+  hueRange?.addEventListener("input", () => {
+    currentH = parseInt(hueRange.value);
+    updateFromHSV();
+  });
+
+  hexInput?.addEventListener("input", () => {
+    const rawVal = hexInput.value.replace(/[^0-9A-Fa-f]/g, '');
+    if (rawVal.length === 6) {
+      const hsv = hexToHsv(rawVal);
+      currentH = hsv.h;
+      currentS = hsv.s;
+      currentV = hsv.v;
+      if (hueRange) hueRange.value = currentH;
+      updateFromHSV();
+    }
+  });
+
+  applyBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.getElementById("accent-dropdown")?.classList.remove("open");
+  });
+
+  function syncInlinePicker(hex) {
+    const hsv = hexToHsv(hex);
+    currentH = hsv.h;
+    currentS = hsv.s;
+    currentV = hsv.v;
+    if (hueRange) hueRange.value = currentH;
+    
+    setTimeout(() => {
+      updateFromHSV();
+    }, 50);
+  }
+
+  // C. Gradient Menu Option Selection
+  gradientMenu.querySelectorAll(".dropdown-option").forEach(option => {
+    option.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const val = option.getAttribute("data-value");
+      setAccentColor(val);
+      document.getElementById("gradient-dropdown")?.classList.remove("open");
+    });
+  });
 }
 
 function initDockAutohideSettings() {
@@ -7511,6 +7770,7 @@ function initCollapsibleSidebarSections() {
 
 // --- 15. Entry point on Document Ready ---
 function initAll() {
+  initCustomDropdowns();
   initSiriAssistant();
   startClock();
   initData();
@@ -7596,6 +7856,7 @@ function initAll() {
   initSettingsWindow();
   initLockScreen();
   initUtilityApps();
+  initPwaManager();
   initLaunchpad();
 }
 
@@ -8608,6 +8869,89 @@ async function initSettingsWindow() {
     });
   });
 
+  // J. Reduce Motion Toggle
+  const reduceMotionToggle = document.getElementById("toggle-reduce-motion");
+  if (reduceMotionToggle) {
+    const isChecked = localStorage.getItem("tahoe_reduce_motion") === "true";
+    reduceMotionToggle.checked = isChecked;
+    document.body.classList.toggle("reduce-motion", isChecked);
+    
+    reduceMotionToggle.addEventListener("change", (e) => {
+      const checked = e.target.checked;
+      document.body.classList.toggle("reduce-motion", checked);
+      localStorage.setItem("tahoe_reduce_motion", checked ? "true" : "false");
+      
+      pushNotification(
+        checked ? "Reduce Motion Enabled" : "Reduce Motion Disabled",
+        checked ? "Animations replaced with cross-fades." : "Standard bouncy animations active."
+      );
+    });
+  }
+
+  // K. Color Filters Dropdown
+  const filterTrigger = document.getElementById("color-filter-trigger");
+  const filterMenu = document.getElementById("color-filter-menu");
+  const filterDropdown = document.getElementById("color-filter-dropdown");
+  
+  if (filterTrigger && filterMenu && filterDropdown) {
+    filterTrigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      filterDropdown.classList.toggle("open");
+    });
+    
+    document.addEventListener("click", () => {
+      filterDropdown.classList.remove("open");
+    });
+    
+    filterMenu.querySelectorAll(".dropdown-option").forEach(option => {
+      option.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const val = option.getAttribute("data-value");
+        setColorFilter(val);
+        filterDropdown.classList.remove("open");
+      });
+    });
+    
+    const savedFilter = localStorage.getItem("tahoe_color_filter") || "none";
+    setColorFilter(savedFilter);
+  }
+  
+  function setColorFilter(filter) {
+    document.body.classList.remove("color-filter-protanopia", "color-filter-deuteranopia", "color-filter-tritanopia");
+    if (filter !== "none") {
+      document.body.classList.add(`color-filter-${filter}`);
+    }
+    localStorage.setItem("tahoe_color_filter", filter);
+    
+    if (filterMenu) {
+      filterMenu.querySelectorAll(".dropdown-option").forEach(opt => {
+        if (opt.getAttribute("data-value") === filter) {
+          opt.classList.add("active");
+        } else {
+          opt.classList.remove("active");
+        }
+      });
+    }
+    
+    const triggerText = document.querySelector("#color-filter-trigger .dropdown-selected-text");
+    if (triggerText) {
+      const names = {
+        none: "None",
+        protanopia: "Protanopia",
+        deuteranopia: "Deuteranopia",
+        tritanopia: "Tritanopia"
+      };
+      triggerText.textContent = names[filter] || filter;
+    }
+    
+    if (filter !== "none") {
+      pushNotification(
+        "Color Filter Applied",
+        `Screen adjusted for ${filter.charAt(0).toUpperCase() + filter.slice(1)}.`
+      );
+    }
+  }
+
   // Hook into Quick Settings Darkmode click to sync Settings pane cards
   const qsDark = document.getElementById("qs-darkmode");
   if (qsDark) {
@@ -8874,7 +9218,14 @@ function openIframeApp(title, url, icon, appId) {
     overflow: hidden;
   `;
 
-  const iconHtml = icon ? `<span>${icon}</span>` : "";
+  let iconHtml = "";
+  if (icon) {
+    if (icon.trim().startsWith("<svg")) {
+      iconHtml = `<span style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; vertical-align: middle;">${icon.replace(/width="[0-9]+"/g, 'width="14"').replace(/height="[0-9]+"/g, 'height="14"')}</span>`;
+    } else {
+      iconHtml = `<span>${icon}</span>`;
+    }
+  }
   win.innerHTML = `
     <div class="window-titlebar" style="background: rgba(30, 30, 40, 0.4); display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); position: relative; justify-content: space-between;">
       <div class="traffic-lights" style="display: flex; gap: 8px; width: 80px;">
@@ -9056,6 +9407,13 @@ function initLaunchpad() {
             win.classList.remove("minimized");
             const ind = document.getElementById("dock-settings-indicator");
             if (ind) ind.classList.add("active-dot");
+            playGlassChime();
+          }
+        } else if (utility === "pwa-manager") {
+          const win = document.getElementById("pwa-store-window");
+          if (win) {
+            win.classList.remove("hidden-window", "minimized");
+            bringWindowToFront(win);
             playGlassChime();
           }
         }
@@ -9248,6 +9606,11 @@ function addAppToDock(appId) {
   } else if (appId === "system7") {
     iconHtmlContent = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' class="dock-icon" width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='6' ry='6' fill='#1e88e5'/><rect x='10' y='2' width='28' height='16' fill='#ffffff'/><rect x='30' y='5' width='5' height='10' fill='#1e88e5'/><rect x='8' y='24' width='32' height='22' rx='2' ry='2' fill='#ffffff'/><line x1='12' y1='30' x2='36' y2='30' stroke='#757575' stroke-width='2'/><line x1='12' y1='35' x2='36' y2='35' stroke='#757575' stroke-width='2'/><line x1='12' y1='40' x2='36' y2='40' stroke='#757575' stroke-width='2'/></svg>`;
     tooltipName = "System 7";
+  } else if (appId.startsWith("pwa-")) {
+    const customPwas = JSON.parse(localStorage.getItem("tahoe_custom_pwas") || "[]");
+    const pwa = customPwas.find(p => p.id === appId) || FEATURED_PWAS.find(p => p.id === appId) || { name: "Web App", emoji: "🌐", color: "#007aff" };
+    iconHtmlContent = `<div class="pwa-dock-icon" style="background: ${pwa.color}; display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 10px; font-size: 22px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), 0 3px 6px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.25);">${pwa.emoji}</div>`;
+    tooltipName = pwa.name;
   }
 
   wrapper.innerHTML = `
@@ -9267,42 +9630,443 @@ function addAppToDock(appId) {
     else if (appId === "marathon") winId = "iframe-win-marathon";
     else if (appId === "lisa") winId = "iframe-win-apple-lisa";
     else if (appId === "system7") winId = "iframe-win-system-7";
+    else if (appId.startsWith("pwa-")) {
+      const customPwas = JSON.parse(localStorage.getItem("tahoe_custom_pwas") || "[]");
+      const pwa = customPwas.find(p => p.id === appId) || FEATURED_PWAS.find(p => p.id === appId);
+      if (pwa) {
+        openIframeApp(pwa.name, pwa.url, pwa.emoji, pwa.id);
+      }
+      return;
+    }
 
     const win = document.getElementById(winId);
     if (win) {
       if (win.classList.contains("hidden-window") || win.classList.contains("minimized")) {
-        win.classList.remove("hidden-window");
-        win.classList.remove("minimized");
-        bringWindowToFront(win);
-        if (appId === "terminal") {
-          const input = document.getElementById("terminal-input");
-          if (input) input.focus();
-        }
-        playGlassChime();
-      } else {
-        bringWindowToFront(win);
+        win.classList.reconst FEATURED_PWAS = [
+  { id: "pwa-googlesearch", name: "Google Search", url: "https://www.google.com/search?igu=1", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`, color: "#4285f4" },
+  { id: "pwa-wikipedia", name: "Wikipedia Mobile", url: "https://en.m.wikipedia.org", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`, color: "#6366f1" },
+  { id: "pwa-tetris", name: "Retro Arcade Tetris", url: "https://chvin.github.io/react-tetris/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`, color: "#ef4444" },
+  { id: "pwa-elevatorsaga", name: "Elevator Saga", url: "https://play.elevatorsaga.com/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline><polyline points="5 12 12 5 19 12"></polyline></svg>`, color: "#10b981" },
+  { id: "pwa-telegram", name: "Telegram Web", url: "https://web.telegram.org/a/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`, color: "#24A1DE" },
+  { id: "pwa-discord", name: "Discord App", url: "https://discord.com/app", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"></rect><path d="M6 12h4M8 10v4M15 11v.01M18 13v.01"></path></svg>`, color: "#5865F2" },
+  { id: "pwa-whatsapp", name: "WhatsApp Web", url: "https://web.whatsapp.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>`, color: "#25D366" },
+  { id: "pwa-slack", name: "Slack", url: "https://slack.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>`, color: "#4A154B" },
+  { id: "pwa-zoom", name: "Zoom", url: "https://zoom.us", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`, color: "#2D8CFF" },
+  { id: "pwa-twitter", name: "Twitter / X", url: "https://x.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="20"></line><line x1="20" y1="4" x2="4" y2="20"></line></svg>`, color: "#111111" },
+  { id: "pwa-notion", name: "Notion Workspace", url: "https://www.notion.so", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`, color: "#000000" },
+  { id: "pwa-googlemaps", name: "Google Maps Mobile", url: "https://www.google.com/maps", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`, color: "#34A853" },
+  { id: "pwa-trello", name: "Trello boards", url: "https://trello.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="9"></rect><rect x="14" y="7" width="3" height="5"></rect></svg>`, color: "#0079BF" },
+  { id: "pwa-figma", name: "Figma Designs", url: "https://figma.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`, color: "#F24E1E" },
+  { id: "pwa-retrogames", name: "Retro Console Games", url: "https://www.retrogames.cc/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`, color: "#e11d48" },
+  { id: "pwa-spotify", name: "Spotify Player", url: "https://open.spotify.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`, color: "#1DB954" },
+  { id: "pwa-youtube", name: "YouTube", url: "https://www.youtube.com/embed/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2" ry="2"></rect><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>`, color: "#FF0000" },
+  { id: "pwa-soundcloud", name: "SoundCloud", url: "https://soundcloud.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"></path></svg>`, color: "#FF5500" },
+  { id: "pwa-github", name: "GitHub Codespaces", url: "https://github.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 15V9a4 4 0 0 0-4-4H9"></path><line x1="6" y1="9" x2="6" y2="15"></line></svg>`, color: "#24292e" },
+  { id: "pwa-stackoverflow", name: "StackOverflow", url: "https://stackoverflow.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="18" x2="20" y2="18"></line><line x1="4" y1="14" x2="20" y2="14"></line><line x1="4" y1="10" x2="20" y2="10"></line><line x1="8" y1="6" x2="20" y2="6"></line></svg>`, color: "#f48024" },
+  { id: "pwa-codepen", name: "CodePen Playgrounds", url: "https://codepen.io", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon><line x1="12" y1="22" x2="12" y2="15.5"></line><polyline points="22 8.5 12 15.5 2 8.5"></polyline><polyline points="2 15.5 12 8.5 22 15.5"></polyline><line x1="12" y1="2" x2="12" y2="8.5"></line></svg>`, color: "#111111" },
+  { id: "pwa-jsonformatter", name: "JSON Formatter", url: "https://jsonformatter.org", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18a4 4 0 0 0-4-4v-4a4 4 0 0 0 4-4"></path><path d="M8 18a4 4 0 0 1 4-4v-4a4 4 0 0 1-4-4"></path></svg>`, color: "#007a87" },
+  { id: "pwa-devdocs", name: "DevDocs API", url: "https://devdocs.io", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>`, color: "#563d7c" },
+  { id: "pwa-caniuse", name: "Can I Use?", url: "https://caniuse.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`, color: "#db5600" }
+];
+
+const PWA_LIBRARY = {
+  discover: [
+    { id: "pwa-googlesearch", name: "Google Search", url: "https://www.google.com/search?igu=1", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`, color: "#4285f4", desc: "Live web search engine." },
+    { id: "pwa-notion", name: "Notion Workspace", url: "https://www.notion.so", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`, color: "#000000", desc: "Wiki, docs & project organization." },
+    { id: "pwa-discord", name: "Discord App", url: "https://discord.com/app", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"></rect><path d="M6 12h4M8 10v4M15 11v.01M18 13v.01"></path></svg>`, color: "#5865F2", desc: "Hang out with friends and communities." },
+    { id: "pwa-spotify", name: "Spotify Player", url: "https://open.spotify.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`, color: "#1DB954", desc: "Stream millions of songs and podcasts." },
+    { id: "pwa-tetris", name: "Retro Arcade Tetris", url: "https://chvin.github.io/react-tetris/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`, color: "#ef4444", desc: "Playable classic brick game." },
+    { id: "pwa-github", name: "GitHub Codespaces", url: "https://github.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 15V9a4 4 0 0 0-4-4H9"></path><line x1="6" y1="9" x2="6" y2="15"></line></svg>`, color: "#24292e", desc: "Collab, host code & track issues." }
+  ],
+  social: [
+    { id: "pwa-telegram", name: "Telegram Web", url: "https://web.telegram.org/a/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`, color: "#24A1DE", desc: "Fast & secure instant messenger." },
+    { id: "pwa-discord", name: "Discord App", url: "https://discord.com/app", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"></rect><path d="M6 12h4M8 10v4M15 11v.01M18 13v.01"></path></svg>`, color: "#5865F2", desc: "Hang out with friends and communities." },
+    { id: "pwa-whatsapp", name: "WhatsApp Web", url: "https://web.whatsapp.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>`, color: "#25D366", desc: "Secure messaging and calling." },
+    { id: "pwa-slack", name: "Slack", url: "https://slack.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>`, color: "#4A154B", desc: "Team collaboration software." },
+    { id: "pwa-zoom", name: "Zoom", url: "https://zoom.us", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`, color: "#2D8CFF", desc: "Video telephony & online chat." },
+    { id: "pwa-twitter", name: "Twitter / X", url: "https://x.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="20"></line><line x1="20" y1="4" x2="4" y2="20"></line></svg>`, color: "#111111", desc: "What's happening in the world right now." }
+  ],
+  productivity: [
+    { id: "pwa-notion", name: "Notion Workspace", url: "https://www.notion.so", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`, color: "#000000", desc: "Wiki, docs & project organization." },
+    { id: "pwa-wikipedia", name: "Wikipedia Mobile", url: "https://en.m.wikipedia.org", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`, color: "#6366f1", desc: "Free web-based encyclopedia." },
+    { id: "pwa-googlesearch", name: "Google Search", url: "https://www.google.com/search?igu=1", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`, color: "#4285f4", desc: "Live web search engine." },
+    { id: "pwa-googlemaps", name: "Google Maps Mobile", url: "https://www.google.com/maps", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`, color: "#34A853", desc: "Live GPS routing and street maps." },
+    { id: "pwa-trello", name: "Trello boards", url: "https://trello.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="9"></rect><rect x="14" y="7" width="3" height="5"></rect></svg>`, color: "#0079BF", desc: "Visual project management grids." },
+    { id: "pwa-figma", name: "Figma Designs", url: "https://figma.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`, color: "#F24E1E", desc: "Collaborative design and prototyping." }
+  ],
+  entertainment: [
+    { id: "pwa-tetris", name: "Retro Arcade Tetris", url: "https://chvin.github.io/react-tetris/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`, color: "#ef4444", desc: "Playable classic brick game." },
+    { id: "pwa-elevatorsaga", name: "Elevator Saga", url: "https://play.elevatorsaga.com/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline><polyline points="5 12 12 5 19 12"></polyline></svg>`, color: "#10b981", desc: "Programming elevator simulation." },
+    { id: "pwa-retrogames", name: "Retro Console Games", url: "https://www.retrogames.cc/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`, color: "#e11d48", desc: "Play standard emulator ROMs." },
+    { id: "pwa-spotify", name: "Spotify Player", url: "https://open.spotify.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`, color: "#1DB954", desc: "Stream millions of songs and podcasts." },
+    { id: "pwa-youtube", name: "YouTube", url: "https://www.youtube.com/embed/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2" ry="2"></rect><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>`, color: "#FF0000", desc: "Enjoy your favorite videos and channels." },
+    { id: "pwa-soundcloud", name: "SoundCloud", url: "https://soundcloud.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"></path></svg>`, color: "#FF5500", desc: "Discover hot trending audio streams." }
+  ],
+  developer: [
+    { id: "pwa-github", name: "GitHub Codespaces", url: "https://github.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 15V9a4 4 0 0 0-4-4H9"></path><line x1="6" y1="9" x2="6" y2="15"></line></svg>`, color: "#24292e", desc: "Collab, host code & track issues." },
+    { id: "pwa-stackoverflow", name: "StackOverflow", url: "https://stackoverflow.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="18" x2="20" y2="18"></line><line x1="4" y1="14" x2="20" y2="14"></line><line x1="4" y1="10" x2="20" y2="10"></line><line x1="8" y1="6" x2="20" y2="6"></line></svg>`, color: "#f48024", desc: "Developer community Q&A." },
+    { id: "pwa-codepen", name: "CodePen Playgrounds", url: "https://codepen.io", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon><line x1="12" y1="22" x2="12" y2="15.5"></line><polyline points="22 8.5 12 15.5 2 8.5"></polyline><polyline points="2 15.5 12 8.5 22 15.5"></polyline><line x1="12" y1="2" x2="12" y2="8.5"></line></svg>`, color: "#111111", desc: "Social sandbox editor for developers." },
+    { id: "pwa-jsonformatter", name: "JSON Formatter", url: "https://jsonformatter.org", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18a4 4 0 0 0-4-4v-4a4 4 0 0 0 4-4"></path><path d="M8 18a4 4 0 0 1 4-4v-4a4 4 0 0 1-4-4"></path></svg>`, color: "#007a87", desc: "Validate and format JSON instantly." },
+    { id: "pwa-devdocs", name: "DevDocs API", url: "https://devdocs.io", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>`, color: "#563d7c", desc: "Fast offline API reference tables." },
+    { id: "pwa-caniuse", name: "Can I Use?", url: "https://caniuse.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`, color: "#db5600", desc: "Browser compatibility tables for front-ends." }
+  ]
+};
+
+function getCustomPwas() {
+  const saved = localStorage.getItem("tahoe_custom_pwas");
+  if (saved) {
+    try { return JSON.parse(saved); } catch(e) { return []; }
+  }
+  return [];
+}
+
+function saveCustomPwas(pwas) {
+  localStorage.setItem("tahoe_custom_pwas", JSON.stringify(pwas));
+}
+
+function initPwaManager() {
+  const storeWin = document.getElementById("pwa-store-window");
+  if (!storeWin) return;
+
+  // Make Store Window draggable
+  if (typeof makeWindowDraggable === "function") {
+    makeWindowDraggable(storeWin);
+  }
+
+  // Close & Minimize handles
+  const closeBtn = document.getElementById("pwa-store-close");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      storeWin.classList.add("hidden-window");
+    });
+  }
+  const minBtn = document.getElementById("pwa-store-minimize");
+  if (minBtn) {
+    minBtn.addEventListener("click", () => {
+      storeWin.classList.add("hidden-window");
+    });
+  }
+
+  // Sidebar Tab Switching Logic
+  const sidebarItems = storeWin.querySelectorAll(".pwa-store-sidebar-item");
+  const panes = storeWin.querySelectorAll(".pwa-store-pane");
+
+  sidebarItems.forEach(item => {
+    item.addEventListener("click", () => {
+      sidebarItems.forEach(sib => sib.classList.remove("active"));
+      item.classList.add("active");
+
+      const targetTab = item.getAttribute("data-store-tab");
+      panes.forEach(pane => {
+        pane.style.display = "none";
+        pane.classList.remove("active");
+      });
+
+      const targetPane = document.getElementById(`store-pane-${targetTab}`);
+      if (targetPane) {
+        targetPane.style.display = "block";
+        targetPane.classList.add("active");
       }
-    }
+    });
   });
 
-  const dock = document.getElementById("dock");
-  if (dock) {
-    const appsWrapper = document.querySelector('.dock-item-wrapper[data-app="applications"]');
-    const settingsWrapper = document.querySelector('.dock-item-wrapper[data-app="settings"]');
-    const targetSibling = appsWrapper || settingsWrapper;
-    
-    if (targetSibling) {
-      dock.insertBefore(wrapper, targetSibling);
-    } else {
-      dock.appendChild(wrapper);
+  // Render all Category Grids
+  renderGrids();
+
+  // Install custom PWA form handler inside the Store Window
+  const installForm = document.getElementById("pwa-store-install-form");
+  if (installForm) {
+    installForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("pwa-store-name-input").value.trim();
+      const url = document.getElementById("pwa-store-url-input").value.trim();
+      const emoji = document.getElementById("pwa-store-emoji-input").value.trim();
+      const color = document.getElementById("pwa-store-color-input").value;
+
+      if (!name || !url || !emoji) return;
+
+      const id = `pwa-${Date.now()}`;
+      const newPwa = { id, name, url, emoji, color };
+
+      const customPwas = getCustomPwas();
+      customPwas.push(newPwa);
+      saveCustomPwas(customPwas);
+
+      // Reset form
+      installForm.reset();
+      document.getElementById("pwa-store-color-input").value = "#007aff";
+
+      // Refresh installed grids
+      renderGrids();
+      
+      // Auto-launch the newly installed PWA and add to dock
+      openIframeApp(newPwa.name, newPwa.url, newPwa.emoji, newPwa.id);
+
+      pushNotification(
+        "App Installed Successfully",
+        `"${name}" has been added to your system and docked.`
+      );
+      
+      // Switch tab to Installed
+      const installedTabItem = storeWin.querySelector('[data-store-tab="installed"]');
+      if (installedTabItem) installedTabItem.click();
+    });
+  }
+
+  // System Settings Preferences Tab - Cache Clearing
+  const clearCacheBtn = document.getElementById("btn-clear-pwa-cache");
+  if (clearCacheBtn) {
+    clearCacheBtn.addEventListener("click", () => {
+      const customs = getCustomPwas();
+      customs.forEach(pwa => {
+        const existingId = `iframe-win-${pwa.name.replace(/\s+/g, '-').toLowerCase()}`;
+        const win = document.getElementById(existingId);
+        if (win) win.remove();
+        removeAppFromDock(pwa.id);
+      });
+      localStorage.removeItem("tahoe_custom_pwas");
+      renderGrids();
+      pushNotification("Cache Purged", "All installed local PWAs have been removed.");
+    });
+  }
+
+  const resetDefaultsBtn = document.getElementById("btn-reset-pwa-default");
+  if (resetDefaultsBtn) {
+    resetDefaultsBtn.addEventListener("click", () => {
+      const customs = getCustomPwas();
+      customs.forEach(pwa => {
+        removeAppFromDock(pwa.id);
+      });
+      localStorage.setItem("tahoe_custom_pwas", JSON.stringify([]));
+      renderGrids();
+      pushNotification("System Reset", "PWA settings restored to default.");
+    });
+  }
+
+  function renderGrids() {
+    // Render each library category grid
+    Object.keys(PWA_LIBRARY).forEach(cat => {
+      const grid = document.getElementById(`pwa-${cat}-grid`);
+      if (!grid) return;
+
+      grid.innerHTML = "";
+      const customPwas = getCustomPwas();
+
+      PWA_LIBRARY[cat].forEach(pwa => {
+        const isInstalled = customPwas.some(p => p.url === pwa.url);
+        const activePwa = customPwas.find(p => p.url === pwa.url) || pwa;
+
+        const card = document.createElement("div");
+        card.className = "pwa-card";
+        card.style = "background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: relative; overflow: hidden; width: 100%; box-sizing: border-box;";
+        card.innerHTML = `
+          <div class="pwa-card-icon" style="background: ${pwa.color}; width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.25);">${pwa.emoji}</div>
+          <div class="pwa-card-name" style="font-size: 13px; font-weight: 600; color: #fff; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-ui), sans-serif; margin-top: 4px;">${pwa.name}</div>
+          <div style="font-size: 10px; opacity: 0.5; height: 28px; overflow: hidden; line-height: 1.3; font-family: var(--font-ui), sans-serif;">${pwa.desc || 'Native web utility.'}</div>
+          <button class="btn-pwa-action" style="width: 72px; border: none; outline: none; border-radius: 20px; padding: 5px 0; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: var(--font-ui), sans-serif; text-align: center; margin-top: 6px; background: ${isInstalled ? 'rgba(255,255,255,0.1)' : '#007aff'}; color: ${isInstalled ? '#3b82f6' : '#fff'};">
+            ${isInstalled ? 'OPEN' : 'GET'}
+          </button>
+        `;
+
+        const actionBtn = card.querySelector(".btn-pwa-action");
+        actionBtn.addEventListener("click", () => {
+          if (isInstalled) {
+            // Instant Launch
+            openIframeApp(activePwa.name, activePwa.url, activePwa.emoji, activePwa.id);
+          } else {
+            // Install
+            const activeCustoms = getCustomPwas();
+            activeCustoms.push(pwa);
+            saveCustomPwas(activeCustoms);
+            renderGrids();
+
+            // Auto-launch
+            openIframeApp(pwa.name, pwa.url, pwa.emoji, pwa.id);
+
+            pushNotification(
+              "App Installed Successfully",
+              `"${pwa.name}" has been added to your system and docked.`
+            );
+          }
+        });
+
+        grid.appendChild(card);
+      });
+    });
+
+    // Render Discover Page Featured App Store Carousel
+    const discoverPane = document.getElementById("store-pane-discover");
+    if (discoverPane) {
+      // Remove any existing featured header
+      const existingHero = discoverPane.querySelector(".discover-hero-wrapper");
+      if (existingHero) existingHero.remove();
+
+      // Create new Apple-like Discover Hero Section
+      const heroWrapper = document.createElement("div");
+      heroWrapper.className = "discover-hero-wrapper";
+      heroWrapper.style = "display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px;";
+      
+      const customPwas = getCustomPwas();
+      const isTetrisInstalled = customPwas.some(p => p.url === "https://chvin.github.io/react-tetris/");
+      const isNotionInstalled = customPwas.some(p => p.url === "https://www.notion.so");
+
+      heroWrapper.innerHTML = `
+        <div style="background: linear-gradient(135deg, #1e1b4b, #311042); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; min-height: 180px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: left;">
+          <div style="font-size: 10px; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-ui), sans-serif;">FEATURED APP</div>
+          <div style="margin-top: 12px; margin-bottom: 12px;">
+            <h3 style="font-size: 22px; font-weight: 700; color: #fff; margin: 0; font-family: var(--font-ui), sans-serif;">Retro Arcade Tetris</h3>
+            <p style="font-size: 13px; opacity: 0.7; max-width: 320px; margin: 4px 0 0 0; line-height: 1.4; font-family: var(--font-ui), sans-serif;">An immersive web brick classic. Play immediately with high frame rate controls.</p>
+          </div>
+          <button class="btn-hero-install-tetris" style="background: rgba(255,255,255,0.18); border: none; padding: 6px 18px; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 800; cursor: pointer; align-self: flex-start; backdrop-filter: blur(10px); text-transform: uppercase; font-family: var(--font-ui), sans-serif;">
+            ${isTetrisInstalled ? 'OPEN' : 'GET'}
+          </button>
+          <div style="position: absolute; right: 24px; bottom: 8px; font-size: 110px; opacity: 0.12; user-select: none;">🧱</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #0f172a, #1e293b); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: left;">
+          <div style="font-size: 10px; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-ui), sans-serif;">PRODUCTIVITY ESSENTIAL</div>
+          <div>
+            <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin: 0; font-family: var(--font-ui), sans-serif;">Notion Workspace</h3>
+            <p style="font-size: 11px; opacity: 0.6; margin: 4px 0 0 0; line-height: 1.3; font-family: var(--font-ui), sans-serif;">Your unified collaborative workspace for notes, tasks and wikis.</p>
+          </div>
+          <button class="btn-hero-install-notion" style="background: #fff; color: #0f172a; border: none; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; cursor: pointer; align-self: flex-start; text-transform: uppercase; font-family: var(--font-ui), sans-serif;">
+            ${isNotionInstalled ? 'OPEN' : 'GET'}
+          </button>
+        </div>
+      `;
+
+      discoverPane.insertBefore(heroWrapper, discoverPane.querySelector("h2"));
+
+      // Bind hero button click actions
+      const tetrisHeroBtn = heroWrapper.querySelector(".btn-hero-install-tetris");
+      if (tetrisHeroBtn) {
+        tetrisHeroBtn.addEventListener("click", () => {
+          const tetrisPwa = PWA_LIBRARY.discover.find(p => p.id === "pwa-tetris");
+          if (isTetrisInstalled) {
+            openIframeApp("Retro Arcade Tetris", "https://chvin.github.io/react-tetris/", tetrisPwa.emoji, "pwa-tetris");
+          } else {
+            const activeCustoms = getCustomPwas();
+            activeCustoms.push(tetrisPwa);
+            saveCustomPwas(activeCustoms);
+            renderGrids();
+            openIframeApp("Retro Arcade Tetris", "https://chvin.github.io/react-tetris/", tetrisPwa.emoji, "pwa-tetris");
+            pushNotification("App Installed Successfully", '"Retro Arcade Tetris" has been added and docked.');
+          }
+        });
+      }
+
+      const notionHeroBtn = heroWrapper.querySelector(".btn-hero-install-notion");
+      if (notionHeroBtn) {
+        notionHeroBtn.addEventListener("click", () => {
+          const notionPwa = PWA_LIBRARY.discover.find(p => p.id === "pwa-notion");
+          if (isNotionInstalled) {
+            openIframeApp("Notion Workspace", "https://www.notion.so", notionPwa.emoji, "pwa-notion");
+          } else {
+            const activeCustoms = getCustomPwas();
+            activeCustoms.push(notionPwa);
+            saveCustomPwas(activeCustoms);
+            renderGrids();
+            openIframeApp("Notion Workspace", "https://www.notion.so", notionPwa.emoji, "pwa-notion");
+            pushNotification("App Installed Successfully", '"Notion Workspace" has been added and docked.');
+          }
+        });
+      }
     }
 
-    // Refresh dynamic magnification motion targets
-    if (typeof window.refreshDockMagnification === "function") {
-      window.refreshDockMagnification();
+    // Render Installed Tab
+    const installedList = document.getElementById("pwa-store-installed-list");
+    if (!installedList) return;
+
+    installedList.innerHTML = "";
+    const customPwas = getCustomPwas();
+
+    if (customPwas.length === 0) {
+      installedList.innerHTML = `<div style="text-align: center; font-size: 13px; opacity: 0.5; padding: 30px 0; font-family: var(--font-ui), sans-serif;">No custom web apps installed yet. Install from other categories or add your own!</div>`;
+      return;
     }
+
+    customPwas.forEach(pwa => {
+      const row = document.createElement("div");
+      row.className = "pwa-installed-row";
+      row.style = "display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 10px 14px; transition: all 0.2s; font-family: var(--font-ui), sans-serif;";
+      row.innerHTML = `
+        <div class="pwa-installed-info" style="display: flex; align-items: center; gap: 12px;">
+          <div class="pwa-installed-icon" style="background: ${pwa.color}; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(255,255,255,0.25);">${pwa.emoji}</div>
+          <div>
+            <div class="pwa-installed-name" style="font-size: 13px; font-weight: 600; color: #fff;">${pwa.name}</div>
+            <div class="pwa-installed-url" style="font-size: 11px; opacity: 0.4;">${pwa.url.substring(0, 50)}${pwa.url.length > 50 ? '...' : ''}</div>
+          </div>
+        </div>
+        <div class="pwa-installed-actions" style="display: flex; gap: 8px;">
+          <button class="btn-pwa-row-action btn-pwa-row-launch" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500; font-family: var(--font-ui), sans-serif;">Launch</button>
+          <button class="btn-pwa-row-action btn-pwa-row-delete" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500; font-family: var(--font-ui), sans-serif;">Delete</button>
+        </div>
+      `;
+
+      // Launch button
+      row.querySelector(".btn-pwa-row-launch").addEventListener("click", () => {
+        openIframeApp(pwa.name, pwa.url, pwa.emoji, pwa.id);
+      });
+
+      // Delete button
+      row.querySelector(".btn-pwa-row-delete").addEventListener("click", () => {
+        // Remove app window if open
+        const existingId = `iframe-win-${pwa.name.replace(/\s+/g, '-').toLowerCase()}`;
+        const win = document.getElementById(existingId);
+        if (win) win.remove();
+
+        // Remove from dock
+        removeAppFromDock(pwa.id);
+
+        // Update list
+        const activeCustoms = getCustomPwas().filter(p => p.id !== pwa.id);
+        saveCustomPwas(activeCustoms);
+
+        renderGrids();
+
+        pushNotification(
+          "App Uninstalled",
+          `"${pwa.name}" has been removed from the system and dock.`
+        );
+      });
+
+      installedList.appendChild(row);
+    });
+  }g: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500;">Delete</button>
+        </div>
+      `;
+
+      // Launch button
+      row.querySelector(".btn-pwa-row-launch").addEventListener("click", () => {
+        openIframeApp(pwa.name, pwa.url, pwa.emoji, pwa.id);
+      });
+
+      // Delete button
+      row.querySelector(".btn-pwa-row-delete").addEventListener("click", () => {
+        // Remove app window if open
+        const existingId = `iframe-win-${pwa.name.replace(/\s+/g, '-').toLowerCase()}`;
+        const win = document.getElementById(existingId);
+        if (win) win.remove();
+
+        // Remove from dock
+        removeAppFromDock(pwa.id);
+
+        // Update list
+        const activeCustoms = getCustomPwas().filter(p => p.id !== pwa.id);
+        saveCustomPwas(activeCustoms);
+
+        renderGrids();
+
+        pushNotification(
+          "App Uninstalled",
+          `"${pwa.name}" has been removed from the system and dock.`
+        );
+      });
+
+      installedList.appendChild(row);
+    });
   }
 }
+
 
 let texteditActiveFile = null;
 let notesData = [];

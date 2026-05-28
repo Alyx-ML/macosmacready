@@ -358,7 +358,7 @@ body.light-mode #menu-bar {
   cursor: pointer;
   outline: none;
   font-family: inherit;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 400;
   display: flex;
   align-items: center;
@@ -375,6 +375,10 @@ body.light-mode .menu-item:hover, body.light-mode .menu-item.active {
 
 .menu-item.font-semibold {
   font-weight: 600;
+}
+
+#menu-active-app {
+  font-size: 11px;
 }
 
 .apple-logo {
@@ -3469,6 +3473,33 @@ body.light-mode #dock {
   background: rgba(255, 255, 255, 0.25);
   border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+}
+
+/* Dock Autohide Style System */
+#dock-hotspot {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  z-index: 95;
+  background: transparent;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+body.dock-autohide-enabled #dock-hotspot {
+  pointer-events: auto;
+}
+
+body.dock-autohide-enabled #dock-container {
+  transform: translate(-50%, calc(100% + 20px));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.dock-autohide-enabled #dock-hotspot:hover ~ #dock-container,
+body.dock-autohide-enabled #dock-container:hover {
+  transform: translate(-50%, 0);
 }
 
 .dock-item-wrapper {
@@ -7049,34 +7080,115 @@ body.light-mode .wallpaper-section-title {
 }
 
 /* Custom Accent picker in settings */
+.accent-picker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-top: 8px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body.light-mode .accent-picker-row {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
 .settings-accent-circle {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  border: 2px solid #fff;
+  border: 1.5px solid rgba(0, 0, 0, 0.45);
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   position: relative;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .settings-accent-circle:hover {
-  transform: scale(1.15);
+  transform: scale(1.2) translateY(-1px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Glass Highlight Overlay */
+.settings-accent-circle::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  right: 1px;
+  height: 48%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 100%);
+  border-radius: 10px 10px 0 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Concentric selected indicator matching real macOS System Settings */
+.settings-accent-circle.active {
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  outline: 1.5px solid var(--outline-color, #007aff);
+  outline-offset: 1.5px;
 }
 
 .settings-accent-circle.active::after {
   content: '✓';
+  font-size: 9px;
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
   position: absolute;
   left: 50%;
-  top: 48%;
+  top: 46%;
   transform: translate(-50%, -50%);
-  font-size: 10px;
-  color: #fff;
-  font-weight: bold;
+  z-index: 2;
 }
 
-.settings-accent-circle.accent-silver.active::after {
-  color: #1e1e24;
+/* 14 Accent Colors background & outline definitions */
+.settings-accent-circle.accent-blue { --outline-color: #007aff; background-color: #007aff; }
+.settings-accent-circle.accent-sky { --outline-color: #5ac8fa; background-color: #5ac8fa; }
+.settings-accent-circle.accent-teal { --outline-color: #00a3c4; background-color: #00a3c4; }
+.settings-accent-circle.accent-mint { --outline-color: #00c7be; background-color: #00c7be; }
+.settings-accent-circle.accent-green { --outline-color: #34c759; background-color: #34c759; }
+.settings-accent-circle.accent-yellow { --outline-color: #ffcc00; background-color: #ffcc00; }
+.settings-accent-circle.accent-amber { --outline-color: #ff9500; background-color: #ff9500; }
+.settings-accent-circle.accent-pink { --outline-color: #ff2d55; background-color: #ff2d55; }
+.settings-accent-circle.accent-rose { --outline-color: #e11d48; background-color: #e11d48; }
+.settings-accent-circle.accent-purple { --outline-color: #af52de; background-color: #af52de; }
+.settings-accent-circle.accent-indigo { --outline-color: #5856d6; background-color: #5856d6; }
+.settings-accent-circle.accent-bronze { --outline-color: #a2845e; background-color: #a2845e; }
+.settings-accent-circle.accent-slate { --outline-color: #64748b; background-color: #64748b; }
+.settings-accent-circle.accent-silver { --outline-color: #8e8e93; background-color: #8e8e93; }
+
+/* 14 Heritage Gradients background & outline definitions */
+.settings-accent-circle.accent-puma { --outline-color: #74ebd5; background: linear-gradient(135deg, #74ebd5 0%, #acb6e5 100%); }
+.settings-accent-circle.accent-tiger { --outline-color: #5aa5e6; background: linear-gradient(135deg, #5aa5e6 0%, #0b5796 100%); }
+.settings-accent-circle.accent-panther { --outline-color: #78716c; background: linear-gradient(135deg, #d6d3d1 0%, #78716c 100%); }
+.settings-accent-circle.accent-leopard { --outline-color: #9ca3af; background: linear-gradient(135deg, #9ca3af 0%, #4b5563 100%); }
+.settings-accent-circle.accent-yosemite { --outline-color: #f97316; background: linear-gradient(135deg, #fdba74 0%, #f97316 100%); }
+.settings-accent-circle.accent-elcapitan { --outline-color: #8baaaa; background: linear-gradient(135deg, #8baaaa 0%, #506a6a 100%); }
+.settings-accent-circle.accent-sierra { --outline-color: #0891b2; background: linear-gradient(135deg, #a5f3fc 0%, #0891b2 100%); }
+.settings-accent-circle.accent-mojave { --outline-color: #fb923c; background: linear-gradient(135deg, #f43f5e 0%, #fb923c 50%, #f59e0b 100%); }
+.settings-accent-circle.accent-catalina { --outline-color: #1d4ed8; background: linear-gradient(135deg, #1d4ed8 0%, #1e1b4b 100%); }
+.settings-accent-circle.accent-bigsur { --outline-color: #38bdf8; background: linear-gradient(135deg, #f472b6 0%, #38bdf8 50%, #eab308 100%); }
+.settings-accent-circle.accent-monterey { --outline-color: #8b5cf6; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%); }
+.settings-accent-circle.accent-ventura { --outline-color: #f97316; background: linear-gradient(135deg, #f97316 0%, #b91c1c 100%); }
+.settings-accent-circle.accent-sonoma { --outline-color: #ca8a04; background: linear-gradient(135deg, #fef08a 0%, #ca8a04 100%); }
+.settings-accent-circle.accent-sequoia { --outline-color: #16a34a; background: linear-gradient(135deg, #86efac 0%, #16a34a 100%); }
+
+.settings-accent-circle.accent-silver.active::after,
+.settings-accent-circle.accent-yellow.active::after {
+  color: #1a1a20;
+  text-shadow: none;
 }
 
 /* System Dropdown Select style */
