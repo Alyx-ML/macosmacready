@@ -11537,9 +11537,8 @@ function openSiriHud() {
 
   siriWaveState = "listening";
   siriWavePhase = 0;
-  if (!siriWaveId) {
-    animateSiriWave();
-  }
+  drawSiriWaveFrame();
+  stopSiriWaveAnimation();
 }
 
 function closeSiriHud() {
@@ -11563,12 +11562,20 @@ function closeSiriHud() {
 
   setTimeout(() => {
     if (!siriActive) {
-      if (siriWaveId) {
-        cancelAnimationFrame(siriWaveId);
-        siriWaveId = null;
-      }
+      stopSiriWaveAnimation();
     }
   }, 350);
+}
+
+function startSiriWaveAnimation() {
+  if (!siriActive || siriWaveId) return;
+  siriWaveId = requestAnimationFrame(animateSiriWave);
+}
+
+function stopSiriWaveAnimation() {
+  if (!siriWaveId) return;
+  cancelAnimationFrame(siriWaveId);
+  siriWaveId = null;
 }
 
 function positionSiriHud() {
@@ -11591,6 +11598,16 @@ function positionSiriHud() {
 }
 
 function animateSiriWave() {
+  siriWaveId = null;
+  if (!siriActive) return;
+  drawSiriWaveFrame();
+
+  if (siriWaveState !== "listening" || micEnabled) {
+    siriWaveId = requestAnimationFrame(animateSiriWave);
+  }
+}
+
+function drawSiriWaveFrame() {
   const p1 = document.getElementById("wave-path-1");
   const p2 = document.getElementById("wave-path-2");
   const p3 = document.getElementById("wave-path-3");
@@ -11646,10 +11663,6 @@ function animateSiriWave() {
   drawSiriWavePath(p1, amp1, freq1, siriWavePhase, 60);
   drawSiriWavePath(p2, amp2, freq2, siriWavePhase + 2.5, 60);
   drawSiriWavePath(p3, amp3, freq3, siriWavePhase + 5.0, 60);
-
-  if (siriActive) {
-    siriWaveId = requestAnimationFrame(animateSiriWave);
-  }
 }
 
 function drawSiriWavePath(pathEl, amp, freq, phase, centerY) {
@@ -11725,6 +11738,7 @@ async function toggleSiriMic() {
     micBtn.classList.add("active");
     if (statusText) statusText.textContent = "Listening...";
     siriWaveState = "listening";
+    startSiriWaveAnimation();
     siriRecordingStopTimer = setTimeout(() => {
       stopSiriVoiceRecording();
     }, 6500);
@@ -11791,6 +11805,7 @@ function stopSiriVoiceRecording() {
   clearSiriRecordingTimer();
   micEnabled = false;
   if (micBtn) micBtn.classList.remove("active");
+  if (siriWaveState === "listening") stopSiriWaveAnimation();
   if (siriMediaRecorder) {
     const recorder = siriMediaRecorder;
     try {
@@ -11808,6 +11823,7 @@ function cancelSiriVoiceRecording() {
   micEnabled = false;
   const micBtn = document.getElementById("siri-mic-toggle");
   if (micBtn) micBtn.classList.remove("active");
+  if (siriWaveState === "listening") stopSiriWaveAnimation();
   if (siriMediaRecorder) {
     const recorder = siriMediaRecorder;
     siriMediaRecorder = null;
@@ -11967,12 +11983,14 @@ function getSiriAssistantContext() {
 function renderSiriResponse(response, responseText, requestId = siriRequestId) {
   if (requestId !== siriRequestId) return;
   siriWaveState = "speaking";
+  startSiriWaveAnimation();
 
   if (responseText) {
     responseText.style.display = "block";
     typewriterEffect(responseText, response.text, () => {
       if (requestId !== siriRequestId) return;
       siriWaveState = "listening";
+      stopSiriWaveAnimation();
     }, requestId);
   }
 
@@ -11999,6 +12017,7 @@ function submitSiriQuery(query) {
 
   // Set Wave to Thinking
   siriWaveState = "thinking";
+  startSiriWaveAnimation();
   if (statusText) statusText.textContent = `"${query}"`;
   if (responseText) {
     responseText.style.display = "none";
