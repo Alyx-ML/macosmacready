@@ -11911,6 +11911,7 @@ const SIRI_TRANSCRIBE_ENDPOINT = "https://macosmacready.fpt4g789c6.workers.dev/a
 async function requestCloudflareSiri(query) {
   const response = await fetch(SIRI_API_ENDPOINT, {
     method: "POST",
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json"
     },
