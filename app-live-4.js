@@ -530,7 +530,7 @@ function cleanArticleText(text) {
 }
 
 function isArticleBoilerplate(text) {
-  return /^(source:|read on|continue reading|go to the linked site|go to the podcast page|advertisement|sponsor|subscribe|share this|related articles)/i.test(text);
+  return /^(source:|read on|continue reading|go to the linked site|go to the podcast page|advertisement|sponsor|subscribe|share this|related articles|related stories:|ftc:)/i.test(text);
 }
 
 const ARTICLE_LEADING_LABELS = new Set([
@@ -564,6 +564,27 @@ const ARTICLE_LEADING_LABELS = new Set([
   "watchos"
 ]);
 
+const ARTICLE_RELATED_SECTION_LABELS = new Set([
+  "active discussions",
+  "deals",
+  "do more with your apple products",
+  "latest news",
+  "more from appleinsider",
+  "more stories",
+  "popular stories",
+  "read more",
+  "related articles",
+  "related stories",
+  "top stories",
+  "videos"
+]);
+
+const ARTICLE_AD_LINK_LABELS = new Set([
+  "discounted airpods pro 3",
+  "get weekly updates",
+  "official apple store on amazon"
+]);
+
 function removeLeadingArticleLabels(root) {
   if (!root) return;
 
@@ -571,7 +592,7 @@ function removeLeadingArticleLabels(root) {
   let removedCount = 0;
 
   while (node && removedCount < 12) {
-    if (node.tagName !== "P") return;
+    if (!/^(P|H2|H3|LI)$/i.test(node.tagName)) return;
 
     const text = cleanArticleText(node.textContent);
     if (!isLeadingArticleLabel(text)) return;
@@ -593,6 +614,100 @@ function isLeadingArticleLabel(text) {
   if (words.length === 0 || words.length > 4) return false;
 
   return words.every(word => /^[A-Z0-9][A-Za-z0-9&+-]*$/.test(word) || /^[A-Z]{2,}$/.test(word));
+}
+
+function removeLeadingRelatedArticleSections(root) {
+  if (!root) return;
+
+  let node = root.firstElementChild;
+  let removingRelated = false;
+  let removedCount = 0;
+
+  while (node && removedCount < 24) {
+    const text = cleanArticleText(node.textContent);
+    const lowerText = text.toLowerCase();
+    const startsRelatedSection = ARTICLE_RELATED_SECTION_LABELS.has(lowerText);
+
+    if (!removingRelated && !startsRelatedSection) return;
+
+    if (removingRelated && /^H[23]$/i.test(node.tagName) && !startsRelatedSection) return;
+
+    const next = node.nextElementSibling;
+    node.remove();
+    node = next;
+    removedCount += 1;
+    removingRelated = true;
+  }
+}
+
+function removeTrailingRelatedArticleSections(root) {
+  if (!root) return;
+
+  const children = [...root.children];
+  const sectionStart = children.find(node => {
+    if (!/^(H2|H3|P|LI)$/i.test(node.tagName)) return false;
+    return ARTICLE_RELATED_SECTION_LABELS.has(cleanArticleText(node.textContent).toLowerCase());
+  });
+
+  if (!sectionStart) return;
+
+  let node = sectionStart;
+  while (node) {
+    const next = node.nextElementSibling;
+    node.remove();
+    node = next;
+  }
+}
+
+function removeArticleAdLinks(root) {
+  if (!root) return;
+
+  [...root.children].forEach(node => {
+    const text = cleanArticleText(node.textContent);
+    const lowerText = text.toLowerCase();
+    if (
+      ARTICLE_AD_LINK_LABELS.has(lowerText) ||
+      /^discounted (airpods|apple watch|ipad|iphone|macbook|mac mini|mac studio)/i.test(text) ||
+      /^macbook neo .+ \$(590|690) .+delivery by/i.test(text) ||
+      /^these .+ macbook air models are .+ off/i.test(text) ||
+      /^still live: .+macbook air/i.test(text)
+    ) {
+      node.remove();
+    }
+  });
+}
+
+function removeTrailingLinkLists(root) {
+  if (!root) return;
+
+  const children = [...root.children];
+  const newsletterNode = children.find(node => cleanArticleText(node.textContent).toLowerCase() === "get weekly updates");
+  if (!newsletterNode) return;
+
+  let sectionStart = newsletterNode;
+  let cursor = newsletterNode.previousElementSibling;
+  let headlineCount = 0;
+
+  while (cursor && headlineCount < 8) {
+    const text = cleanArticleText(cursor.textContent);
+    if (!isRelatedHeadlineText(text)) break;
+    sectionStart = cursor;
+    headlineCount += 1;
+    cursor = cursor.previousElementSibling;
+  }
+
+  let node = headlineCount >= 2 ? sectionStart : newsletterNode;
+  while (node) {
+    const next = node.nextElementSibling;
+    node.remove();
+    node = next;
+  }
+}
+
+function isRelatedHeadlineText(text) {
+  if (!text || text.length < 24 || text.length > 160) return false;
+  if (/[.!?]$/.test(text)) return false;
+  return true;
 }
 
 function escapeHTML(text) {
@@ -762,6 +877,93 @@ function formatRSSDate(pubDate) {
 }
 
 // Set macOS Accent Color
+const HERITAGE_ACCENT_TOKENS = {
+  puma: {
+    color: "#2b7a78",
+    rgb: "43, 122, 120",
+    glow: "rgba(43, 122, 120, 0.4)",
+    gradient: "linear-gradient(135deg, #74ebd5 0%, #acb6e5 100%)"
+  },
+  tiger: {
+    color: "#0f6eb5",
+    rgb: "15, 110, 181",
+    glow: "rgba(15, 110, 181, 0.4)",
+    gradient: "linear-gradient(135deg, #5aa5e6 0%, #0b5796 100%)"
+  },
+  panther: {
+    color: "#78716c",
+    rgb: "120, 113, 108",
+    glow: "rgba(120, 113, 108, 0.35)",
+    gradient: "linear-gradient(135deg, #d6d3d1 0%, #78716c 100%)"
+  },
+  leopard: {
+    color: "#4b5563",
+    rgb: "75, 85, 99",
+    glow: "rgba(75, 85, 99, 0.35)",
+    gradient: "linear-gradient(135deg, #9ca3af 0%, #4b5563 100%)"
+  },
+  yosemite: {
+    color: "#f97316",
+    rgb: "249, 115, 22",
+    glow: "rgba(249, 115, 22, 0.4)",
+    gradient: "linear-gradient(135deg, #fdba74 0%, #f97316 100%)"
+  },
+  elcapitan: {
+    color: "#6b7280",
+    rgb: "107, 114, 128",
+    glow: "rgba(107, 114, 128, 0.35)",
+    gradient: "linear-gradient(135deg, #b7b7b7 0%, #4b5563 100%)"
+  },
+  sierra: {
+    color: "#2f80ed",
+    rgb: "47, 128, 237",
+    glow: "rgba(47, 128, 237, 0.4)",
+    gradient: "linear-gradient(135deg, #56ccf2 0%, #2f80ed 100%)"
+  },
+  mojave: {
+    color: "#fb923c",
+    rgb: "251, 146, 60",
+    glow: "rgba(251, 146, 60, 0.4)",
+    gradient: "linear-gradient(135deg, #f43f5e 0%, #fb923c 50%, #f59e0b 100%)"
+  },
+  catalina: {
+    color: "#7c3aed",
+    rgb: "124, 58, 237",
+    glow: "rgba(124, 58, 237, 0.4)",
+    gradient: "linear-gradient(135deg, #1d4ed8 0%, #7c3aed 55%, #f97316 100%)"
+  },
+  bigsur: {
+    color: "#0ea5e9",
+    rgb: "14, 165, 233",
+    glow: "rgba(14, 165, 233, 0.4)",
+    gradient: "linear-gradient(135deg, #0ea5e9 0%, #f97316 50%, #ec4899 100%)"
+  },
+  monterey: {
+    color: "#7c3aed",
+    rgb: "124, 58, 237",
+    glow: "rgba(124, 58, 237, 0.4)",
+    gradient: "linear-gradient(135deg, #7c3aed 0%, #ec4899 55%, #fb7185 100%)"
+  },
+  ventura: {
+    color: "#f97316",
+    rgb: "249, 115, 22",
+    glow: "rgba(249, 115, 22, 0.4)",
+    gradient: "linear-gradient(135deg, #dc2626 0%, #f97316 55%, #facc15 100%)"
+  },
+  sonoma: {
+    color: "#84cc16",
+    rgb: "132, 204, 22",
+    glow: "rgba(132, 204, 22, 0.4)",
+    gradient: "linear-gradient(135deg, #f59e0b 0%, #84cc16 55%, #16a34a 100%)"
+  },
+  sequoia: {
+    color: "#16a34a",
+    rgb: "22, 163, 74",
+    glow: "rgba(22, 163, 74, 0.4)",
+    gradient: "linear-gradient(135deg, #86efac 0%, #16a34a 100%)"
+  }
+};
+
 function setAccentColor(color) {
   // Remove existing themes dynamically
   Array.from(document.body.classList).forEach(cls => {
@@ -790,6 +992,14 @@ function setAccentColor(color) {
     document.body.style.removeProperty("--accent-gradient");
     
     document.body.classList.add(`theme-${color}`);
+
+    const heritageTokens = HERITAGE_ACCENT_TOKENS[color];
+    if (heritageTokens) {
+      document.body.style.setProperty("--accent-color", heritageTokens.color);
+      document.body.style.setProperty("--accent-color-rgb", heritageTokens.rgb);
+      document.body.style.setProperty("--accent-glow", heritageTokens.glow);
+      document.body.style.setProperty("--accent-gradient", heritageTokens.gradient);
+    }
   }
   
   localStorage.setItem("tahoe_theme", color);
@@ -1961,7 +2171,12 @@ function stripSourceLinks(content) {
       }
     }
   });
+  removeLeadingRelatedArticleSections(wrapper);
   removeLeadingArticleLabels(wrapper);
+  removeLeadingRelatedArticleSections(wrapper);
+  removeTrailingRelatedArticleSections(wrapper);
+  removeArticleAdLinks(wrapper);
+  removeTrailingLinkLists(wrapper);
   return wrapper.innerHTML;
 }
 
