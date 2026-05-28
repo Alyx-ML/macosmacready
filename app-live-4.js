@@ -11401,6 +11401,8 @@ let siriVoiceMonitorInterval = null;
 let siriRecordingStopTimer = null;
 let siriResponseTimer = null;
 let siriRequestId = 0;
+let siriWaveLastFrame = 0;
+const SIRI_WAVE_FRAME_INTERVAL = 1000 / 30;
 
 function initSiriAssistant() {
   const siriToggle = document.getElementById("menu-siri-toggle");
@@ -11576,6 +11578,7 @@ function stopSiriWaveAnimation() {
   if (!siriWaveId) return;
   cancelAnimationFrame(siriWaveId);
   siriWaveId = null;
+  siriWaveLastFrame = 0;
 }
 
 function positionSiriHud() {
@@ -11597,10 +11600,14 @@ function positionSiriHud() {
   siriHud.style.setProperty("right", "auto", "important");
 }
 
-function animateSiriWave() {
+function animateSiriWave(timestamp = 0) {
   siriWaveId = null;
   if (!siriActive) return;
-  drawSiriWaveFrame();
+
+  if (!siriWaveLastFrame || timestamp - siriWaveLastFrame >= SIRI_WAVE_FRAME_INTERVAL) {
+    siriWaveLastFrame = timestamp;
+    drawSiriWaveFrame();
+  }
 
   if (siriWaveState !== "listening" || micEnabled) {
     siriWaveId = requestAnimationFrame(animateSiriWave);

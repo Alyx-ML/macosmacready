@@ -8601,6 +8601,8 @@ body.light-mode .glass-select-option:hover {
   flex-direction: column;
   overflow: hidden;
   will-change: opacity, transform;
+  contain: layout paint style;
+  isolation: isolate;
 }
 
 #siri-hud.siri-positioning {
@@ -8639,11 +8641,13 @@ body.light-mode #siri-hud {
   z-index: 1;
   transition: opacity 0.4s ease, background 0.4s ease;
   animation: siriOrbPulse 6s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+  transform: translate3d(-50%, -50%, 0);
 }
 
 @keyframes siriOrbPulse {
-  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.2; }
-  100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.3; }
+  0% { transform: translate3d(-50%, -50%, 0) scale(0.9); opacity: 0.2; }
+  100% { transform: translate3d(-50%, -50%, 0) scale(1.1); opacity: 0.3; }
 }
 
 .siri-wave-container {
