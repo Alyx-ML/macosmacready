@@ -4768,6 +4768,29 @@ body.light-mode .store-app-card {
   opacity: 0.6;
 }
 
+.pwa-store-symbol {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  display: block;
+  fill: none;
+  color: rgba(255, 255, 255, 0.9);
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pwa-store-symbol * {
+  fill: none;
+  stroke: currentColor;
+}
+
+.pwa-store-sidebar-item.active .pwa-store-symbol,
+.pwa-store-sidebar-item:hover .pwa-store-symbol {
+  color: #fff;
+}
+
 .app-card-screenshots-carousel {
   display: flex;
   gap: 8px;
@@ -8836,4 +8859,231 @@ body.light-mode .siri-tag:hover {
 }
 body.light-mode .siri-response::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.15);
+}
+
+/* --- macOS Sequoia/Tahoe Web App Store Visual Enhancements --- */
+#pwa-store-window {
+  width: 860px !important;
+  height: 580px !important;
+  background: rgba(22, 23, 29, 0.55) !important;
+  backdrop-filter: blur(40px) saturate(210%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(210%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.24) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 25px 55px rgba(0, 0, 0, 0.5) !important;
+  transition: background 0.3s ease, border-color 0.3s ease !important;
+}
+
+body.light-mode #pwa-store-window {
+  background: rgba(246, 246, 246, 0.72) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 20px 45px rgba(0, 0, 0, 0.15) !important;
+}
+
+#pwa-store-window .window-titlebar {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+body.light-mode #pwa-store-window .window-titlebar {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+#pwa-store-window .window-sidebar {
+  background: rgba(0, 0, 0, 0.14) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  padding: 20px 8px 16px !important;
+}
+
+body.light-mode #pwa-store-window .window-sidebar {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.pwa-store-sidebar-item {
+  margin: 1px 0;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  border-radius: 8px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+body.light-mode .pwa-store-sidebar-item {
+  color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.pwa-store-sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #fff !important;
+}
+
+body.light-mode .pwa-store-sidebar-item:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+  color: #000 !important;
+}
+
+.pwa-store-sidebar-item.active {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode .pwa-store-sidebar-item.active {
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: #000 !important;
+}
+
+.pwa-store-content {
+  background: transparent !important;
+  padding: 24px 32px !important;
+}
+
+/* Premium Card Visuals matching macOS App Store widgets */
+.pwa-card {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px !important;
+  padding: 16px 14px !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+body.light-mode .pwa-card {
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+}
+
+.pwa-card:hover {
+  transform: translateY(-3px) !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24) !important;
+}
+
+body.light-mode .pwa-card:hover {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+.pwa-card-icon {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 4px 10px rgba(0, 0, 0, 0.25) !important;
+}
+
+.pwa-card-name {
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  margin-top: 6px !important;
+}
+
+body.light-mode .pwa-card-name {
+  color: #000000 !important;
+}
+
+.btn-pwa-action {
+  width: 74px !important;
+  border-radius: 20px !important;
+  padding: 5px 0 !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* GET button (Active) */
+.btn-pwa-action:not([style*="background: rgba"]) {
+  background: #007aff !important;
+  color: #ffffff !important;
+}
+.btn-pwa-action:not([style*="background: rgba"]):hover {
+  background: #147efb !important;
+  transform: scale(1.04);
+}
+
+/* OPEN button (Installed) */
+.btn-pwa-action[style*="background: rgba"] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #3b82f6 !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
+}
+.btn-pwa-action[style*="background: rgba"]:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.light-mode .btn-pwa-action[style*="background: rgba"] {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: #007aff !important;
+}
+body.light-mode .btn-pwa-action[style*="background: rgba"]:hover {
+  background: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Discover Carousel Hero Cards */
+.discover-hero-wrapper > div {
+  border-radius: 16px !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.discover-hero-wrapper > div:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35) !important;
+}
+body.light-mode .discover-hero-wrapper > div {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Custom form inputs inside App Store */
+#pwa-store-install-form input {
+  background: rgba(0, 0, 0, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  color: #fff !important;
+  transition: border-color 0.2s, background 0.2s !important;
+}
+#pwa-store-install-form input:focus {
+  border-color: #007aff !important;
+  background: rgba(0, 0, 0, 0.32) !important;
+}
+body.light-mode #pwa-store-install-form input {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #000 !important;
+}
+body.light-mode #pwa-store-install-form input:focus {
+  background: #ffffff !important;
+  border-color: #007aff !important;
+}
+
+/* Installed row layout */
+.pwa-installed-row {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 14px !important;
+  padding: 12px 18px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s ease !important;
+}
+.pwa-installed-row:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1) !important;
+}
+body.light-mode .pwa-installed-row {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+body.light-mode .pwa-installed-row:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
 }

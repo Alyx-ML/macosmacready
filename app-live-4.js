@@ -27,19 +27,26 @@ const NEWS_RSS_SOURCES = [
   { name: "Six Colors", url: "https://sixcolors.com/feed/", category: "science" },
   { name: "MacStories", url: "https://www.macstories.net/feed/", category: "culture" },
   { name: "9to5Mac Apps", url: "https://9to5mac.com/guides/apps/feed/", category: "culture" },
-  { name: "9to5Mac Apple Intelligence", url: "https://9to5mac.com/guides/apple-intelligence/feed/", category: "ai" }
+  { name: "9to5Mac Apple Intelligence", url: "https://9to5mac.com/guides/apple-intelligence/feed/", category: "ai" },
+  { name: "9to5Toys Mac Deals", url: "https://9to5toys.com/guides/mac/feed/", category: "deals" },
+  { name: "9to5Toys Apple Deals", url: "https://9to5toys.com/guides/apple/feed/", category: "deals" }
 ];
 const MAC_NEWS_TERMS = /\b(macOS|Mac\b|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]\b|WWDC|Safari|Finder|Time Machine|Xcode|Gatekeeper|FileVault|Launch Services|MDM|Jamf|SwiftUI|AppKit|Terminal|malware|Security Update)\b/i;
 const STRONG_MAC_CONTEXT_TERMS = /\b(macOS|Mac\b|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]\b|Finder|Time Machine|Xcode|Gatekeeper|FileVault|Launch Services|MDM|Jamf|SwiftUI|AppKit|Terminal|Security Update)\b/i;
 const IOS_ONLY_TERMS = /\b(iOS|iPhone|iPad|iPadOS|watchOS|Apple Watch|AirPods|visionOS|Vision Pro)\b/i;
 const DEAL_TERMS = /\b(deal|deals|sale|discount|coupon|save \$|save up to|% off|today only|lowest price|record-low|price drop|clearance|promo|promotion|bundle|lifetime license|sponsored|advertorial|stacksocial|walmart|best buy|amazon|b&h)\b/i;
 const MAC_DEAL_TERMS = /\b(MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Studio Display|Apple display|Apple silicon)\b/i;
+const MACBOOK_DEAL_TERMS = /\b(MacBook|MacBook Air|MacBook Pro|USB-C|Thunderbolt|MagSafe|dock|hub|charger|adapter|monitor|display|SSD|external drive|keyboard|mouse|trackpad|sleeve|case|stand|backpack|accessor(?:y|ies)|AppleCare|M[1-9]\b)\b/i;
+const MAC_DEAL_PRODUCT_TERMS = /\b(MacBook|MacBook Air|MacBook Pro|Mac mini|Mac Studio|Mac Pro|iMac|Studio Display|Mac\b)\b/i;
+const MOBILE_PRODUCT_TERMS = /\b(iPhone|iPad|AirPods|Apple Watch|Watch|Vision Pro|MagSafe Battery)\b/i;
+const PRICE_PATTERN = /(?:[$£€]\s?\d[\d,]*(?:\.\d{2})?|\d{1,3}%\s?off|save\s?(?:up to\s?)?[$£€]?\s?\d[\d,]*|[$£€]?\s?\d[\d,]*\s?off|all-time low|record low|lowest price)/ig;
 const RSS_CATEGORY_TERMS = {
   technology: MAC_NEWS_TERMS,
   design: /\b(game|games|gaming|Steam|Xbox|PlayStation|Nintendo|Switch|PC|trailer|release|released|launch|update|patch|DLC|demo|early access|indie|developer|studio)\b/i,
   science: /\b(review|reviews|hands-on|tested|benchmark|benchmarks|performance|long-term|versus|vs\.?|Mac|macOS|MacBook|iMac|Mac mini|Mac Studio|Mac Pro)\b/i,
   culture: /\b(Mac app|Mac apps|macOS app|macOS apps|for Mac|on Mac|Mac version|menu bar|Safari extension|Setapp|Raycast|Alfred|BBEdit|Pixelmator|CleanMyMac|Final Cut|Logic Pro|developer tool|Apple silicon)\b/i,
-  ai: /\b(Apple Intelligence|AI|artificial intelligence|Siri|LLM|language model|machine learning|Foundation Models|Image Playground|Genmoji|Writing Tools|ChatGPT|OpenAI|Claude|Gemini|Shortcuts Playground|macOS)\b/i
+  ai: /\b(Apple Intelligence|AI|artificial intelligence|Siri|LLM|language model|machine learning|Foundation Models|Image Playground|Genmoji|Writing Tools|ChatGPT|OpenAI|Claude|Gemini|Shortcuts Playground|macOS)\b/i,
+  deals: /\b(MacBook|MacBook Air|MacBook Pro|Mac mini|Mac Studio|Studio Display|Thunderbolt|USB-C|MagSafe|charger|dock|hub|monitor|display|SSD|keyboard|mouse|trackpad|case|sleeve|stand|backpack|accessor(?:y|ies)|deal|deals|discount|sale|off|low|price|Amazon|Best Buy|B&H)\b/i
 };
 const RSS_CATEGORY_LABELS = {
   all: "Today",
@@ -47,7 +54,8 @@ const RSS_CATEGORY_LABELS = {
   design: "Games",
   science: "Reviews",
   culture: "Apps",
-  ai: "Apple Intelligence"
+  ai: "Apple Intelligence",
+  deals: "Deals"
 };
 const GENERATED_NEWS_URL = "public/data/news.generated.json";
 
@@ -387,11 +395,16 @@ function shouldIncludeRSSArticle(source, title, rawDescription, content) {
   if (!title) return false;
 
   const headlineText = `${title} ${stripHTML(rawDescription || "")}`;
-  if (source.category !== "design" && isIOSLedTitle(title)) return false;
+  if (source.category !== "design" && source.category !== "deals" && isIOSLedTitle(title)) return false;
 
   const combinedText = `${title} ${rawDescription || ""} ${stripHTML(content || "")}`;
   const categoryTerms = RSS_CATEGORY_TERMS[source.category] || MAC_NEWS_TERMS;
   if (!categoryTerms.test(combinedText)) return false;
+
+  if (source.category === "deals") {
+    if (MOBILE_PRODUCT_TERMS.test(title) && !MAC_DEAL_PRODUCT_TERMS.test(title)) return false;
+    return DEAL_TERMS.test(combinedText) && MACBOOK_DEAL_TERMS.test(headlineText);
+  }
 
   if (source.category !== "technology") return true;
 
@@ -411,7 +424,7 @@ function isIOSLedTitle(title) {
 }
 
 function isMobileAppleArticle(article) {
-  if (!article || article.category === "design") return false;
+  if (!article || article.category === "design" || article.category === "deals") return false;
   const title = article.title || "";
   const headline = `${article.title || ""} ${article.subtitle || ""}`;
   if (IOS_ONLY_TERMS.test(title) && !STRONG_MAC_CONTEXT_TERMS.test(title)) return true;
@@ -433,6 +446,12 @@ function shouldRenderArticle(article) {
   }
 
   return true;
+}
+
+function extractDealSignals(article) {
+  if (!article || article.category !== "deals") return [];
+  const text = `${article.title || ""} ${article.subtitle || ""}`;
+  return [...new Set((text.match(PRICE_PATTERN) || []).map(value => cleanArticleText(value)).filter(Boolean))].slice(0, 3);
 }
 
 function parseRSSHTML(html) {
@@ -1426,7 +1445,6 @@ function renderFeed() {
   pagedArticles.forEach((article, index) => {
     const isFeatured = shouldFeature && index === 0;
     const cardClass = isFeatured ? "news-card featured" : "news-card";
-
     // Setup cover image styling
     let coverHtml = "";
     if (article.cover && article.cover.startsWith("preset-")) {
@@ -1504,7 +1522,8 @@ function getCategoryHeading(category) {
     design: "Latest Games",
     science: "Mac Reviews",
     culture: "Latest macOS Apps",
-    ai: "Apple Intelligence News for macOS"
+    ai: "Apple Intelligence News for macOS",
+    deals: "MacBook Deals"
   };
   return headings[category] || `${getCategoryTitle(category)} Stories`;
 }
@@ -5655,7 +5674,9 @@ function bindEvents() {
   if (backBtn) {
     backBtn.addEventListener("click", (e) => {
       // Mobile width sidebar toggling inside news view
-      if (window.innerWidth <= 900 && (currentApp === "news" || currentApp === "reviews")) {
+      const newsView = document.getElementById("news-app-view");
+      const newsViewVisible = newsView && window.getComputedStyle(newsView).display !== "none";
+      if (window.innerWidth <= 900 && newsViewVisible) {
         const sidebar = document.getElementById("sidebar");
         if (sidebar) {
           e.stopPropagation();
@@ -9608,7 +9629,8 @@ function addAppToDock(appId) {
     tooltipName = "System 7";
   } else if (appId.startsWith("pwa-")) {
     const customPwas = JSON.parse(localStorage.getItem("tahoe_custom_pwas") || "[]");
-    const pwa = customPwas.find(p => p.id === appId) || FEATURED_PWAS.find(p => p.id === appId) || { name: "Web App", emoji: "🌐", color: "#007aff" };
+    const pwa = customPwas.find(p => p.id === appId) || FEATURED_PWAS.find(p => p.id === appId);
+    if (!pwa) return;
     iconHtmlContent = `<div class="pwa-dock-icon" style="background: ${pwa.color}; display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 10px; font-size: 22px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), 0 3px 6px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.25);">${pwa.emoji}</div>`;
     tooltipName = pwa.name;
   }
@@ -9642,80 +9664,208 @@ function addAppToDock(appId) {
     const win = document.getElementById(winId);
     if (win) {
       if (win.classList.contains("hidden-window") || win.classList.contains("minimized")) {
-        win.classList.reconst FEATURED_PWAS = [
-  { id: "pwa-googlesearch", name: "Google Search", url: "https://www.google.com/search?igu=1", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`, color: "#4285f4" },
-  { id: "pwa-wikipedia", name: "Wikipedia Mobile", url: "https://en.m.wikipedia.org", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`, color: "#6366f1" },
-  { id: "pwa-tetris", name: "Retro Arcade Tetris", url: "https://chvin.github.io/react-tetris/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`, color: "#ef4444" },
-  { id: "pwa-elevatorsaga", name: "Elevator Saga", url: "https://play.elevatorsaga.com/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline><polyline points="5 12 12 5 19 12"></polyline></svg>`, color: "#10b981" },
-  { id: "pwa-telegram", name: "Telegram Web", url: "https://web.telegram.org/a/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`, color: "#24A1DE" },
-  { id: "pwa-discord", name: "Discord App", url: "https://discord.com/app", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"></rect><path d="M6 12h4M8 10v4M15 11v.01M18 13v.01"></path></svg>`, color: "#5865F2" },
-  { id: "pwa-whatsapp", name: "WhatsApp Web", url: "https://web.whatsapp.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>`, color: "#25D366" },
-  { id: "pwa-slack", name: "Slack", url: "https://slack.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>`, color: "#4A154B" },
-  { id: "pwa-zoom", name: "Zoom", url: "https://zoom.us", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`, color: "#2D8CFF" },
-  { id: "pwa-twitter", name: "Twitter / X", url: "https://x.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="20"></line><line x1="20" y1="4" x2="4" y2="20"></line></svg>`, color: "#111111" },
-  { id: "pwa-notion", name: "Notion Workspace", url: "https://www.notion.so", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`, color: "#000000" },
-  { id: "pwa-googlemaps", name: "Google Maps Mobile", url: "https://www.google.com/maps", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`, color: "#34A853" },
-  { id: "pwa-trello", name: "Trello boards", url: "https://trello.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="9"></rect><rect x="14" y="7" width="3" height="5"></rect></svg>`, color: "#0079BF" },
-  { id: "pwa-figma", name: "Figma Designs", url: "https://figma.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`, color: "#F24E1E" },
-  { id: "pwa-retrogames", name: "Retro Console Games", url: "https://www.retrogames.cc/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`, color: "#e11d48" },
-  { id: "pwa-spotify", name: "Spotify Player", url: "https://open.spotify.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`, color: "#1DB954" },
-  { id: "pwa-youtube", name: "YouTube", url: "https://www.youtube.com/embed/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2" ry="2"></rect><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>`, color: "#FF0000" },
-  { id: "pwa-soundcloud", name: "SoundCloud", url: "https://soundcloud.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"></path></svg>`, color: "#FF5500" },
-  { id: "pwa-github", name: "GitHub Codespaces", url: "https://github.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 15V9a4 4 0 0 0-4-4H9"></path><line x1="6" y1="9" x2="6" y2="15"></line></svg>`, color: "#24292e" },
-  { id: "pwa-stackoverflow", name: "StackOverflow", url: "https://stackoverflow.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="18" x2="20" y2="18"></line><line x1="4" y1="14" x2="20" y2="14"></line><line x1="4" y1="10" x2="20" y2="10"></line><line x1="8" y1="6" x2="20" y2="6"></line></svg>`, color: "#f48024" },
-  { id: "pwa-codepen", name: "CodePen Playgrounds", url: "https://codepen.io", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon><line x1="12" y1="22" x2="12" y2="15.5"></line><polyline points="22 8.5 12 15.5 2 8.5"></polyline><polyline points="2 15.5 12 8.5 22 15.5"></polyline><line x1="12" y1="2" x2="12" y2="8.5"></line></svg>`, color: "#111111" },
-  { id: "pwa-jsonformatter", name: "JSON Formatter", url: "https://jsonformatter.org", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18a4 4 0 0 0-4-4v-4a4 4 0 0 0 4-4"></path><path d="M8 18a4 4 0 0 1 4-4v-4a4 4 0 0 1-4-4"></path></svg>`, color: "#007a87" },
-  { id: "pwa-devdocs", name: "DevDocs API", url: "https://devdocs.io", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>`, color: "#563d7c" },
-  { id: "pwa-caniuse", name: "Can I Use?", url: "https://caniuse.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`, color: "#db5600" }
-];
+        win.classList.remove("hidden-window");
+        win.classList.remove("minimized");
+        bringWindowToFront(win);
+        if (appId === "terminal") {
+          const input = document.getElementById("terminal-input");
+          if (input) input.focus();
+        }
+        playGlassChime();
+      } else {
+        bringWindowToFront(win);
+      }
+    }
+  });
+
+  const dock = document.getElementById("dock");
+  if (dock) {
+    const appsWrapper = document.querySelector('.dock-item-wrapper[data-app="applications"]');
+    const settingsWrapper = document.querySelector('.dock-item-wrapper[data-app="settings"]');
+    const targetSibling = appsWrapper || settingsWrapper;
+
+    if (targetSibling) {
+      dock.insertBefore(wrapper, targetSibling);
+    } else {
+      dock.appendChild(wrapper);
+    }
+
+    if (typeof window.refreshDockMagnification === "function") {
+      window.refreshDockMagnification();
+    }
+  }
+}
+
+// --- macOS Tahoe Custom PWA Manager Engine ---
+const PWA_ICONS = {
+  compress: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M16 3h3a2 2 0 0 1 2 2v3"></path><path d="M8 21H5a2 2 0 0 1-2-2v-3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path><path d="M10 8h4v8h-4z"></path></svg>`,
+  pencil: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 0 1 4 4L7 21l-5 1 1-5Z"></path><path d="m15 5 4 4"></path></svg>`,
+  photo: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg>`,
+  grid: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`,
+  book: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z"></path></svg>`,
+  graph: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 15 11 9l4 4 5-8"></path></svg>`,
+  palette: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 22a10 10 0 1 1 10-10 3.5 3.5 0 0 1-3.5 3.5h-1.2a2.3 2.3 0 0 0-1.6 4 2 2 0 0 1-1.2 2.5z"></path></svg>`,
+  terminal: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>`,
+  braces: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4a4 4 0 0 0-4 4v1a3 3 0 0 1-2 3 3 3 0 0 1 2 3v1a4 4 0 0 0 4 4"></path><path d="M16 4a4 4 0 0 1 4 4v1a3 3 0 0 0 2 3 3 3 0 0 0-2 3v1a4 4 0 0 1-4 4"></path></svg>`,
+  ruler: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h18v8H3z"></path><path d="M7 8v4"></path><path d="M11 8v3"></path><path d="M15 8v4"></path><path d="M19 8v3"></path></svg>`,
+  chef: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h12a2 2 0 0 1 2 2v2H4v-2a2 2 0 0 1 2-2z"></path><path d="M12 2a7 7 0 0 0-7 7v3h14V9a7 7 0 0 0-7-7z"></path></svg>`,
+  news: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><path d="M16 8h2"></path><path d="M16 12h2"></path><path d="M6 8h6v8H6z"></path></svg>`,
+  shapes: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.4 0-8 2.5-8 7s4 6.5 8 6.5 8-2 8-6.5-3.6-7-8-7zM8.5 17.5c-2.5.5-4.5 2-4.5 3.5h16c0-1.5-2-3-4.5-3.5"></path></svg>`,
+  gamepad: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"></rect><path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"></path></svg>`,
+  calculator: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><circle cx="8" cy="11" r="1"></circle><circle cx="12" cy="11" r="1"></circle><circle cx="16" cy="11" r="1"></circle><circle cx="8" cy="15" r="1"></circle><circle cx="12" cy="15" r="1"></circle><circle cx="16" cy="15" r="1"></circle><circle cx="8" cy="19" r="1"></circle><circle cx="12" cy="19" r="1"></circle><circle cx="16" cy="19" r="1"></circle></svg>`
+};
+
+const PWA_APPS = {
+  squoosh: { id: "pwa-squoosh", name: "Squoosh", url: "https://squoosh.app/", emoji: PWA_ICONS.compress, color: "#ff6f00", desc: "Compress and convert images in a fast installable web app." },
+  excalidraw: { id: "pwa-excalidraw", name: "Excalidraw", url: "https://excalidraw.com/", emoji: PWA_ICONS.pencil, color: "#6965db", desc: "Sketch diagrams and collaborative whiteboards." },
+  photopea: { id: "pwa-photopea", name: "Photopea", url: "https://www.photopea.com/", emoji: PWA_ICONS.photo, color: "#17a2b8", desc: "Advanced image editing with PSD support." },
+  cyberchef: { id: "pwa-cyberchef", name: "CyberChef", url: "https://gchq.github.io/CyberChef/", emoji: PWA_ICONS.chef, color: "#0d9488", desc: "The ultimate developer multi-tool for data parsing and encoding." },
+  wikipedia: { id: "pwa-wikipedia", name: "Wikipedia Mobile", url: "https://en.m.wikipedia.org", emoji: PWA_ICONS.book, color: "#6366f1", desc: "Fast mobile encyclopedia that opens inside MacReady." },
+  desmos: { id: "pwa-desmos", name: "Desmos Calculator", url: "https://www.desmos.com/calculator", emoji: PWA_ICONS.calculator, color: "#2f855a", desc: "Graphing calculator for equations and visual math." },
+  geogebra: { id: "pwa-geogebra", name: "GeoGebra Calculator", url: "https://www.geogebra.org/calculator", emoji: PWA_ICONS.calculator, color: "#6557d2", desc: "Interactive geometry, graphing and algebra tools." },
+  hackernews: { id: "pwa-hackernews", name: "Hacker News", url: "https://hn.premii.com/", emoji: PWA_ICONS.news, color: "#ea580c", desc: "A clean, modern, and beautiful Hacker News desktop client." },
+  jspaint: { id: "pwa-jspaint", name: "JS Paint", url: "https://jspaint.app/", emoji: PWA_ICONS.palette, color: "#2563eb", desc: "Classic desktop-style paint app for the web." },
+  tldraw: { id: "pwa-tldraw", name: "tldraw", url: "https://www.tldraw.com/", emoji: PWA_ICONS.pencil, color: "#111827", desc: "Clean collaborative canvas for sketches and notes." },
+  tints: { id: "pwa-tints", name: "Tints & Shades", url: "https://maketintsandshades.com/", emoji: PWA_ICONS.palette, color: "#7c3aed", desc: "Generate professional color ramps from a base color." },
+  blobmaker: { id: "pwa-blobmaker", name: "Blobmaker", url: "https://www.blobmaker.app/", emoji: PWA_ICONS.shapes, color: "#db2777", desc: "Generate clean organic SVG blob shapes for your web layouts." },
+  neumorphism: { id: "pwa-neumorphism", name: "Neumorphism CSS", url: "https://neumorphism.io/", emoji: PWA_ICONS.palette, color: "#8b5cf6", desc: "Generate premium Neumorphic soft-shadow CSS styling code." },
+  dillinger: { id: "pwa-dillinger", name: "Dillinger MD", url: "https://dillinger.io/", emoji: PWA_ICONS.pencil, color: "#16a34a", desc: "Modern Markdown editor with offline storage and export capabilities." },
+  cssgradient: { id: "pwa-cssgradient", name: "CSS Gradient", url: "https://cssgradient.io/", emoji: PWA_ICONS.palette, color: "#2563eb", desc: "Generate beautiful multi-color web gradients and CSS code." },
+  sudoku: { id: "pwa-sudoku", name: "Sudoku Game", url: "https://html5sudoku.com/", emoji: PWA_ICONS.grid, color: "#06b6d4", desc: "Classic numbers grid puzzle game with daily challenges." },
+  jsonhero: { id: "pwa-jsonhero", name: "JSON Hero", url: "https://jsonhero.io/", emoji: PWA_ICONS.braces, color: "#eab308", desc: "Beautiful interactive browser for reading and parsing JSON datasets." },
+  carbon: { id: "pwa-carbon", name: "Carbon Code", url: "https://carbon.now.sh/", emoji: PWA_ICONS.photo, color: "#1e293b", desc: "Design and share beautiful images of your source code snippets." },
+  game2048: { id: "pwa-2048", name: "2048 Puzzle", url: "https://2048game.com/", emoji: PWA_ICONS.gamepad, color: "#d97706", desc: "The classic installable slide-puzzle game." },
+  floppybird: { id: "pwa-floppybird", name: "Floppy Bird", url: "https://nebez.github.io/floppybird/", emoji: PWA_ICONS.gamepad, color: "#16a34a", desc: "Immersive side-scrolling arcade flappy flight clone." },
+  tictactoe: { id: "pwa-tictactoe", name: "Tic-Tac-Toe", url: "https://playtictactoe.org/", emoji: PWA_ICONS.gamepad, color: "#4f46e5", desc: "Interactive classic tic-tac-toe with multiple game modes." },
+  hextris: { id: "pwa-hextris", name: "Hextris Puzzle", url: "https://hextris.io/", emoji: PWA_ICONS.gamepad, color: "#ec4899", desc: "Fast-paced hexagonal puzzle game inspired by retro classics." },
+  spaceinvaders: { id: "pwa-spaceinvaders", name: "Space Invaders", url: "https://macek.github.io/spaceinvaders/", emoji: PWA_ICONS.gamepad, color: "#ef4444", desc: "Classic responsive HTML5 clone of the iconic arcade shooter." },
+  svgviewer: { id: "pwa-svgviewer", name: "SVG Viewer", url: "https://www.svgviewer.dev/", emoji: PWA_ICONS.photo, color: "#06b6d4", desc: "Inspect, format, optimize, and preview SVG vector code." },
+  micropad: { id: "pwa-micropad", name: "µPad Notes", url: "https://micropad.jele.co/", emoji: PWA_ICONS.book, color: "#6366f1", desc: "Premium minimalist cloud note-taking canvas and journal." },
+  jsfiddle: { id: "pwa-jsfiddle", name: "JSFiddle Editor", url: "https://jsfiddle.net/", emoji: PWA_ICONS.braces, color: "#3b82f6", desc: "Popular browser sandbox editor for HTML, CSS, and JS development." },
+  jsonlint: { id: "pwa-jsonlint", name: "JSONLint", url: "https://jsonlint.com/", emoji: PWA_ICONS.braces, color: "#0d9488", desc: "Clean validator, validator syntax corrector, and JSON formatter." }
+};
+
+const FEATURED_PWAS = Object.values(PWA_APPS);
 
 const PWA_LIBRARY = {
   discover: [
-    { id: "pwa-googlesearch", name: "Google Search", url: "https://www.google.com/search?igu=1", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`, color: "#4285f4", desc: "Live web search engine." },
-    { id: "pwa-notion", name: "Notion Workspace", url: "https://www.notion.so", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`, color: "#000000", desc: "Wiki, docs & project organization." },
-    { id: "pwa-discord", name: "Discord App", url: "https://discord.com/app", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"></rect><path d="M6 12h4M8 10v4M15 11v.01M18 13v.01"></path></svg>`, color: "#5865F2", desc: "Hang out with friends and communities." },
-    { id: "pwa-spotify", name: "Spotify Player", url: "https://open.spotify.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`, color: "#1DB954", desc: "Stream millions of songs and podcasts." },
-    { id: "pwa-tetris", name: "Retro Arcade Tetris", url: "https://chvin.github.io/react-tetris/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`, color: "#ef4444", desc: "Playable classic brick game." },
-    { id: "pwa-github", name: "GitHub Codespaces", url: "https://github.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 15V9a4 4 0 0 0-4-4H9"></path><line x1="6" y1="9" x2="6" y2="15"></line></svg>`, color: "#24292e", desc: "Collab, host code & track issues." }
+    PWA_APPS.squoosh,
+    PWA_APPS.excalidraw,
+    PWA_APPS.photopea,
+    PWA_APPS.cyberchef,
+    PWA_APPS.hackernews,
+    PWA_APPS.dillinger,
+    PWA_APPS.hextris,
+    PWA_APPS.jsonhero,
+    PWA_APPS.spaceinvaders,
+    PWA_APPS.micropad
   ],
   social: [
-    { id: "pwa-telegram", name: "Telegram Web", url: "https://web.telegram.org/a/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`, color: "#24A1DE", desc: "Fast & secure instant messenger." },
-    { id: "pwa-discord", name: "Discord App", url: "https://discord.com/app", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"></rect><path d="M6 12h4M8 10v4M15 11v.01M18 13v.01"></path></svg>`, color: "#5865F2", desc: "Hang out with friends and communities." },
-    { id: "pwa-whatsapp", name: "WhatsApp Web", url: "https://web.whatsapp.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>`, color: "#25D366", desc: "Secure messaging and calling." },
-    { id: "pwa-slack", name: "Slack", url: "https://slack.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>`, color: "#4A154B", desc: "Team collaboration software." },
-    { id: "pwa-zoom", name: "Zoom", url: "https://zoom.us", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`, color: "#2D8CFF", desc: "Video telephony & online chat." },
-    { id: "pwa-twitter", name: "Twitter / X", url: "https://x.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="20"></line><line x1="20" y1="4" x2="4" y2="20"></line></svg>`, color: "#111111", desc: "What's happening in the world right now." }
+    PWA_APPS.excalidraw,
+    PWA_APPS.tldraw,
+    PWA_APPS.hackernews,
+    PWA_APPS.wikipedia,
+    PWA_APPS.carbon,
+    PWA_APPS.micropad
   ],
   productivity: [
-    { id: "pwa-notion", name: "Notion Workspace", url: "https://www.notion.so", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`, color: "#000000", desc: "Wiki, docs & project organization." },
-    { id: "pwa-wikipedia", name: "Wikipedia Mobile", url: "https://en.m.wikipedia.org", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`, color: "#6366f1", desc: "Free web-based encyclopedia." },
-    { id: "pwa-googlesearch", name: "Google Search", url: "https://www.google.com/search?igu=1", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`, color: "#4285f4", desc: "Live web search engine." },
-    { id: "pwa-googlemaps", name: "Google Maps Mobile", url: "https://www.google.com/maps", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`, color: "#34A853", desc: "Live GPS routing and street maps." },
-    { id: "pwa-trello", name: "Trello boards", url: "https://trello.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="9"></rect><rect x="14" y="7" width="3" height="5"></rect></svg>`, color: "#0079BF", desc: "Visual project management grids." },
-    { id: "pwa-figma", name: "Figma Designs", url: "https://figma.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`, color: "#F24E1E", desc: "Collaborative design and prototyping." }
+    PWA_APPS.squoosh,
+    PWA_APPS.cyberchef,
+    PWA_APPS.desmos,
+    PWA_APPS.geogebra,
+    PWA_APPS.tints,
+    PWA_APPS.dillinger,
+    PWA_APPS.jsonhero,
+    PWA_APPS.blobmaker,
+    PWA_APPS.neumorphism,
+    PWA_APPS.micropad
   ],
   entertainment: [
-    { id: "pwa-tetris", name: "Retro Arcade Tetris", url: "https://chvin.github.io/react-tetris/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`, color: "#ef4444", desc: "Playable classic brick game." },
-    { id: "pwa-elevatorsaga", name: "Elevator Saga", url: "https://play.elevatorsaga.com/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline><polyline points="5 12 12 5 19 12"></polyline></svg>`, color: "#10b981", desc: "Programming elevator simulation." },
-    { id: "pwa-retrogames", name: "Retro Console Games", url: "https://www.retrogames.cc/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`, color: "#e11d48", desc: "Play standard emulator ROMs." },
-    { id: "pwa-spotify", name: "Spotify Player", url: "https://open.spotify.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`, color: "#1DB954", desc: "Stream millions of songs and podcasts." },
-    { id: "pwa-youtube", name: "YouTube", url: "https://www.youtube.com/embed/", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2" ry="2"></rect><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>`, color: "#FF0000", desc: "Enjoy your favorite videos and channels." },
-    { id: "pwa-soundcloud", name: "SoundCloud", url: "https://soundcloud.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"></path></svg>`, color: "#FF5500", desc: "Discover hot trending audio streams." }
+    PWA_APPS.game2048,
+    PWA_APPS.floppybird,
+    PWA_APPS.sudoku,
+    PWA_APPS.tictactoe,
+    PWA_APPS.hextris,
+    PWA_APPS.spaceinvaders,
+    PWA_APPS.jspaint
   ],
   developer: [
-    { id: "pwa-github", name: "GitHub Codespaces", url: "https://github.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 15V9a4 4 0 0 0-4-4H9"></path><line x1="6" y1="9" x2="6" y2="15"></line></svg>`, color: "#24292e", desc: "Collab, host code & track issues." },
-    { id: "pwa-stackoverflow", name: "StackOverflow", url: "https://stackoverflow.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="18" x2="20" y2="18"></line><line x1="4" y1="14" x2="20" y2="14"></line><line x1="4" y1="10" x2="20" y2="10"></line><line x1="8" y1="6" x2="20" y2="6"></line></svg>`, color: "#f48024", desc: "Developer community Q&A." },
-    { id: "pwa-codepen", name: "CodePen Playgrounds", url: "https://codepen.io", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon><line x1="12" y1="22" x2="12" y2="15.5"></line><polyline points="22 8.5 12 15.5 2 8.5"></polyline><polyline points="2 15.5 12 8.5 22 15.5"></polyline><line x1="12" y1="2" x2="12" y2="8.5"></line></svg>`, color: "#111111", desc: "Social sandbox editor for developers." },
-    { id: "pwa-jsonformatter", name: "JSON Formatter", url: "https://jsonformatter.org", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18a4 4 0 0 0-4-4v-4a4 4 0 0 0 4-4"></path><path d="M8 18a4 4 0 0 1 4-4v-4a4 4 0 0 1-4-4"></path></svg>`, color: "#007a87", desc: "Validate and format JSON instantly." },
-    { id: "pwa-devdocs", name: "DevDocs API", url: "https://devdocs.io", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>`, color: "#563d7c", desc: "Fast offline API reference tables." },
-    { id: "pwa-caniuse", name: "Can I Use?", url: "https://caniuse.com", emoji: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`, color: "#db5600", desc: "Browser compatibility tables for front-ends." }
+    PWA_APPS.cyberchef,
+    PWA_APPS.squoosh,
+    PWA_APPS.tldraw,
+    PWA_APPS.cssgradient,
+    PWA_APPS.jsonhero,
+    PWA_APPS.carbon,
+    PWA_APPS.blobmaker,
+    PWA_APPS.neumorphism,
+    PWA_APPS.svgviewer,
+    PWA_APPS.jsfiddle,
+    PWA_APPS.jsonlint
   ]
 };
+
+const BLOCKED_LEGACY_PWA_IDS = new Set([
+  "pwa-googlesearch",
+  "pwa-tetris",
+  "pwa-elevatorsaga",
+  "pwa-telegram",
+  "pwa-discord",
+  "pwa-whatsapp",
+  "pwa-slack",
+  "pwa-zoom",
+  "pwa-twitter",
+  "pwa-notion",
+  "pwa-googlemaps",
+  "pwa-trello",
+  "pwa-figma",
+  "pwa-spotify",
+  "pwa-youtube",
+  "pwa-soundcloud",
+  "pwa-github",
+  "pwa-stackoverflow",
+  "pwa-codepen",
+  "pwa-jsonformatter",
+  "pwa-caniuse"
+]);
+
+const BLOCKED_LEGACY_PWA_URLS = new Set([
+  "https://www.google.com/search?igu=1",
+  "https://chvin.github.io/react-tetris/",
+  "https://play.elevatorsaga.com/",
+  "https://web.telegram.org/a/",
+  "https://discord.com/app",
+  "https://web.whatsapp.com",
+  "https://slack.com",
+  "https://zoom.us",
+  "https://x.com",
+  "https://www.notion.so",
+  "https://www.google.com/maps",
+  "https://trello.com",
+  "https://figma.com",
+  "https://open.spotify.com",
+  "https://www.youtube.com/embed/",
+  "https://soundcloud.com",
+  "https://github.com",
+  "https://stackoverflow.com",
+  "https://codepen.io",
+  "https://jsonformatter.org",
+  "https://caniuse.com"
+]);
+
+function isBlockedLegacyPwa(pwa) {
+  return BLOCKED_LEGACY_PWA_IDS.has(pwa.id) || BLOCKED_LEGACY_PWA_URLS.has(pwa.url);
+}
 
 function getCustomPwas() {
   const saved = localStorage.getItem("tahoe_custom_pwas");
   if (saved) {
-    try { return JSON.parse(saved); } catch(e) { return []; }
+    try {
+      const pwas = JSON.parse(saved).filter(pwa => !isBlockedLegacyPwa(pwa));
+      if (pwas.length !== JSON.parse(saved).length) {
+        saveCustomPwas(pwas);
+      }
+      return pwas;
+    } catch(e) { return []; }
   }
   return [];
 }
@@ -9907,29 +10057,29 @@ function initPwaManager() {
       heroWrapper.style = "display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px;";
       
       const customPwas = getCustomPwas();
-      const isTetrisInstalled = customPwas.some(p => p.url === "https://chvin.github.io/react-tetris/");
-      const isNotionInstalled = customPwas.some(p => p.url === "https://www.notion.so");
+      const isSquooshInstalled = customPwas.some(p => p.url === PWA_APPS.squoosh.url);
+      const isExcalidrawInstalled = customPwas.some(p => p.url === PWA_APPS.excalidraw.url);
 
       heroWrapper.innerHTML = `
         <div style="background: linear-gradient(135deg, #1e1b4b, #311042); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; min-height: 180px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: left;">
           <div style="font-size: 10px; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-ui), sans-serif;">FEATURED APP</div>
           <div style="margin-top: 12px; margin-bottom: 12px;">
-            <h3 style="font-size: 22px; font-weight: 700; color: #fff; margin: 0; font-family: var(--font-ui), sans-serif;">Retro Arcade Tetris</h3>
-            <p style="font-size: 13px; opacity: 0.7; max-width: 320px; margin: 4px 0 0 0; line-height: 1.4; font-family: var(--font-ui), sans-serif;">An immersive web brick classic. Play immediately with high frame rate controls.</p>
+            <h3 style="font-size: 22px; font-weight: 700; color: #fff; margin: 0; font-family: var(--font-ui), sans-serif;">Squoosh</h3>
+            <p style="font-size: 13px; opacity: 0.7; max-width: 320px; margin: 4px 0 0 0; line-height: 1.4; font-family: var(--font-ui), sans-serif;">A polished installable image compressor that opens cleanly inside MacReady.</p>
           </div>
-          <button class="btn-hero-install-tetris" style="background: rgba(255,255,255,0.18); border: none; padding: 6px 18px; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 800; cursor: pointer; align-self: flex-start; backdrop-filter: blur(10px); text-transform: uppercase; font-family: var(--font-ui), sans-serif;">
-            ${isTetrisInstalled ? 'OPEN' : 'GET'}
+          <button class="btn-hero-install-squoosh" style="background: rgba(255,255,255,0.18); border: none; padding: 6px 18px; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 800; cursor: pointer; align-self: flex-start; backdrop-filter: blur(10px); text-transform: uppercase; font-family: var(--font-ui), sans-serif;">
+            ${isSquooshInstalled ? 'OPEN' : 'GET'}
           </button>
-          <div style="position: absolute; right: 24px; bottom: 8px; font-size: 110px; opacity: 0.12; user-select: none;">🧱</div>
+          <div style="position: absolute; right: 50px; bottom: 52px; opacity: 0.16; transform: scale(4); transform-origin: center; pointer-events: none;">${PWA_APPS.squoosh.emoji}</div>
         </div>
         <div style="background: linear-gradient(135deg, #0f172a, #1e293b); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: left;">
-          <div style="font-size: 10px; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-ui), sans-serif;">PRODUCTIVITY ESSENTIAL</div>
+          <div style="font-size: 10px; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-ui), sans-serif;">COLLABORATION</div>
           <div>
-            <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin: 0; font-family: var(--font-ui), sans-serif;">Notion Workspace</h3>
-            <p style="font-size: 11px; opacity: 0.6; margin: 4px 0 0 0; line-height: 1.3; font-family: var(--font-ui), sans-serif;">Your unified collaborative workspace for notes, tasks and wikis.</p>
+            <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin: 0; font-family: var(--font-ui), sans-serif;">Excalidraw</h3>
+            <p style="font-size: 11px; opacity: 0.6; margin: 4px 0 0 0; line-height: 1.3; font-family: var(--font-ui), sans-serif;">Sketch diagrams and shared ideas without leaving the desktop.</p>
           </div>
-          <button class="btn-hero-install-notion" style="background: #fff; color: #0f172a; border: none; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; cursor: pointer; align-self: flex-start; text-transform: uppercase; font-family: var(--font-ui), sans-serif;">
-            ${isNotionInstalled ? 'OPEN' : 'GET'}
+          <button class="btn-hero-install-excalidraw" style="background: #fff; color: #0f172a; border: none; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; cursor: pointer; align-self: flex-start; text-transform: uppercase; font-family: var(--font-ui), sans-serif;">
+            ${isExcalidrawInstalled ? 'OPEN' : 'GET'}
           </button>
         </div>
       `;
@@ -9937,36 +10087,36 @@ function initPwaManager() {
       discoverPane.insertBefore(heroWrapper, discoverPane.querySelector("h2"));
 
       // Bind hero button click actions
-      const tetrisHeroBtn = heroWrapper.querySelector(".btn-hero-install-tetris");
-      if (tetrisHeroBtn) {
-        tetrisHeroBtn.addEventListener("click", () => {
-          const tetrisPwa = PWA_LIBRARY.discover.find(p => p.id === "pwa-tetris");
-          if (isTetrisInstalled) {
-            openIframeApp("Retro Arcade Tetris", "https://chvin.github.io/react-tetris/", tetrisPwa.emoji, "pwa-tetris");
+      const squooshHeroBtn = heroWrapper.querySelector(".btn-hero-install-squoosh");
+      if (squooshHeroBtn) {
+        squooshHeroBtn.addEventListener("click", () => {
+          const squooshPwa = PWA_APPS.squoosh;
+          if (isSquooshInstalled) {
+            openIframeApp(squooshPwa.name, squooshPwa.url, squooshPwa.emoji, squooshPwa.id);
           } else {
             const activeCustoms = getCustomPwas();
-            activeCustoms.push(tetrisPwa);
+            activeCustoms.push(squooshPwa);
             saveCustomPwas(activeCustoms);
             renderGrids();
-            openIframeApp("Retro Arcade Tetris", "https://chvin.github.io/react-tetris/", tetrisPwa.emoji, "pwa-tetris");
-            pushNotification("App Installed Successfully", '"Retro Arcade Tetris" has been added and docked.');
+            openIframeApp(squooshPwa.name, squooshPwa.url, squooshPwa.emoji, squooshPwa.id);
+            pushNotification("App Installed Successfully", '"Squoosh" has been added and docked.');
           }
         });
       }
 
-      const notionHeroBtn = heroWrapper.querySelector(".btn-hero-install-notion");
-      if (notionHeroBtn) {
-        notionHeroBtn.addEventListener("click", () => {
-          const notionPwa = PWA_LIBRARY.discover.find(p => p.id === "pwa-notion");
-          if (isNotionInstalled) {
-            openIframeApp("Notion Workspace", "https://www.notion.so", notionPwa.emoji, "pwa-notion");
+      const excalidrawHeroBtn = heroWrapper.querySelector(".btn-hero-install-excalidraw");
+      if (excalidrawHeroBtn) {
+        excalidrawHeroBtn.addEventListener("click", () => {
+          const excalidrawPwa = PWA_APPS.excalidraw;
+          if (isExcalidrawInstalled) {
+            openIframeApp(excalidrawPwa.name, excalidrawPwa.url, excalidrawPwa.emoji, excalidrawPwa.id);
           } else {
             const activeCustoms = getCustomPwas();
-            activeCustoms.push(notionPwa);
+            activeCustoms.push(excalidrawPwa);
             saveCustomPwas(activeCustoms);
             renderGrids();
-            openIframeApp("Notion Workspace", "https://www.notion.so", notionPwa.emoji, "pwa-notion");
-            pushNotification("App Installed Successfully", '"Notion Workspace" has been added and docked.');
+            openIframeApp(excalidrawPwa.name, excalidrawPwa.url, excalidrawPwa.emoji, excalidrawPwa.id);
+            pushNotification("App Installed Successfully", '"Excalidraw" has been added and docked.');
           }
         });
       }
@@ -9999,39 +10149,6 @@ function initPwaManager() {
         <div class="pwa-installed-actions" style="display: flex; gap: 8px;">
           <button class="btn-pwa-row-action btn-pwa-row-launch" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500; font-family: var(--font-ui), sans-serif;">Launch</button>
           <button class="btn-pwa-row-action btn-pwa-row-delete" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500; font-family: var(--font-ui), sans-serif;">Delete</button>
-        </div>
-      `;
-
-      // Launch button
-      row.querySelector(".btn-pwa-row-launch").addEventListener("click", () => {
-        openIframeApp(pwa.name, pwa.url, pwa.emoji, pwa.id);
-      });
-
-      // Delete button
-      row.querySelector(".btn-pwa-row-delete").addEventListener("click", () => {
-        // Remove app window if open
-        const existingId = `iframe-win-${pwa.name.replace(/\s+/g, '-').toLowerCase()}`;
-        const win = document.getElementById(existingId);
-        if (win) win.remove();
-
-        // Remove from dock
-        removeAppFromDock(pwa.id);
-
-        // Update list
-        const activeCustoms = getCustomPwas().filter(p => p.id !== pwa.id);
-        saveCustomPwas(activeCustoms);
-
-        renderGrids();
-
-        pushNotification(
-          "App Uninstalled",
-          `"${pwa.name}" has been removed from the system and dock.`
-        );
-      });
-
-      installedList.appendChild(row);
-    });
-  }g: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500;">Delete</button>
         </div>
       `;
 

@@ -61,6 +61,10 @@ struct Filters {
     reviews: Regex,
     apps: Regex,
     ai: Regex,
+    deals: Regex,
+    macbook_deals: Regex,
+    mac_deal_product: Regex,
+    mobile_product: Regex,
     boilerplate: Regex,
 }
 
@@ -150,6 +154,18 @@ impl Filters {
             ai: Regex::new(
                 r"(?i)\b(Apple Intelligence|AI|artificial intelligence|Siri|LLM|language model|machine learning|Foundation Models|Image Playground|Genmoji|Writing Tools|ChatGPT|OpenAI|Claude|Gemini|Shortcuts Playground|macOS)\b",
             )?,
+            deals: Regex::new(
+                r"(?i)\b(MacBook|MacBook Air|MacBook Pro|Mac mini|Mac Studio|Studio Display|Thunderbolt|USB-C|MagSafe|charger|dock|hub|monitor|display|SSD|keyboard|mouse|trackpad|case|sleeve|stand|backpack|accessor(?:y|ies)|deal|deals|discount|sale|off|low|price|Amazon|Best Buy|B&H)\b",
+            )?,
+            macbook_deals: Regex::new(
+                r"(?i)\b(MacBook|MacBook Air|MacBook Pro|USB-C|Thunderbolt|MagSafe|dock|hub|charger|adapter|monitor|display|SSD|external drive|keyboard|mouse|trackpad|sleeve|case|stand|backpack|accessor(?:y|ies)|AppleCare|M[1-9]\b)\b",
+            )?,
+            mac_deal_product: Regex::new(
+                r"(?i)\b(MacBook|MacBook Air|MacBook Pro|Mac mini|Mac Studio|Mac Pro|iMac|Studio Display|Mac\b)\b",
+            )?,
+            mobile_product: Regex::new(
+                r"(?i)\b(iPhone|iPad|AirPods|Apple Watch|Watch|Vision Pro|MagSafe Battery)\b",
+            )?,
             boilerplate: Regex::new(
                 r"(?i)^(source:|read on|continue reading|go to the linked site|go to the podcast page|advertisement|sponsor|subscribe|share this|related articles|sign up|you are using an ad blocker)",
             )?,
@@ -162,6 +178,7 @@ impl Filters {
             "science" => self.reviews.is_match(text),
             "culture" => self.apps.is_match(text),
             "ai" => self.ai.is_match(text),
+            "deals" => self.deals.is_match(text),
             _ => self.mac_news.is_match(text),
         }
     }
@@ -317,6 +334,18 @@ fn news_sources() -> Vec<Source> {
             name: "9to5Mac Apple Intelligence",
             url: "https://9to5mac.com/guides/apple-intelligence/feed/",
             category: "ai",
+            format: None,
+        },
+        Source {
+            name: "9to5Toys Mac Deals",
+            url: "https://9to5toys.com/guides/mac/feed/",
+            category: "deals",
+            format: None,
+        },
+        Source {
+            name: "9to5Toys Apple Deals",
+            url: "https://9to5toys.com/guides/apple/feed/",
+            category: "deals",
             format: None,
         },
     ]
@@ -523,7 +552,7 @@ fn should_include_article(
     content: &Option<String>,
 ) -> bool {
     let headline_text = format!("{} {}", title, strip_html_option(raw_description));
-    if source.category != "design" && is_ios_led_title(filters, title) {
+    if source.category != "design" && source.category != "deals" && is_ios_led_title(filters, title) {
         return false;
     }
 
@@ -536,6 +565,15 @@ fn should_include_article(
 
     if !filters.category_matches(source.category, &combined_text) {
         return false;
+    }
+
+    if source.category == "deals" {
+        if filters.mobile_product.is_match(title)
+            && !filters.mac_deal_product.is_match(title)
+        {
+            return false;
+        }
+        return filters.deal.is_match(&combined_text) && filters.macbook_deals.is_match(&headline_text);
     }
 
     if source.category != "technology" {
@@ -554,7 +592,7 @@ fn should_include_article(
 }
 
 fn should_render_article(filters: &Filters, article: &Article) -> bool {
-    if article.category != "design" {
+    if article.category != "design" && article.category != "deals" {
         let headline = format!("{} {}", article.title, article.subtitle);
         if filters.ios_only.is_match(&headline) && !filters.strong_mac.is_match(&headline) {
             return false;
@@ -572,7 +610,7 @@ fn should_render_article(filters: &Filters, article: &Article) -> bool {
 fn balance_articles(mut fetched: Vec<Article>) -> Vec<Article> {
     fetched.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
 
-    let category_order = ["technology", "science", "culture", "ai", "design"];
+    let category_order = ["technology", "deals", "science", "culture", "ai", "design"];
     let mut categorized = Vec::new();
 
     for category in category_order {
@@ -601,7 +639,7 @@ fn balance_articles(mut fetched: Vec<Article>) -> Vec<Article> {
         .into_iter()
         .filter(|article| seen_urls.insert(article.source_url.clone()))
         .filter(|article| seen_titles.insert(article.title.to_lowercase()))
-        .take(48)
+        .take(60)
         .collect()
 }
 
