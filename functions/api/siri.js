@@ -1,4 +1,4 @@
-const AI_MODEL = "@cf/moonshotai/kimi-k2.6";
+const AI_MODEL = "@cf/google/gemma-4-26b-a4b-it";
 
 const WEATHER_CODES = {
   0: "clear",
@@ -39,31 +39,45 @@ export async function onRequestPost({ request, env }) {
     return json({ reply: "Siri AI is not configured yet. Add a Cloudflare Workers AI binding named AI." }, 500, request);
   }
 
-  const result = await env.AI.run(AI_MODEL, {
-    messages: [
-      {
-        role: "system",
-        content: [
-          "You are Siri inside MacReady, a macOS-style web desktop.",
-          "Answer in plain language. Be concise, helpful, and calm.",
-          "Start directly with the answer.",
-          "Do not describe the user's request.",
-          "Do not include reasoning, analysis, or hidden notes.",
-          "Do not pretend to have live data unless it is provided in the context.",
-          "If the user asks for current weather, tell them to include a city if no city was provided.",
-          "Use the app context only when it helps."
-        ].join(" ")
-      },
-      {
-        role: "user",
-        content: `Context: ${JSON.stringify(context).slice(0, 2500)}\n\nUser: ${message}`
-      }
-    ],
-    max_tokens: 320,
-    temperature: 0.4
-  });
+  let result;
+  try {
+    result = await env.AI.run(AI_MODEL, {
+      messages: [
+        {
+          role: "system",
+          content: [
+            "You are Siri inside MacReady, a macOS-style web desktop.",
+            "Answer in plain language. Be concise, helpful, and calm.",
+            "Start directly with the answer.",
+            "Do not describe the user's request.",
+            "Do not include reasoning, analysis, or hidden notes.",
+            "Do not pretend to have live data unless it is provided in the context.",
+            "If asked what a product, technology, event, or company is, answer as a normal general-knowledge question.",
+            "If the user asks for current weather, tell them to include a city if no city was provided.",
+            "Use the app context only when it helps."
+          ].join(" ")
+        },
+        {
+          role: "user",
+          content: `Context: ${JSON.stringify(context).slice(0, 2500)}\n\nUser: ${message}`
+        }
+      ],
+      max_tokens: 500,
+      temperature: 0.4
+    });
+  } catch (error) {
+    return json({
+      reply: "Siri could not reach the AI service.",
+      detail: String(error?.message || error || "").slice(0, 240)
+    }, 502, request);
+  }
 
-  return json({ reply: extractAiText(result) }, 200, request);
+  const reply = extractAiText(result);
+  if (!reply) {
+    return json({ reply: "Siri did not receive a text response from the AI service." }, 502, request);
+  }
+
+  return json({ reply }, 200, request);
 }
 
 export function onRequestGet() {
@@ -121,8 +135,8 @@ function extractAiText(result) {
   }
   if (Array.isArray(result?.output)) {
     const text = result.output
-      .flatMap(item => item.content || [])
-      .map(part => part.text || part.content || "")
+      .flatMap(item => typeof item === "string" ? [item] : item.content || [])
+      .map(part => typeof part === "string" ? part : part.text || part.content || "")
       .join("")
       .trim();
     if (text) return text;
@@ -130,7 +144,7 @@ function extractAiText(result) {
   if (Array.isArray(result?.result?.response)) return result.result.response.join("").trim();
   const nestedText = findGeneratedText(result);
   if (nestedText) return nestedText;
-  return "Siri received the request, but the AI service returned an empty answer.";
+  return "";
 }
 
 function findGeneratedText(value, key = "", depth = 0) {
@@ -143,6 +157,7 @@ function findGeneratedText(value, key = "", depth = 0) {
 
   if (Array.isArray(value)) {
     for (const item of value) {
+      if (typeof item === "string" && item.trim()) return item.trim();
       const text = findGeneratedText(item, key, depth + 1);
       if (text) return text;
     }
