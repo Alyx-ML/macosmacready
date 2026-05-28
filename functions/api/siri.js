@@ -1,4 +1,4 @@
-const AI_MODEL = "@cf/google/gemma-4-26b-a4b-it";
+const AI_MODEL = "@cf/zai-org/glm-4.7-flash";
 
 const WEATHER_CODES = {
   0: "clear",
@@ -62,7 +62,7 @@ export async function onRequestPost({ request, env }) {
           content: `Context: ${JSON.stringify(context).slice(0, 2500)}\n\nUser: ${message}`
         }
       ],
-      max_tokens: 500,
+      max_tokens: 700,
       temperature: 0.4
     });
   } catch (error) {
