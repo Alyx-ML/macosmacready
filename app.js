@@ -5,12 +5,59 @@
 const NEWS_RSS_SOURCES = [
   { name: "9to5Mac", url: "https://9to5mac.com/guides/mac/feed/", category: "technology" },
   { name: "MacRumors", url: "https://feeds.macrumors.com/MacRumors-All", category: "technology" },
-  { name: "AppleInsider", url: "https://appleinsider.com/rss/news", category: "technology" },
+  { name: "AppleInsider Mac", url: "https://appleinsider.com/inside/mac", category: "technology", format: "html" },
   { name: "Apple Newsroom", url: "https://www.apple.com/newsroom/rss-feed.rss", category: "technology" },
   { name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/apple", category: "technology" },
-  { name: "The Verge", url: "https://www.theverge.com/rss/apple/index.xml", category: "technology" }
+  { name: "The Verge", url: "https://www.theverge.com/rss/apple/index.xml", category: "technology" },
+  { name: "TidBITS", url: "https://tidbits.com/feed/", category: "technology" },
+  { name: "The Eclectic Light Company", url: "https://eclecticlight.co/category/macs/feed/", category: "technology" },
+  { name: "Michael Tsai", url: "https://mjtsai.com/blog/feed/", category: "technology" },
+  { name: "Macworld", url: "https://www.macworld.com/feed", category: "technology" },
+  { name: "The Mac Observer", url: "https://www.macobserver.com/feed/", category: "technology" },
+  { name: "Daring Fireball", url: "https://daringfireball.net/feeds/main", category: "technology" },
+  { name: "512 Pixels", url: "https://512pixels.net/feed.xml", category: "technology" },
+  { name: "Scripting OS X", url: "https://scriptingosx.com/feed/", category: "technology" },
+  { name: "OWC Rocket Yard", url: "https://eshop.macsales.com/blog/feed/", category: "technology" },
+  { name: "Der Flounder", url: "https://derflounder.wordpress.com/feed/", category: "technology" },
+  { name: "PC Gamer", url: "https://www.pcgamer.com/rss/", category: "design" },
+  { name: "Rock Paper Shotgun", url: "https://www.rockpapershotgun.com/feed", category: "design" },
+  { name: "Polygon", url: "https://www.polygon.com/rss/index.xml", category: "design" },
+  { name: "Kotaku", url: "https://kotaku.com/rss", category: "design" },
+  { name: "Macworld Reviews", url: "https://www.macworld.com/reviews/feed", category: "science" },
+  { name: "Six Colors", url: "https://sixcolors.com/feed/", category: "science" },
+  { name: "MacStories", url: "https://www.macstories.net/feed/", category: "culture" },
+  { name: "9to5Mac Apps", url: "https://9to5mac.com/guides/apps/feed/", category: "culture" },
+  { name: "9to5Mac Apple Intelligence", url: "https://9to5mac.com/guides/apple-intelligence/feed/", category: "ai" },
+  { name: "9to5Toys Mac Deals", url: "https://9to5toys.com/guides/mac/feed/", category: "deals" },
+  { name: "9to5Toys Apple Deals", url: "https://9to5toys.com/guides/apple/feed/", category: "deals" }
 ];
-const MAC_NEWS_TERMS = /\b(macOS|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]|WWDC)\b/i;
+const MAC_NEWS_TERMS = /\b(macOS|Mac\b|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]\b|WWDC|Safari|Finder|Time Machine|Xcode|Gatekeeper|FileVault|Launch Services|MDM|Jamf|SwiftUI|AppKit|Terminal|malware|Security Update)\b/i;
+const STRONG_MAC_CONTEXT_TERMS = /\b(macOS|Mac\b|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]\b|Finder|Time Machine|Xcode|Gatekeeper|FileVault|Launch Services|MDM|Jamf|SwiftUI|AppKit|Terminal|Security Update)\b/i;
+const IOS_ONLY_TERMS = /\b(iOS|iPhone|iPad|iPadOS|watchOS|Apple Watch|AirPods|visionOS|Vision Pro)\b/i;
+const DEAL_TERMS = /\b(deal|deals|sale|discount|coupon|save \$|save up to|% off|today only|lowest price|record-low|price drop|clearance|promo|promotion|bundle|lifetime license|sponsored|advertorial|stacksocial|walmart|best buy|amazon|b&h)\b/i;
+const MAC_DEAL_TERMS = /\b(MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Studio Display|Apple display|Apple silicon)\b/i;
+const MACBOOK_DEAL_TERMS = /\b(MacBook|MacBook Air|MacBook Pro|USB-C|Thunderbolt|MagSafe|dock|hub|charger|adapter|monitor|display|SSD|external drive|keyboard|mouse|trackpad|sleeve|case|stand|backpack|accessor(?:y|ies)|AppleCare|M[1-9]\b)\b/i;
+const MAC_DEAL_PRODUCT_TERMS = /\b(MacBook|MacBook Air|MacBook Pro|Mac mini|Mac Studio|Mac Pro|iMac|Studio Display|Mac\b)\b/i;
+const MOBILE_PRODUCT_TERMS = /\b(iPhone|iPad|AirPods|Apple Watch|Watch|Vision Pro|MagSafe Battery)\b/i;
+const PRICE_PATTERN = /(?:[$£€]\s?\d[\d,]*(?:\.\d{2})?|\d{1,3}%\s?off|save\s?(?:up to\s?)?[$£€]?\s?\d[\d,]*|[$£€]?\s?\d[\d,]*\s?off|all-time low|record low|lowest price)/ig;
+const RSS_CATEGORY_TERMS = {
+  technology: MAC_NEWS_TERMS,
+  design: /\b(game|games|gaming|Steam|Xbox|PlayStation|Nintendo|Switch|PC|trailer|release|released|launch|update|patch|DLC|demo|early access|indie|developer|studio)\b/i,
+  science: /\b(review|reviews|hands-on|tested|benchmark|benchmarks|performance|long-term|versus|vs\.?|Mac|macOS|MacBook|iMac|Mac mini|Mac Studio|Mac Pro)\b/i,
+  culture: /\b(Mac app|Mac apps|macOS app|macOS apps|for Mac|on Mac|Mac version|menu bar|Safari extension|Setapp|Raycast|Alfred|BBEdit|Pixelmator|CleanMyMac|Final Cut|Logic Pro|developer tool|Apple silicon)\b/i,
+  ai: /\b(Apple Intelligence|AI|artificial intelligence|Siri|LLM|language model|machine learning|Foundation Models|Image Playground|Genmoji|Writing Tools|ChatGPT|OpenAI|Claude|Gemini|Shortcuts Playground|macOS)\b/i,
+  deals: /\b(MacBook|MacBook Air|MacBook Pro|Mac mini|Mac Studio|Studio Display|Thunderbolt|USB-C|MagSafe|charger|dock|hub|monitor|display|SSD|keyboard|mouse|trackpad|case|sleeve|stand|backpack|accessor(?:y|ies)|deal|deals|discount|sale|off|low|price|Amazon|Best Buy|B&H)\b/i
+};
+const RSS_CATEGORY_LABELS = {
+  all: "Today",
+  technology: "News",
+  design: "Games",
+  science: "Reviews",
+  culture: "Apps",
+  ai: "Apple Intelligence",
+  deals: "Deals"
+};
+const GENERATED_NEWS_URL = "public/data/news.generated.json";
 
 function fetchDevProxy(url) {
   const isLocalDev = ["localhost", "127.0.0.1"].includes(window.location.hostname);
@@ -18,6 +65,46 @@ function fetchDevProxy(url) {
     ? `/rss?url=${encodeURIComponent(url)}`
     : `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
   return fetch(requestUrl);
+}
+
+function fetchAppleJson(url) {
+  return new Promise((resolve, reject) => {
+    const callbackName = `macreadyAppleJson${Date.now()}${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement("script");
+    const cleanup = () => {
+      delete window[callbackName];
+      script.remove();
+    };
+    const timer = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Apple App Store request timed out"));
+    }, 15000);
+
+    window[callbackName] = data => {
+      window.clearTimeout(timer);
+      cleanup();
+      resolve({
+        ok: true,
+        json: async () => data
+      });
+    };
+
+    const requestUrl = new URL(url);
+    requestUrl.searchParams.set("callback", callbackName);
+    script.onerror = () => {
+      window.clearTimeout(timer);
+      cleanup();
+      reject(new Error("Apple App Store request failed"));
+    };
+    script.src = requestUrl.toString();
+    document.head.appendChild(script);
+  });
+}
+
+function fetchRSSJson(url) {
+  const isLocalDev = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (isLocalDev) return null;
+  return fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
 }
 
 // Curated Preset Gradients for Visual Diversity
@@ -43,6 +130,8 @@ if (currentUsername === "MacReady") {
   localStorage.removeItem("macready_username");
 }
 let currentUserEmail = localStorage.getItem("macready_email") || "";
+const ADMIN_ACCOUNT_USERNAMES = new Set(["Admin", "MacReady Admin"]);
+const ADMIN_ACCOUNT_EMAILS = new Set(["admin@macready.local"]);
 let articles = [];
 let currentCategory = "all"; // "all" or specific categories
 let currentLibrary = "today"; // "today", "bookmarks", "queue", "custom"
@@ -50,7 +139,8 @@ let searchQuery = "";
 let selectedArticleId = null;
 let currentReaderTheme = "classic";
 let currentView = "grid"; // "grid" or "list"
-let visibleArticlesCount = 6;
+const INITIAL_VISIBLE_ARTICLE_COUNT = 10;
+let visibleArticlesCount = INITIAL_VISIBLE_ARTICLE_COUNT;
 let enabledNewsSources = new Set(NEWS_RSS_SOURCES.map(source => source.name));
 let queuedArticleUrls = new Set();
 
@@ -108,7 +198,11 @@ function initData() {
   if (storedSources) {
     try {
       const sourceNames = JSON.parse(storedSources);
-      enabledNewsSources = new Set(sourceNames.filter(name => NEWS_RSS_SOURCES.some(source => source.name === name)));
+      const currentSourceNames = NEWS_RSS_SOURCES.map(source => source.name);
+      enabledNewsSources = new Set(sourceNames.filter(name => currentSourceNames.includes(name)));
+      currentSourceNames.forEach(name => {
+        if (!sourceNames.includes(name)) enabledNewsSources.add(name);
+      });
     } catch (e) {
       console.error(e);
     }
@@ -142,6 +236,7 @@ function initData() {
 
   // Update counts
   updateCounts();
+  updateAppHeader();
 }
 
 function saveToStorage() {
@@ -151,166 +246,271 @@ function saveToStorage() {
   localStorage.setItem("tahoe_reading_queue", JSON.stringify(Array.from(queuedArticleUrls)));
 }
 
-function updateCounts() {
-  const bookmarkCount = articles.filter(a => a.bookmarked).length;
-  const queueCount = articles.filter(a => a.queued).length;
-  const customCount = articles.filter(a => a.custom).length;
-  
-  const bCountEl = document.getElementById("bookmark-count");
-  const qCountEl = document.getElementById("queue-count");
-  const cCountEl = document.getElementById("custom-count");
-  if (bCountEl) bCountEl.textContent = bookmarkCount;
-  if (qCountEl) qCountEl.textContent = queueCount;
-  if (cCountEl) cCountEl.textContent = customCount;
-
-  const widgetTotalCount = document.getElementById("widget-total-count");
-  const widgetBookmarkCount = document.getElementById("widget-bookmark-count");
-  const widgetCustomCount = document.getElementById("widget-custom-count");
-
-  if (widgetTotalCount) widgetTotalCount.textContent = articles.length;
-  if (widgetBookmarkCount) widgetBookmarkCount.textContent = bookmarkCount;
-  if (widgetCustomCount) widgetCustomCount.textContent = customCount;
-}
-
-function renderNewsSourceControls() {
-  const menu = document.getElementById("news-source-menu");
-  if (!menu) return;
-
-  menu.innerHTML = NEWS_RSS_SOURCES.map(source => `
-    <li class="sidebar-item source-control-item" data-source-name="${source.name}">
-      <label class="source-control-label">
-        <input type="checkbox" ${enabledNewsSources.has(source.name) ? "checked" : ""}>
-        <span>${source.name}</span>
-      </label>
-    </li>
-  `).join("");
-
-  menu.querySelectorAll(".source-control-item").forEach(item => {
-    const checkbox = item.querySelector("input");
-    const sourceName = item.getAttribute("data-source-name");
-    if (!checkbox || !sourceName) return;
-
-    checkbox.addEventListener("change", () => {
-      if (checkbox.checked) {
-        enabledNewsSources.add(sourceName);
-      } else {
-        enabledNewsSources.delete(sourceName);
-      }
-      saveToStorage();
-      renderFeed();
-    });
-  });
-}
-
-async function loadNewsFromRSS() {
-  articles = [];
-  renderFeed();
-
-  const fetched = [];
-  await Promise.allSettled(NEWS_RSS_SOURCES.map(async source => {
-    const response = await fetchDevProxy(source.url);
-    if (!response.ok) throw new Error(`RSS failed for ${source.name}`);
-
-    const xml = await response.text();
-    const documentXml = new DOMParser().parseFromString(xml, "application/xml");
-    const items = [...documentXml.querySelectorAll("item")];
-
-    items.forEach((item, index) => {
-      const title = getRSSNodeText(item, "title");
-      const link = getRSSNodeText(item, "link");
-      const rawDescription = getRSSNodeText(item, "description");
-      const content = getRSSNodeText(item, "content\\:encoded") || rawDescription;
-      const pubDate = getRSSNodeText(item, "pubDate");
-      const combinedText = `${title} ${rawDescription}`;
-
-      if (!title || !link || !MAC_NEWS_TERMS.test(combinedText)) return;
-
-      fetched.push({
-        id: `${source.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.parse(pubDate) || index}`,
-        title,
-        subtitle: buildRSSSubtitle(rawDescription || content),
-        category: source.category,
-        author: source.name,
-        avatar: source.name.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase(),
-        date: formatRSSDate(pubDate),
-        timestamp: Date.parse(pubDate) || 0,
-        cover: extractRSSImage(item, content),
-        sourceName: source.name,
-        sourceUrl: link,
-        bookmarked: false,
-        queued: queuedArticleUrls.has(link),
-        custom: false,
-        content: buildRSSArticleContent(content || rawDescription, link, source.name)
-      });
-    });
-  }));
-
-  articles = fetched
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 30);
-  updateCounts();
-  renderFeed();
-}
 
 function getRSSNodeText(item, selector) {
   return item.querySelector(selector)?.textContent?.trim() || "";
 }
 
+async function fetchHTMLNewsSource(source) {
+  const response = await fetchDevProxy(source.url);
+  if (!response.ok) throw new Error(`HTML source failed for ${source.name}`);
+
+  const html = await response.text();
+  const doc = parseRSSHTML(html);
+  const articleLinks = [...doc.querySelectorAll("article a[href], .article a[href], .card a[href], h2 a[href], h3 a[href], a[href]")]
+    .map(link => {
+      const title = cleanArticleText(link.textContent);
+      const sourceUrl = new URL(link.getAttribute("href"), source.url).toString();
+      const container = link.closest("article, .article, .card, .post, li, div") || link.parentElement;
+      const subtitle = buildHTMLSourceSubtitle(container, title);
+      const cover = extractSourceArticleImage(container?.outerHTML || "", source.url);
+      const timeText = container?.querySelector("time")?.getAttribute("datetime") || container?.querySelector("time")?.textContent || "";
+      const timestamp = Date.parse(timeText) || 0;
+
+      return { title, sourceUrl, subtitle, cover, timestamp };
+    })
+    .filter(item => item.title.length > 24)
+    .filter(item => item.sourceUrl.startsWith("https://appleinsider.com/"))
+    .filter(item => !isIOSFocusedNewsText(item.title, item.subtitle))
+    .filter((item, index, list) => list.findIndex(match => match.sourceUrl === item.sourceUrl) === index)
+    .slice(0, 12);
+
+  return articleLinks.map((item, index) => ({
+    id: `${source.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${item.timestamp || index}`,
+    title: item.title,
+    subtitle: item.subtitle || "Latest Mac coverage from AppleInsider.",
+    category: source.category,
+    author: source.name,
+    avatar: source.name.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase(),
+    date: formatRSSDate(item.timestamp || Date.now()),
+    timestamp: item.timestamp || Date.now() - index,
+    cover: item.cover || "preset-1",
+    sourceName: source.name,
+    sourceUrl: item.sourceUrl,
+    bookmarked: false,
+    queued: queuedArticleUrls.has(item.sourceUrl),
+    custom: false,
+    content: `<p>${escapeHTML(item.subtitle || item.title)}</p>`
+  }));
+}
+
+function buildHTMLSourceSubtitle(container, title) {
+  if (!container) return "";
+  const text = [...container.querySelectorAll("p, .dek, .summary, .excerpt")]
+    .map(node => cleanArticleText(node.textContent))
+    .find(value => value.length > 40 && value !== title);
+  return text || "";
+}
+
+function getRSSItemNodes(documentXml) {
+  const rssItems = [...documentXml.querySelectorAll("item")];
+  if (rssItems.length > 0) return rssItems;
+  return [...documentXml.querySelectorAll("entry")];
+}
+
+function getRSSItemLink(item) {
+  const directLink = getRSSNodeText(item, "link");
+  if (directLink) return directLink;
+
+  const alternateLink = [...item.querySelectorAll("link")]
+    .find(link => !link.getAttribute("rel") || link.getAttribute("rel") === "alternate");
+  return alternateLink?.getAttribute("href") || "";
+}
+
+function shouldIncludeRSSArticle(source, title, rawDescription, content) {
+  if (!title) return false;
+
+  const headlineText = `${title} ${stripHTML(rawDescription || "")}`;
+  if (source.category !== "design" && source.category !== "deals" && isIOSLedTitle(title)) return false;
+
+  const combinedText = `${title} ${rawDescription || ""} ${stripHTML(content || "")}`;
+  const categoryTerms = RSS_CATEGORY_TERMS[source.category] || MAC_NEWS_TERMS;
+  if (!categoryTerms.test(combinedText)) return false;
+
+  if (source.category === "deals") {
+    if (MOBILE_PRODUCT_TERMS.test(title) && !MAC_DEAL_PRODUCT_TERMS.test(title)) return false;
+    return DEAL_TERMS.test(combinedText) && MACBOOK_DEAL_TERMS.test(headlineText);
+  }
+
+  if (source.category !== "technology") return true;
+
+  const hasMacContext = STRONG_MAC_CONTEXT_TERMS.test(headlineText);
+  if (!hasMacContext) return false;
+
+  const isDeal = DEAL_TERMS.test(headlineText);
+  if (isDeal && !MAC_DEAL_TERMS.test(headlineText)) return false;
+
+  if (isIOSLedTitle(title)) return false;
+
+  return true;
+}
+
+function isIOSLedTitle(title) {
+  return IOS_ONLY_TERMS.test(title || "") && !STRONG_MAC_CONTEXT_TERMS.test(title || "");
+}
+
+function isMobileAppleArticle(article) {
+  if (!article || article.category === "design" || article.category === "deals") return false;
+  const title = article.title || "";
+  const headline = `${article.title || ""} ${article.subtitle || ""}`;
+  if (IOS_ONLY_TERMS.test(title) && !STRONG_MAC_CONTEXT_TERMS.test(title)) return true;
+  return IOS_ONLY_TERMS.test(headline) && !STRONG_MAC_CONTEXT_TERMS.test(headline);
+}
+
+function isIOSFocusedNewsText(title, subtitle = "") {
+  const headlineText = `${title || ""} ${subtitle || ""}`;
+  return IOS_ONLY_TERMS.test(headlineText) && !STRONG_MAC_CONTEXT_TERMS.test(headlineText);
+}
+
+function shouldRenderArticle(article) {
+  if (isMobileAppleArticle(article)) return false;
+  if (article.category === "technology" && isIOSLedTitle(article.title)) return false;
+
+  const imageRequiredSources = ["The Mac Observer", "Six Colors", "MacStories"];
+  if (imageRequiredSources.includes(article.sourceName) && (!article.cover || article.cover.startsWith("preset-"))) {
+    return false;
+  }
+
+  return true;
+}
+
+function extractDealSignals(article) {
+  if (!article || article.category !== "deals") return [];
+  const text = `${article.title || ""} ${article.subtitle || ""}`;
+  return [...new Set((text.match(PRICE_PATTERN) || []).map(value => cleanArticleText(value)).filter(Boolean))].slice(0, 3);
+}
+
+function parseRSSHTML(html) {
+  return new DOMParser().parseFromString(html || "", "text/html");
+}
+
 function stripHTML(html) {
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = html || "";
-  return wrapper.textContent.replace(/\s+/g, " ").trim();
+  const doc = parseRSSHTML(html);
+  return doc.body.textContent.replace(/\s+/g, " ").trim();
 }
 
 function buildRSSSubtitle(html) {
-  return stripHTML(html).slice(0, 150);
+  return buildArticleExcerpt(html, 260);
 }
 
-function buildRSSArticleContent(html, link, sourceName) {
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = html || "";
-  wrapper.querySelectorAll("img, figure, script, style").forEach(node => node.remove());
-  const textBlocks = [...wrapper.querySelectorAll("p, li")]
+function buildArticleExcerpt(html, maxLength = 260) {
+  const doc = parseRSSHTML(html);
+  doc.querySelectorAll("img, figure, script, style, noscript").forEach(node => node.remove());
+  const textBlocks = [...doc.querySelectorAll("p, li")]
     .map(node => node.textContent.replace(/\s+/g, " ").trim())
-    .filter(Boolean);
-  const rawParagraphs = textBlocks.length > 0
-    ? textBlocks
-    : [wrapper.textContent.replace(/\s+/g, " ").trim()].filter(Boolean);
-  const paragraphs = rawParagraphs.flatMap(splitLongArticleParagraph);
+    .filter(text => text.length > 30);
+  const text = (textBlocks.length > 0 ? textBlocks : [doc.body.textContent.replace(/\s+/g, " ").trim()])
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
 
-  return `${paragraphs.map(text => `<p>${text}</p>`).join("")}<p><a href="${link}" target="_blank" rel="noopener">Source: ${sourceName}</a></p>`;
+  if (text.length <= maxLength) return text;
+
+  const shortened = text.slice(0, maxLength);
+  const lastBreak = Math.max(shortened.lastIndexOf(". "), shortened.lastIndexOf("? "), shortened.lastIndexOf("! "));
+  if (lastBreak > 120) return shortened.slice(0, lastBreak + 1);
+
+  const lastSpace = shortened.lastIndexOf(" ");
+  return `${shortened.slice(0, lastSpace > 120 ? lastSpace : maxLength).trim()}...`;
 }
 
-function splitLongArticleParagraph(text) {
-  if (text.length <= 520) return [text];
+function cleanArticleText(text) {
+  return (text || "")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .trim();
+}
 
-  const sentences = text.match(/[^.!?]+[.!?]+(?:\s|$)|[^.!?]+$/g) || [text];
-  const paragraphs = [];
-  let current = "";
-
-  sentences.forEach(sentence => {
-    const next = `${current} ${sentence.trim()}`.trim();
-    if (current && next.length > 420) {
-      paragraphs.push(current);
-      current = sentence.trim();
-    } else {
-      current = next;
-    }
-  });
-
-  if (current) paragraphs.push(current);
-  return paragraphs;
+function escapeHTML(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function extractRSSImage(item, html) {
-  const mediaContent = item.querySelector("content, thumbnail");
-  const mediaUrl = mediaContent?.getAttribute("url");
+  const mediaUrl = [
+    ...item.querySelectorAll("enclosure, thumbnail, image, media\\:content, media\\:thumbnail, itunes\\:image")
+  ].map(node => node.getAttribute("url") || node.getAttribute("href") || node.textContent?.trim())
+    .find(url => /^https?:\/\//.test(url || ""));
   if (mediaUrl) return mediaUrl;
 
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = html || "";
-  const imgSrc = wrapper.querySelector("img")?.getAttribute("src");
-  return imgSrc || "preset-1";
+  return extractRSSImageFromHTML(html);
+}
+
+function extractRSSImageFromHTML(html) {
+  const doc = parseRSSHTML(html);
+  const imageUrl = [...doc.querySelectorAll("img, source")]
+    .map(node => node.getAttribute("src") || node.getAttribute("data-src") || node.getAttribute("data-lazy-src") || node.getAttribute("data-orig-file") || node.getAttribute("srcset"))
+    .filter(Boolean)
+    .map(value => value.split(",")[0].trim().split(/\s+/)[0])
+    .find(url => /^https?:\/\//.test(url));
+  return imageUrl || "preset-1";
+}
+
+async function hydrateSourceArticleImages(articleList) {
+  const imageHydrationSources = ["The Mac Observer", "Six Colors", "MacStories"];
+  const articlesNeedingSourceImages = imageHydrationSources.flatMap(sourceName =>
+    articleList
+      .filter(article => article.sourceName === sourceName)
+      .filter(article => !article.cover || article.cover.startsWith("preset-"))
+      .slice(0, 8)
+  );
+
+  if (articlesNeedingSourceImages.length === 0) return;
+
+  await Promise.allSettled(articlesNeedingSourceImages.map(async article => {
+    const response = await fetchDevProxy(article.sourceUrl);
+    if (!response.ok) return;
+
+    const html = await response.text();
+    const sourceImage = extractSourceArticleImage(html, article.sourceUrl);
+    if (sourceImage) article.cover = sourceImage;
+  }));
+}
+
+function extractSourceArticleImage(html, articleUrl) {
+  const doc = parseRSSHTML(html);
+  const imageUrl = getJSONLDImage(doc) || [
+    ...doc.querySelectorAll(
+      "meta[property='og:image'], meta[name='twitter:image'], link[rel='image_src'], article img, article source, figure img, .entry-content img, .post-thumbnail img, .featured-image img, .wp-post-image"
+    )
+  ].map(node =>
+    node.getAttribute("content") ||
+    node.getAttribute("href") ||
+    node.getAttribute("src") ||
+    node.getAttribute("data-src") ||
+    node.getAttribute("data-lazy-src") ||
+    node.getAttribute("data-srcset") ||
+    node.getAttribute("data-lazy-srcset") ||
+    node.getAttribute("srcset")
+  )
+    .filter(Boolean)
+    .map(value => value.split(",")[0].trim().split(/\s+/)[0])
+    .find(url => /^(https?:)?\/\//.test(url) || url.startsWith("/"));
+
+  if (!imageUrl) return "";
+  return new URL(imageUrl, articleUrl).toString();
+}
+
+function getJSONLDImage(doc) {
+  for (const script of doc.querySelectorAll("script[type='application/ld+json']")) {
+    try {
+      const data = JSON.parse(script.textContent || "{}");
+      const items = Array.isArray(data) ? data : [data];
+      for (const item of items) {
+        const image = item.image || item.thumbnailUrl;
+        if (typeof image === "string") return image;
+        if (Array.isArray(image) && typeof image[0] === "string") return image[0];
+        if (image && typeof image.url === "string") return image.url;
+      }
+    } catch {
+      continue;
+    }
+  }
+  return "";
 }
 
 function optimizeArticleImageUrl(url, isFeatured = false) {
@@ -325,8 +525,13 @@ function optimizeArticleImageUrl(url, isFeatured = false) {
   }
 
   if (parsed.hostname === "images.macrumors.com") {
-    parsed.searchParams.set("resize", `${width},0`);
-    return parsed.toString();
+    parsed.searchParams.delete("resize");
+    const resizedUrl = new URL("https://images.weserv.nl/");
+    resizedUrl.searchParams.set("url", `${parsed.hostname}${parsed.pathname}${parsed.search}`);
+    resizedUrl.searchParams.set("w", width);
+    resizedUrl.searchParams.set("output", "webp");
+    resizedUrl.searchParams.set("q", "82");
+    return resizedUrl.toString();
   }
 
   return url;
@@ -362,6 +567,93 @@ function formatRSSDate(pubDate) {
 }
 
 // Set macOS Accent Color
+const HERITAGE_ACCENT_TOKENS = {
+  puma: {
+    color: "#2b7a78",
+    rgb: "43, 122, 120",
+    glow: "rgba(43, 122, 120, 0.4)",
+    gradient: "linear-gradient(135deg, #74ebd5 0%, #acb6e5 100%)"
+  },
+  tiger: {
+    color: "#0f6eb5",
+    rgb: "15, 110, 181",
+    glow: "rgba(15, 110, 181, 0.4)",
+    gradient: "linear-gradient(135deg, #5aa5e6 0%, #0b5796 100%)"
+  },
+  panther: {
+    color: "#78716c",
+    rgb: "120, 113, 108",
+    glow: "rgba(120, 113, 108, 0.35)",
+    gradient: "linear-gradient(135deg, #d6d3d1 0%, #78716c 100%)"
+  },
+  leopard: {
+    color: "#4b5563",
+    rgb: "75, 85, 99",
+    glow: "rgba(75, 85, 99, 0.35)",
+    gradient: "linear-gradient(135deg, #9ca3af 0%, #4b5563 100%)"
+  },
+  yosemite: {
+    color: "#f97316",
+    rgb: "249, 115, 22",
+    glow: "rgba(249, 115, 22, 0.4)",
+    gradient: "linear-gradient(135deg, #fdba74 0%, #f97316 100%)"
+  },
+  elcapitan: {
+    color: "#6b7280",
+    rgb: "107, 114, 128",
+    glow: "rgba(107, 114, 128, 0.35)",
+    gradient: "linear-gradient(135deg, #b7b7b7 0%, #4b5563 100%)"
+  },
+  sierra: {
+    color: "#2f80ed",
+    rgb: "47, 128, 237",
+    glow: "rgba(47, 128, 237, 0.4)",
+    gradient: "linear-gradient(135deg, #56ccf2 0%, #2f80ed 100%)"
+  },
+  mojave: {
+    color: "#fb923c",
+    rgb: "251, 146, 60",
+    glow: "rgba(251, 146, 60, 0.4)",
+    gradient: "linear-gradient(135deg, #f43f5e 0%, #fb923c 50%, #f59e0b 100%)"
+  },
+  catalina: {
+    color: "#7c3aed",
+    rgb: "124, 58, 237",
+    glow: "rgba(124, 58, 237, 0.4)",
+    gradient: "linear-gradient(135deg, #1d4ed8 0%, #7c3aed 55%, #f97316 100%)"
+  },
+  bigsur: {
+    color: "#0ea5e9",
+    rgb: "14, 165, 233",
+    glow: "rgba(14, 165, 233, 0.4)",
+    gradient: "linear-gradient(135deg, #0ea5e9 0%, #f97316 50%, #ec4899 100%)"
+  },
+  monterey: {
+    color: "#7c3aed",
+    rgb: "124, 58, 237",
+    glow: "rgba(124, 58, 237, 0.4)",
+    gradient: "linear-gradient(135deg, #7c3aed 0%, #ec4899 55%, #fb7185 100%)"
+  },
+  ventura: {
+    color: "#f97316",
+    rgb: "249, 115, 22",
+    glow: "rgba(249, 115, 22, 0.4)",
+    gradient: "linear-gradient(135deg, #dc2626 0%, #f97316 55%, #facc15 100%)"
+  },
+  sonoma: {
+    color: "#84cc16",
+    rgb: "132, 204, 22",
+    glow: "rgba(132, 204, 22, 0.4)",
+    gradient: "linear-gradient(135deg, #f59e0b 0%, #84cc16 55%, #16a34a 100%)"
+  },
+  sequoia: {
+    color: "#16a34a",
+    rgb: "22, 163, 74",
+    glow: "rgba(22, 163, 74, 0.4)",
+    gradient: "linear-gradient(135deg, #86efac 0%, #16a34a 100%)"
+  }
+};
+
 function setAccentColor(color) {
   // Remove existing themes dynamically
   Array.from(document.body.classList).forEach(cls => {
@@ -390,6 +682,14 @@ function setAccentColor(color) {
     document.body.style.removeProperty("--accent-gradient");
     
     document.body.classList.add(`theme-${color}`);
+
+    const heritageTokens = HERITAGE_ACCENT_TOKENS[color];
+    if (heritageTokens) {
+      document.body.style.setProperty("--accent-color", heritageTokens.color);
+      document.body.style.setProperty("--accent-color-rgb", heritageTokens.rgb);
+      document.body.style.setProperty("--accent-glow", heritageTokens.glow);
+      document.body.style.setProperty("--accent-gradient", heritageTokens.gradient);
+    }
   }
   
   localStorage.setItem("tahoe_theme", color);
@@ -747,73 +1047,12 @@ function initDockAutohideSettings() {
   });
 }
 
-// --- 3. Dynamic Dock Magnification Mathematics ---
-let dockItemsList = [];
-function initDockMagnification() {
-  const dock = document.getElementById("dock");
-  const dockContainer = document.getElementById("dock-container");
-  if (!dock || !dockContainer) return;
-
-  const refreshDockItems = () => {
-    dockItemsList = Array.from(dock.querySelectorAll(".dock-item-wrapper"));
-  };
-
-  refreshDockItems();
-  window.refreshDockMagnification = refreshDockItems;
-
-  dock.addEventListener("mousemove", (e) => {
-    const mouseX = e.clientX;
-    const mouseY = e.clientY;
-
-    dockItemsList.forEach((item) => {
-      const rect = item.getBoundingClientRect();
-      const itemX = rect.left + rect.width / 2;
-      const itemY = rect.top + rect.height;
-
-      // Distance from cursor to dock item bottom-center
-      const distX = mouseX - itemX;
-      const distY = mouseY - itemY;
-      const distance = Math.sqrt(distX * distX + distY * distY);
-
-      // Scale calculations: max scale 1.45 at 0px distance, tapering to 1.0 at 150px distance
-      const maxDistance = 150;
-      let scale = 1.0;
-
-      if (distance < maxDistance) {
-        // Cosine curve for ultra-smooth scaling profile
-        const factor = (Math.cos((distance / maxDistance) * Math.PI) + 1) / 2;
-        scale = 1.0 + 0.38 * factor;
-      }
-
-      // Apply dynamic transformation directly
-      item.style.transform = `scale(${scale}) translateY(${-15 * (scale - 1)}px)`;
-      
-      // Update padding on parent to keep alignment elegant
-      const dockItem = item.querySelector(".dock-item");
-      if (dockItem) {
-        dockItem.style.margin = `0 ${5 * (scale - 1)}px 4px ${5 * (scale - 1)}px`;
-      }
-    });
-  });
-
-  dock.addEventListener("mouseleave", () => {
-    // Reset all scale factors smoothly
-    dockItemsList.forEach((item) => {
-      item.style.transform = "scale(1) translateY(0)";
-      const dockItem = item.querySelector(".dock-item");
-      if (dockItem) {
-        dockItem.style.margin = "0 0 4px 0";
-      }
-    });
-  });
-}
-
 // --- 4. Multi-App Switching Routing System ---
 function switchApp(appName, pushHistory = true) {
   currentApp = appName;
   openedApps.add(appName);
   if (appName === "news" || appName === "reviews") {
-    visibleArticlesCount = 6;
+    visibleArticlesCount = INITIAL_VISIBLE_ARTICLE_COUNT;
   }
   
   // 1. Manage history
@@ -878,7 +1117,11 @@ function switchApp(appName, pushHistory = true) {
   const segmentControl = document.querySelector(".segment-control");
 
   // Defaults
-  if (newStoryBtn) newStoryBtn.style.display = "none";
+  if (newStoryBtn) {
+    newStoryBtn.hidden = true;
+    newStoryBtn.setAttribute("aria-hidden", "true");
+    newStoryBtn.style.setProperty("display", "none", "important");
+  }
   if (segmentControl) segmentControl.style.display = "none";
 
   if (searchInput) {
@@ -890,9 +1133,9 @@ function switchApp(appName, pushHistory = true) {
 
   // App-specific customization
   if (appName === "news") {
-    if (appTitle) appTitle.textContent = "Today's Stories";
+    if (appTitle) appTitle.textContent = "Today's Overview";
     if (searchInput) searchInput.placeholder = "Search Articles...";
-    if (newStoryBtn) newStoryBtn.style.display = "flex";
+    updateAdminControls();
     if (segmentControl) segmentControl.style.display = "flex";
 
     // Setup news segment buttons state
@@ -913,7 +1156,7 @@ function switchApp(appName, pushHistory = true) {
     renderFeed();
   }
   else if (appName === "reviews") {
-    if (appTitle) appTitle.textContent = "Hardware & Software Reviews";
+    if (appTitle) appTitle.textContent = "Mac Reviews";
     if (searchInput) searchInput.placeholder = "Search Reviews...";
     if (segmentControl) segmentControl.style.display = "flex";
 
@@ -950,6 +1193,7 @@ function switchApp(appName, pushHistory = true) {
       loadAllGamesData();
     } else {
       renderGamesView();
+      refreshSteamGamesIfNeeded();
     }
     applyAtmosphericGlow(activeAtmosphericGame);
   }
@@ -1021,169 +1265,6 @@ function goForward() {
   }
 }
 
-// --- 5. News Feed Renderer ---
-function renderFeed() {
-  const grid = document.getElementById("news-grid");
-  const emptyState = document.getElementById("empty-state");
-  if (!grid) return;
-
-  // Filter articles based on sidebar navigation and categories
-  let filtered = articles;
-
-  // Enforce Reviews Filter if active app is Reviews
-  if (currentApp === "reviews") {
-    filtered = filtered.filter(a => a.category === "science");
-  } else {
-    // 1. Library Filter (only for News App)
-    if (currentLibrary === "bookmarks") {
-      filtered = filtered.filter(a => a.bookmarked);
-    } else if (currentLibrary === "queue") {
-      filtered = filtered.filter(a => a.queued);
-    } else if (currentLibrary === "custom") {
-      filtered = filtered.filter(a => a.custom);
-    }
-
-    // 2. Category Filter
-    if (currentCategory !== "all") {
-      filtered = filtered.filter(a => a.category === currentCategory);
-    }
-
-  }
-
-  // 3. Search Filter
-  if (searchQuery.trim() !== "") {
-    const q = searchQuery.toLowerCase();
-    filtered = filtered.filter(a => 
-      a.title.toLowerCase().includes(q) || 
-      a.subtitle.toLowerCase().includes(q) ||
-      a.author.toLowerCase().includes(q)
-    );
-  }
-
-  // Handle Empty State
-  if (filtered.length === 0) {
-    grid.innerHTML = "";
-    if (emptyState) emptyState.classList.remove("hidden");
-    return;
-  } else {
-    if (emptyState) emptyState.classList.add("hidden");
-  }
-
-  // Render HTML Cards
-  let html = "";
-  
-  // Set first item as featured if in grid-view and not searching/filtering specific categories and is News app
-  const shouldFeature = currentView === "grid" && currentCategory === "all" && searchQuery === "" && currentLibrary === "today" && currentApp === "news";
-
-  // Slice articles for pagination and lazy-loading
-  const pagedArticles = filtered.slice(0, visibleArticlesCount);
-
-  pagedArticles.forEach((article, index) => {
-    const isFeatured = shouldFeature && index === 0;
-    const cardClass = isFeatured ? "news-card featured" : "news-card";
-
-    // Setup cover image styling
-    let coverHtml = "";
-    if (article.cover && article.cover.startsWith("preset-")) {
-      const grad = PRESET_GRADIENTS[article.cover] || PRESET_GRADIENTS["preset-1"];
-      coverHtml = `<div class="card-cover" style="background: ${grad}"></div>`;
-    } else {
-      const coverUrl = optimizeArticleImageUrl(article.cover, isFeatured);
-      const imagePriority = isFeatured ? `fetchpriority="high"` : `loading="lazy"`;
-      const imageSource = index > 3 ? `data-src="${coverUrl}"` : `src="${coverUrl}"`;
-      coverHtml = `<div class="card-cover"><img ${imageSource} alt="${article.title}" ${imagePriority} decoding="async"></div>`;
-    }
-
-    html += `
-      <article class="${cardClass}" data-id="${article.id}">
-        ${coverHtml}
-
-        <div class="card-body">
-          <div class="card-meta">
-            <a class="card-source" href="${article.sourceUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Source: ${article.sourceName}</a>
-            <span class="card-date">${article.date}</span>
-          </div>
-          <h3 class="card-title font-title">${article.title}</h3>
-          <p class="card-excerpt">${article.subtitle}</p>
-          
-          <div class="card-author-row" style="margin-bottom: 8px;">
-            <div class="card-avatar">${article.avatar}</div>
-            <span class="card-author-name">${article.author}</span>
-          </div>
-
-          <a href="${article.sourceUrl}" target="_blank" rel="noopener" class="btn-read-more-glass" onclick="event.stopPropagation()">
-            <span>Read More</span>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.75; vertical-align: middle;"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-          </a>
-        </div>
-      </article>
-    `;
-  });
-
-  grid.innerHTML = html;
-  initNewsImageLoading();
-
-  // Append or manage the soft glass liquid lazy load blur panel
-  let blurPanel = document.getElementById("feed-lazy-load-blur");
-  if (filtered.length > visibleArticlesCount) {
-    if (!blurPanel) {
-      blurPanel = document.createElement("div");
-      blurPanel.id = "feed-lazy-load-blur";
-      blurPanel.className = "feed-lazy-load-blur";
-      grid.parentNode.parentNode.appendChild(blurPanel);
-    }
-    blurPanel.innerHTML = ``;
-    blurPanel.classList.remove("fade-out");
-    blurPanel.style.display = "flex";
-  } else {
-    if (blurPanel) {
-      blurPanel.remove();
-    }
-  }
-
-  // Add click event listeners to entire cards
-  grid.querySelectorAll(".news-card").forEach(card => {
-    card.addEventListener("click", () => {
-      const id = card.getAttribute("data-id");
-      openArticle(id);
-    });
-
-    // Cursor tracking highlight effect
-    card.addEventListener("mousemove", (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      card.style.setProperty("--mouse-x", `${x}px`);
-      card.style.setProperty("--mouse-y", `${y}px`);
-    });
-  });
-}
-
-// Toggle Article Bookmark
-function toggleBookmark(id) {
-  const article = articles.find(a => a.id === id);
-  if (article) {
-    article.bookmarked = !article.bookmarked;
-    saveToStorage();
-    updateCounts();
-    renderFeed();
-    
-    // Sync reader state if open
-    const readerOpen = !document.getElementById("reader-overlay").classList.contains("hidden");
-    if (readerOpen && selectedArticleId === id) {
-      updateReaderBookmarkBtn(article.bookmarked);
-    }
-
-    // Sync Notification Center Reading List
-    renderBookmarksWidget();
-
-    // Dynamic banner feedback in system alerts
-    pushNotification(
-      article.bookmarked ? "Bookmarked Story" : "Removed Bookmark", 
-      `"${article.title.substring(0, 30)}..." has been updated.`
-    );
-  }
-}
 
 // macOS Tahoe 26 System Control State
 let dndActive = false;
@@ -1197,63 +1278,6 @@ function playGlassChime() {
 
 
 // Dynamic Bookmarks Reading List Widget Sync
-function renderBookmarksWidget() {
-  const container = document.getElementById("widget-reading-list");
-  const countBadge = document.getElementById("widget-bookmarks-count");
-  if (!container) return;
-
-  const bookmarkedArticles = articles.filter(a => a.bookmarked);
-  if (countBadge) {
-    countBadge.textContent = `${bookmarkedArticles.length} article${bookmarkedArticles.length !== 1 ? 's' : ''}`;
-  }
-
-  if (bookmarkedArticles.length === 0) {
-    container.innerHTML = `
-      <div class="empty-reading-list">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-1 opacity-40">
-          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-        </svg>
-        <p class="text-xxs opacity-60">No bookmarked articles. Save stories to read later.</p>
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = bookmarkedArticles.map(article => `
-    <div class="reading-item" data-id="${article.id}">
-      <div class="reading-item-left">
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" class="reading-item-icon">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-        </svg>
-        <span class="reading-item-title" title="${article.title}">${article.title}</span>
-      </div>
-      <button class="reading-item-remove" data-id="${article.id}" title="Remove Bookmark">
-        <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
-  `).join("");
-
-  // Bind click handlers to the dynamic reading list
-  container.querySelectorAll(".reading-item").forEach(item => {
-    item.addEventListener("click", (e) => {
-      if (e.target.closest(".reading-item-remove")) return;
-      const id = item.getAttribute("data-id");
-      openArticle(id);
-    });
-  });
-
-  container.querySelectorAll(".reading-item-remove").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const id = btn.getAttribute("data-id");
-      toggleBookmark(id);
-    });
-  });
-}
 
 // Helper: Push dynamic alert to Widget list
 function pushNotification(title, message, options = {}) {
@@ -1292,202 +1316,6 @@ function pushNotification(title, message, options = {}) {
   }
 }
 
-// --- 6. Quick Look Article Reader View Actions ---
-let currentFontSizeClass = "font-size-medium";
-
-function openArticle(id) {
-  const article = articles.find(a => a.id === id);
-  if (!article) return;
-
-  selectedArticleId = id;
-  const overlay = document.getElementById("reader-overlay");
-  
-  // Fill text details
-  document.getElementById("reader-toolbar-title").textContent = article.title;
-  document.getElementById("reader-title").textContent = article.title;
-  document.getElementById("reader-subtitle").textContent = article.subtitle;
-  document.getElementById("reader-author").textContent = article.author;
-  document.getElementById("reader-date").textContent = article.date;
-  document.getElementById("reader-avatar").textContent = article.avatar;
-  document.getElementById("reader-text").innerHTML = stripSourceLinks(article.content);
-  const originalLink = document.getElementById("reader-open-original");
-  if (originalLink) originalLink.href = article.sourceUrl;
-  const heroReadMore = document.getElementById("reader-hero-read-more");
-  if (heroReadMore) heroReadMore.href = article.sourceUrl;
-
-  // Reset font class
-  const richtext = document.getElementById("reader-text");
-  richtext.className = `reader-richtext font-editorial ${currentFontSizeClass}`;
-  updateFontPercentageDisplay();
-
-  // Parse word count and reading time dynamically for print-style meta
-  const plainText = richtext.textContent || "";
-  const words = plainText.trim().split(/\s+/).filter(Boolean).length;
-  const readTime = Math.ceil(words / 200) || 1;
-  const metaLine = document.getElementById("reader-editorial-meta");
-  if (metaLine) {
-    metaLine.innerHTML = `By <span style="font-weight: 700;">${article.author}</span> &bull; ${article.date} &bull; ⏱️ ${readTime} min read`;
-  }
-
-  // Apply reading theme class
-  setReaderTheme(currentReaderTheme);
-
-  // Reset scroll-linked opacity styles on load
-  const subtitleEl = document.getElementById("reader-subtitle");
-  if (subtitleEl) subtitleEl.style.opacity = "1";
-  if (metaLine) metaLine.style.opacity = "0.65";
-
-  // Cover image settings
-  const coverImg = document.getElementById("reader-cover-img");
-  const heroBlock = document.querySelector(".reader-hero");
-  
-  if (article.cover.startsWith("preset-")) {
-    if (coverImg) coverImg.classList.add("hidden");
-    const preset = PRESET_INFO[article.cover] || PRESET_INFO["preset-1"];
-    if (heroBlock) heroBlock.style.background = preset.bg;
-  } else {
-    if (coverImg) {
-      coverImg.classList.remove("hidden");
-      coverImg.src = article.cover;
-    }
-    if (heroBlock) heroBlock.style.background = "#121217";
-  }
-
-  // Bookmark Button in reader
-  updateReaderBookmarkBtn(article.bookmarked);
-  updateReaderQueueBtn(article.queued);
-
-  // Reset scroll progress bar
-  const pBar = document.getElementById("reader-progress");
-  if (pBar) pBar.style.width = "0%";
-
-  // Reset toolbar hiding state
-  const toolbar = document.querySelector(".reader-toolbar");
-  if (toolbar) toolbar.classList.remove("toolbar-hidden");
-
-  // Determine active filtered list to identify adjacent stories
-  let filtered = articles;
-  if (currentApp === "reviews") {
-    filtered = filtered.filter(a => a.category === "science");
-  } else {
-    if (currentLibrary === "bookmarks") {
-      filtered = filtered.filter(a => a.bookmarked);
-    } else if (currentLibrary === "queue") {
-      filtered = filtered.filter(a => a.queued);
-    } else if (currentLibrary === "custom") {
-      filtered = filtered.filter(a => a.custom);
-    }
-    if (currentCategory !== "all") {
-      filtered = filtered.filter(a => a.category === currentCategory);
-    }
-  }
-  if (searchQuery.trim() !== "") {
-    const q = searchQuery.toLowerCase();
-    filtered = filtered.filter(a => 
-      a.title.toLowerCase().includes(q) || 
-      a.subtitle.toLowerCase().includes(q) ||
-      a.author.toLowerCase().includes(q)
-    );
-  }
-
-  const currentIndex = filtered.findIndex(a => a.id === id);
-  const nextArticle = currentIndex >= 0 && currentIndex < filtered.length - 1 ? filtered[currentIndex + 1] : null;
-
-  // Up Next Footer Setup (Removed as requested)
-  const nextDivider = document.getElementById("reader-next-divider");
-  if (nextDivider) {
-    nextDivider.style.display = "none";
-  }
-
-  // Open the overlay
-  if (overlay) {
-    overlay.classList.remove("hidden");
-    document.body.classList.add("reader-active");
-  }
-  const bodyPane = document.getElementById("reader-body");
-  if (bodyPane) {
-    bodyPane.scrollTop = 0;
-
-    let lastScrollTop = 0;
-
-    // Add scroll handler for reading progress tracker and auto-hiding toolbar
-    bodyPane.onscroll = () => {
-      const currentScroll = bodyPane.scrollTop;
-
-      // 1. Auto-hide toolbar on scroll down, show on scroll up
-      if (toolbar) {
-        if (currentScroll > lastScrollTop && currentScroll > 60) {
-          toolbar.classList.add("toolbar-hidden");
-        } else if (currentScroll < lastScrollTop) {
-          toolbar.classList.remove("toolbar-hidden");
-        }
-      }
-      lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
-
-
-
-      // 3. Scroll progress
-      const totalHeight = bodyPane.scrollHeight - bodyPane.clientHeight;
-      if (totalHeight > 0) {
-        const percentage = (bodyPane.scrollTop / totalHeight) * 100;
-        if (pBar) pBar.style.width = `${percentage}%`;
-      }
-    };
-  }
-}
-
-function stripSourceLinks(content) {
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = content;
-  wrapper.querySelectorAll("a").forEach(link => {
-    if (link.textContent.trim().toLowerCase().startsWith("source:")) {
-      const paragraph = link.closest("p");
-      if (paragraph) {
-        paragraph.remove();
-      } else {
-        link.remove();
-      }
-    }
-  });
-  return wrapper.innerHTML;
-}
-
-function setReaderTheme(theme) {
-  currentReaderTheme = theme;
-  const articleCard = document.getElementById("reader-article");
-  if (articleCard) {
-    articleCard.classList.remove("theme-paper", "theme-velvet");
-    if (theme === "paper") {
-      articleCard.classList.add("theme-paper");
-    } else if (theme === "velvet") {
-      articleCard.classList.add("theme-velvet");
-    }
-  }
-
-  // Update dropdown radio selection states
-  document.querySelectorAll(".theme-circle-btn").forEach(btn => {
-    const btnTheme = btn.getAttribute("data-theme");
-    if (btnTheme === theme) {
-      btn.classList.add("active");
-      btn.setAttribute("aria-checked", "true");
-    } else {
-      btn.classList.remove("active");
-      btn.setAttribute("aria-checked", "false");
-    }
-  });
-}
-
-function updateFontPercentageDisplay() {
-  const percentageEl = document.getElementById("font-percentage");
-  if (!percentageEl) return;
-  if (currentFontSizeClass === "font-size-small") {
-    percentageEl.textContent = "85%";
-  } else if (currentFontSizeClass === "font-size-medium") {
-    percentageEl.textContent = "100%";
-  } else if (currentFontSizeClass === "font-size-large") {
-    percentageEl.textContent = "120%";
-  }
-}
 
 function initResizableSidebars() {
   const sidebars = document.querySelectorAll(".window-sidebar");
@@ -1529,163 +1357,37 @@ function initResizableSidebars() {
   });
 }
 
-function updateReaderBookmarkBtn(isBookmarked) {
-  const btn = document.getElementById("reader-bookmark-btn");
-  if (!btn) return;
-  
-  const textEl = btn.querySelector(".action-text");
-  
-  if (isBookmarked) {
-    btn.classList.add("active");
-    if (textEl) textEl.textContent = "Remove Bookmark";
-    const svg = btn.querySelector("svg");
-    if (svg) {
-      svg.setAttribute("fill", "var(--accent-color)");
-      svg.setAttribute("stroke", "var(--accent-color)");
-    }
-  } else {
-    btn.classList.remove("active");
-    if (textEl) textEl.textContent = "Bookmark Article";
-    const svg = btn.querySelector("svg");
-    if (svg) {
-      svg.setAttribute("fill", "none");
-      svg.setAttribute("stroke", "currentColor");
-    }
-  }
-}
-
-function updateReaderQueueBtn(isQueued) {
-  const btn = document.getElementById("reader-queue-btn");
-  if (!btn) return;
-
-  if (isQueued) {
-    btn.classList.add("active");
-    btn.style.color = "var(--accent-color)";
-  } else {
-    btn.classList.remove("active");
-    btn.style.color = "";
-  }
-}
-
-function toggleReadingQueue(id) {
-  const article = articles.find(a => a.id === id);
-  if (!article) return;
-
-  article.queued = !article.queued;
-  if (article.queued) {
-    queuedArticleUrls.add(article.sourceUrl);
-  } else {
-    queuedArticleUrls.delete(article.sourceUrl);
-  }
-
-  saveToStorage();
-  updateCounts();
-  renderFeed();
-  updateReaderQueueBtn(article.queued);
-}
-
-function closeReader() {
-  const overlay = document.getElementById("reader-overlay");
-  if (overlay) {
-    overlay.classList.add("hidden");
-    document.body.classList.remove("reader-active");
-  }
-  
-  const dropdown = document.getElementById("reader-options-dropdown");
-  if (dropdown) {
-    dropdown.classList.add("hidden");
-    const optionsBtn = document.getElementById("reader-options-btn");
-    if (optionsBtn) {
-      optionsBtn.setAttribute("aria-expanded", "false");
-    }
-  }
-  
-  selectedArticleId = null;
-}
-
-// Adjacent navigation helper for chevrons and keybinds
-function navigateArticle(direction) {
-  if (!selectedArticleId) return;
-  let filtered = articles;
-  if (currentApp === "reviews") {
-    filtered = filtered.filter(a => a.category === "science");
-  } else {
-    if (currentLibrary === "bookmarks") {
-      filtered = filtered.filter(a => a.bookmarked);
-    } else if (currentLibrary === "queue") {
-      filtered = filtered.filter(a => a.queued);
-    } else if (currentLibrary === "custom") {
-      filtered = filtered.filter(a => a.custom);
-    }
-    if (currentCategory !== "all") {
-      filtered = filtered.filter(a => a.category === currentCategory);
-    }
-  }
-  if (searchQuery.trim() !== "") {
-    const q = searchQuery.toLowerCase();
-    filtered = filtered.filter(a => 
-      a.title.toLowerCase().includes(q) || 
-      a.subtitle.toLowerCase().includes(q) ||
-      a.author.toLowerCase().includes(q)
-    );
-  }
-
-  const currentIndex = filtered.findIndex(a => a.id === selectedArticleId);
-  const targetIndex = currentIndex + direction;
-  if (targetIndex >= 0 && targetIndex < filtered.length) {
-    openArticle(filtered[targetIndex].id);
-  }
-}
-
-// Proximity-activated chevron overlay visual manager
-function updateProximityChevrons(x, width) {
-  const prevBtn = document.getElementById("reader-prev-btn");
-  const nextBtn = document.getElementById("reader-next-btn");
-  if (!prevBtn || !nextBtn || !selectedArticleId) return;
-
-  let filtered = articles;
-  if (currentApp === "reviews") {
-    filtered = filtered.filter(a => a.category === "science");
-  } else {
-    if (currentLibrary === "bookmarks") {
-      filtered = filtered.filter(a => a.bookmarked);
-    } else if (currentLibrary === "queue") {
-      filtered = filtered.filter(a => a.queued);
-    } else if (currentLibrary === "custom") {
-      filtered = filtered.filter(a => a.custom);
-    }
-    if (currentCategory !== "all") {
-      filtered = filtered.filter(a => a.category === currentCategory);
-    }
-  }
-  if (searchQuery.trim() !== "") {
-    const q = searchQuery.toLowerCase();
-    filtered = filtered.filter(a => 
-      a.title.toLowerCase().includes(q) || 
-      a.subtitle.toLowerCase().includes(q) ||
-      a.author.toLowerCase().includes(q)
-    );
-  }
-
-  const currentIndex = filtered.findIndex(a => a.id === selectedArticleId);
-  const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex >= 0 && currentIndex < filtered.length - 1;
-
-  if (x < 80 && hasPrev) {
-    prevBtn.classList.add("proximity-visible");
-  } else {
-    prevBtn.classList.remove("proximity-visible");
-  }
-
-  if (width - x < 80 && hasNext) {
-    nextBtn.classList.add("proximity-visible");
-  } else {
-    nextBtn.classList.remove("proximity-visible");
-  }
-}
 
 // --- 7. Custom Story Builder Form Sheet ---
+function isAdminAccount() {
+  const username = (currentUsername || "").trim();
+  const email = (currentUserEmail || "").trim().toLowerCase();
+  return ADMIN_ACCOUNT_USERNAMES.has(username) || ADMIN_ACCOUNT_EMAILS.has(email);
+}
+
+function updateAdminControls() {
+  const newStoryBtn = document.getElementById("btn-new-story");
+  const menuNewStory = document.getElementById("menu-new-story");
+  const canWriteStories = currentApp === "news" && isAdminAccount();
+
+  if (newStoryBtn) {
+    newStoryBtn.hidden = !canWriteStories;
+    newStoryBtn.setAttribute("aria-hidden", String(!canWriteStories));
+    if (canWriteStories) {
+      newStoryBtn.style.setProperty("display", "flex");
+    } else {
+      newStoryBtn.style.setProperty("display", "none", "important");
+    }
+  }
+
+  if (menuNewStory) {
+    menuNewStory.hidden = !isAdminAccount();
+    menuNewStory.setAttribute("aria-hidden", String(!isAdminAccount()));
+  }
+}
+
 function openStoryEditor() {
+  if (!isAdminAccount()) return;
   const editor = document.getElementById("editor-modal");
   if (editor) editor.classList.remove("hidden");
 }
@@ -1939,15 +1641,15 @@ async function updateCrossoverFeeds() {
         const creator = item.querySelector("creator")?.textContent || item.querySelector("author")?.textContent || "CodeWeavers Staff";
         const description = item.querySelector("description")?.textContent || "";
         
-        const tempDiv = document.createElement("div");
-        tempDiv.innerHTML = description;
-        const excerpt = tempDiv.textContent.slice(0, 140) + "...";
+        const tempDoc = parseRSSHTML(description);
+        const excerpt = tempDoc.body.textContent.slice(0, 140) + "...";
         
         // Find standard cover image from content or description
         let image = "https://media.codeweavers.com/pub/crossover/website/images/og-images/blog_og_1200x630.png";
-        const firstImg = tempDiv.querySelector("img");
-        if (firstImg && firstImg.src) {
-          image = firstImg.src;
+        const firstImg = tempDoc.querySelector("img");
+        const firstImgSrc = firstImg?.getAttribute("src");
+        if (firstImgSrc) {
+          image = firstImgSrc;
           // Clean up relative paths
           if (image.startsWith("/")) {
             image = "https://www.codeweavers.com" + image;
@@ -2114,14 +1816,8 @@ const MACOS_HISTORICAL = [
   }
 ];
 
-let macosHasSynced = false;
-
 function renderMacosView() {
   renderMacosData(MACOS_CHANGELOG, MACOS_HISTORICAL);
-
-  if (!macosHasSynced) {
-    fetchMacosReleaseNotes();
-  }
 }
 
 function renderMacosData(changelogs, historical) {
@@ -2203,95 +1899,6 @@ function renderMacosData(changelogs, historical) {
       });
     });
   });
-}
-
-async function fetchMacosReleaseNotes() {
-  try {
-    const targetUrl = "https://developer.apple.com/tutorials/data/documentation/macos-release-notes.json";
-    const res = await fetchViaProxy(targetUrl);
-    if (!res.ok) throw new Error("CORS Proxy failed");
-
-    // Standard Apple docc catalog structure parsing
-    const liveText = await res.text();
-    let contents = liveText;
-    try {
-      const parsedWrapper = JSON.parse(liveText);
-      if (parsedWrapper.contents) {
-        contents = parsedWrapper.contents;
-      }
-    } catch (e) {}
-
-    const payload = JSON.parse(contents);
-    
-    // Parse references to see what versions are available
-    if (payload && payload.references) {
-      const refs = payload.references;
-      const updatedChangelogs = [];
-      const updatedHistorical = [];
-
-      // Extract details from refs
-      Object.keys(refs).forEach(key => {
-        const ref = refs[key];
-        if (ref.type === "topic" && ref.kind === "article") {
-          const title = ref.title || "";
-          const abstract = ref.abstract && ref.abstract[0] && ref.abstract[0].text ? ref.abstract[0].text : "Developer documentation release changes and framework updates.";
-          
-          // Categorize and map
-          if (title.includes("macOS Tahoe") || title.includes("macOS 26")) {
-            // Find existing seed or generate a beautiful note set
-            const versionMatch = title.match(/(\d+\.\d+(\.\d+)?|\d+)/);
-            const versionStr = versionMatch ? versionMatch[0] : "26.x";
-            const seeded = MACOS_CHANGELOG.find(c => c.version === versionStr) || MACOS_CHANGELOG.find(c => c.version.startsWith(versionStr.split('.')[0]));
-
-            if (seeded) {
-              updatedChangelogs.push({
-                version: seeded.version,
-                date: seeded.date,
-                notes: seeded.notes
-              });
-            } else if (abstract) {
-              updatedChangelogs.push({
-                version: versionStr,
-                date: "Apple Developer Release Notes",
-                notes: [abstract]
-              });
-            }
-          } else if (title.includes("macOS") || title.includes("AppKit") || title.includes("Foundation")) {
-            const versionMatch = title.match(/(\d+\.\d+(\.\d+)?|\d+)/);
-            const versionStr = versionMatch ? versionMatch[0] : "SDK";
-            
-            let category = "SDK Framework";
-            if (title.includes("Sequoia") || title.includes("15")) category = "macOS 15 Sequoia";
-            else if (title.includes("Sonoma") || title.includes("14")) category = "macOS 14 Sonoma";
-            else if (title.includes("Ventura") || title.includes("13")) category = "macOS 13 Ventura";
-            else if (title.includes("Monterey") || title.includes("12")) category = "macOS 12 Monterey";
-            else if (title.includes("AppKit")) category = "AppKit Framework";
-            else if (title.includes("Foundation")) category = "Foundation Framework";
-
-            const seeded = MACOS_HISTORICAL.find(h => h.version === versionStr && h.category === category);
-            updatedHistorical.push({
-              category,
-              version: seeded ? seeded.version : versionStr,
-              date: seeded ? seeded.date : "Apple Developer Release Notes",
-              notes: seeded ? seeded.notes : [abstract]
-            });
-          }
-        }
-      });
-
-      // If we successfully parsed any notes, update render feeds!
-      if (updatedChangelogs.length > 0) {
-        // Sort changelogs descending by version number
-        updatedChangelogs.sort((a, b) => b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' }));
-        
-        renderMacosData(updatedChangelogs, updatedHistorical.length > 0 ? updatedHistorical : MACOS_HISTORICAL);
-        macosHasSynced = true;
-        return;
-      }
-    }
-  } catch (err) {
-    console.warn("Live macOS developer JSON fetch failed.", err);
-  }
 }
 
 function filterMacos(query) {
@@ -2630,6 +2237,10 @@ let gamesCache = [
 ];
 let gamesLoaded = false;
 let gamesLoading = false;
+const STEAM_GAMES_CACHE_KEY = "macready_steam_games_cache_v2";
+const STEAM_GAMES_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+let steamGamesLastSavedAt = 0;
+let steamGamesRefreshStarted = false;
 let currentGameFilter = "trending";
 let currentGameCompat = "all";
 let gameSearchQuery = "";
@@ -2646,6 +2257,43 @@ let currentCarouselIndex = 0;
 // New state for Dynamic Wallpaper Glass Blending
 let activeAtmosphericGame = null;
 let isDetailModalOpen = false;
+
+function loadCachedSteamGames() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(STEAM_GAMES_CACHE_KEY) || "null");
+    if (!cached || !Array.isArray(cached.games) || cached.games.length === 0) return;
+
+    gamesCache = cached.games;
+    steamGamesLastSavedAt = Number(cached.savedAt) || 0;
+    gamesLoaded = true;
+  } catch (error) {
+    console.warn("Steam games cache could not be read.", error);
+  }
+}
+
+function saveSteamGamesCache() {
+  try {
+    localStorage.setItem(STEAM_GAMES_CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      games: gamesCache
+    }));
+    steamGamesLastSavedAt = Date.now();
+  } catch (error) {
+    console.warn("Steam games cache could not be saved.", error);
+  }
+}
+
+function refreshSteamGamesIfNeeded() {
+  if (steamGamesRefreshStarted || gamesLoading) return;
+  const cacheAge = Date.now() - steamGamesLastSavedAt;
+  if (!steamGamesLastSavedAt || cacheAge > STEAM_GAMES_CACHE_TTL_MS) {
+    steamGamesRefreshStarted = true;
+    loadAllGamesData({ silent: true, force: true });
+  }
+}
+
+loadCachedSteamGames();
+if (gamesCache.length > 0) gamesLoaded = true;
 
 // --- Dynamic Wallpaper Glass Blending (Atmospheric Blur) ---
 function applyAtmosphericGlow(game) {
@@ -2909,19 +2557,29 @@ function getSteamSearchCover(row) {
 // --- Merge games into cache (deduplicates by appid) ---
 function mergeGamesIntoCache(newGames) {
   newGames.forEach(game => {
-    if (!gamesCache.some(g => g.appid === game.appid)) {
+    const existing = gamesCache.find(g => g.appid === game.appid);
+    if (existing) {
+      Object.assign(existing, {
+        ...game,
+        screenshots: game.screenshots?.length ? game.screenshots : existing.screenshots,
+        features: game.features?.length ? game.features : existing.features,
+        fullDescription: game.fullDescription || existing.fullDescription,
+        systemRequirements: game.systemRequirements || existing.systemRequirements
+      });
+    } else {
       gamesCache.push(game);
     }
   });
 }
 
 // --- Dynamic Startup: Fetch live from Steam search result pages ---
-async function loadAllGamesData() {
-  if (gamesLoaded || gamesLoading) return;
+async function loadAllGamesData(options = {}) {
+  const { silent = false, force = false } = options;
+  if ((gamesLoaded && !force) || gamesLoading) return;
   gamesLoading = true;
 
   const grid = document.getElementById("games-grid");
-  if (grid) {
+  if (grid && !silent) {
     grid.innerHTML = `
       <div class="empty-state" style="padding: 40px; grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
         <svg class="update-sync-icon syncing" style="width: 32px; height: 32px; color: #66c0f4;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -2939,6 +2597,7 @@ async function loadAllGamesData() {
   ];
 
   try {
+    let mergedCount = 0;
     const results = await Promise.allSettled(
       steamSearchUrls.map(url => fetchViaProxy(url))
     );
@@ -2957,6 +2616,7 @@ async function loadAllGamesData() {
           }
           if (htmlText && htmlText.includes("search_result_row")) {
             const parsed = parseSteamSearchResults(htmlText);
+            mergedCount += parsed.length;
             mergeGamesIntoCache(parsed);
           }
         } catch (e) {
@@ -2966,7 +2626,6 @@ async function loadAllGamesData() {
     }
 
     if (gamesCache.length === 0) {
-      // If all CORS proxies failed, show an error
       if (grid) {
         grid.innerHTML = `
           <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 40px; width: 100%;">
@@ -2977,13 +2636,16 @@ async function loadAllGamesData() {
       }
     }
 
+    if (mergedCount > 0) {
+      saveSteamGamesCache();
+    }
     gamesLoaded = true;
   } catch (err) {
     console.error("Error loading Steam games:", err);
     pushNotification("SteamDB Error", "Could not fetch Steam search data.");
   } finally {
     gamesLoading = false;
-    renderGamesView();
+    if (currentApp === "games" || !silent) renderGamesView();
     updateSteamStats();
   }
 }
@@ -3017,18 +2679,8 @@ async function syncLiveSteamGames() {
       }
       if (htmlText && htmlText.includes("search_result_row")) {
         const freshGames = parseSteamSearchResults(htmlText);
-        // Update existing entries with fresh pricing/rating data
-        freshGames.forEach(fresh => {
-          const existing = gamesCache.find(g => g.appid === fresh.appid);
-          if (existing) {
-            existing.price = fresh.price;
-            existing.discount = fresh.discount;
-            existing.cover = fresh.cover;
-            if (fresh.rating !== null) existing.rating = fresh.rating;
-          } else {
-            gamesCache.push(fresh);
-          }
-        });
+        mergeGamesIntoCache(freshGames);
+        saveSteamGamesCache();
       }
     }
 
@@ -3950,8 +3602,8 @@ async function fetchGenreApps(tab) {
 
     // Fetch primary genre RSS
     const [freeRss, paidRss] = await Promise.all([
-      fetchDevProxy(`https://itunes.apple.com/us/rss/topfreemacapps/limit=24${genreSuffix}/json`),
-      fetchDevProxy(`https://itunes.apple.com/us/rss/toppaidmacapps/limit=24${genreSuffix}/json`)
+      fetchAppleJson(`https://itunes.apple.com/us/rss/topfreemacapps/limit=24${genreSuffix}/json`),
+      fetchAppleJson(`https://itunes.apple.com/us/rss/toppaidmacapps/limit=24${genreSuffix}/json`)
     ]);
 
     let freeEntries = [], paidEntries = [];
@@ -3968,8 +3620,8 @@ async function fetchGenreApps(tab) {
     // Fetch secondary genre RSS if applicable and merge
     if (genreSuffix2) {
       const [freeRss2, paidRss2] = await Promise.all([
-        fetchDevProxy(`https://itunes.apple.com/us/rss/topfreemacapps/limit=24${genreSuffix2}/json`),
-        fetchDevProxy(`https://itunes.apple.com/us/rss/toppaidmacapps/limit=24${genreSuffix2}/json`)
+        fetchAppleJson(`https://itunes.apple.com/us/rss/topfreemacapps/limit=24${genreSuffix2}/json`),
+        fetchAppleJson(`https://itunes.apple.com/us/rss/toppaidmacapps/limit=24${genreSuffix2}/json`)
       ]);
       if (freeRss2.ok) {
         const d = await freeRss2.json();
@@ -3994,7 +3646,7 @@ async function fetchGenreApps(tab) {
     async function lookupIds(entries) {
       if (!entries.length) return [];
       const ids = entries.map(e => e.id?.attributes?.["im:id"]).filter(Boolean).join(",");
-      const res = await fetchDevProxy(`https://itunes.apple.com/lookup?id=${ids}&entity=macSoftware`);
+      const res = await fetchAppleJson(`https://itunes.apple.com/lookup?id=${ids}&entity=macSoftware`);
       if (!res.ok) return [];
       const data = await res.json();
       return (data.results || []).map(mapItunesItem);
@@ -4041,13 +3693,13 @@ async function initializeRealAppStore() {
   if (carouselUtils) carouselUtils.innerHTML = spinnerHtml;
 
   try {
-    const freeRes = await fetchDevProxy("https://itunes.apple.com/us/rss/topfreemacapps/limit=24/json");
+    const freeRes = await fetchAppleJson("https://itunes.apple.com/us/rss/topfreemacapps/limit=24/json");
     if (!freeRes.ok) throw new Error("Failed to fetch top free Mac apps");
     const freeData = await freeRes.json();
     const freeEntries = freeData.feed.entry || [];
     const freeIds = freeEntries.map(e => e.id.attributes["im:id"]).join(",");
 
-    const paidRes = await fetchDevProxy("https://itunes.apple.com/us/rss/toppaidmacapps/limit=24/json");
+    const paidRes = await fetchAppleJson("https://itunes.apple.com/us/rss/toppaidmacapps/limit=24/json");
     if (!paidRes.ok) throw new Error("Failed to fetch top paid Mac apps");
     const paidData = await paidRes.json();
     const paidEntries = paidData.feed.entry || [];
@@ -4055,7 +3707,7 @@ async function initializeRealAppStore() {
 
     let fetchedFreeApps = [];
     if (freeIds) {
-      const freeLookup = await fetchDevProxy(`https://itunes.apple.com/lookup?id=${freeIds}&entity=macSoftware`);
+      const freeLookup = await fetchAppleJson(`https://itunes.apple.com/lookup?id=${freeIds}&entity=macSoftware`);
       if (freeLookup.ok) {
         const data = await freeLookup.json();
         fetchedFreeApps = data.results.map(mapItunesItem);
@@ -4064,7 +3716,7 @@ async function initializeRealAppStore() {
 
     let fetchedPaidApps = [];
     if (paidIds) {
-      const paidLookup = await fetchDevProxy(`https://itunes.apple.com/lookup?id=${paidIds}&entity=macSoftware`);
+      const paidLookup = await fetchAppleJson(`https://itunes.apple.com/lookup?id=${paidIds}&entity=macSoftware`);
       if (paidLookup.ok) {
         const data = await paidLookup.json();
         fetchedPaidApps = data.results.map(mapItunesItem);
@@ -4588,7 +4240,7 @@ async function searchMacAppStore(query) {
 
   try {
     const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=macSoftware&limit=24`;
-    const res = await fetchDevProxy(url);
+    const res = await fetchAppleJson(url);
     if (!res.ok) throw new Error("Search API error");
     const data = await res.json();
     
@@ -4715,7 +4367,7 @@ function filterAppStore(query) {
 const FINDER_FS = {
   desktop: {
     name: "Desktop",
-    path: ["Macintosh HD", "Users", "wallsendcc", "Desktop"],
+    path: ["Macintosh HD", "Users", "user", "Desktop"],
     items: [
       { name: "Tahoe Sunset.png", kind: "image", size: "830 KB", date: "May 22, 2026", src: "tahoe_wallpaper.png" },
       { name: "Project Goals.txt", kind: "text", size: "1.2 KB", date: "May 21, 2026", content: "1. Finish MacReady Multi-App interface\n2. Add gorgeous liquid glass accents\n3. Implement syntax highlighting in Quick Look\n4. Check compatibility with Wine 10.0\n5. Implement Terminal commands and math Calculator" },
@@ -4724,7 +4376,7 @@ const FINDER_FS = {
   },
   documents: {
     name: "Documents",
-    path: ["Macintosh HD", "Users", "wallsendcc", "Documents"],
+    path: ["Macintosh HD", "Users", "user", "Documents"],
     items: [
       { name: "index.html", kind: "code", size: "42.1 KB", date: "May 22, 2026", type: "html", file: "index.html" },
       { name: "styles.css", kind: "code", size: "63.3 KB", date: "May 22, 2026", type: "css", file: "styles.css" },
@@ -4733,7 +4385,7 @@ const FINDER_FS = {
   },
   downloads: {
     name: "Downloads",
-    path: ["Macintosh HD", "Users", "wallsendcc", "Downloads"],
+    path: ["Macintosh HD", "Users", "user", "Downloads"],
     items: [
       { name: "crossover-26.1.0.dmg", kind: "package", size: "342 MB", date: "May 18, 2026" },
       { name: "steam-installer.pkg", kind: "package", size: "128 MB", date: "May 12, 2026" }
@@ -4743,13 +4395,13 @@ const FINDER_FS = {
     name: "Applications",
     path: ["Macintosh HD", "Applications"],
     items: [
-      { name: "MacReady.app", kind: "app", size: "45 MB", date: "May 22, 2026", app: "news", icon: "public/assets/imgs/optimized/NewsIcon.png" },
-      { name: "CrossOver.app", kind: "app", size: "142 MB", date: "May 22, 2026", app: "crossover", icon: "public/assets/imgs/optimized/Crossoverlogo.png" },
-      { name: "Steam.app", kind: "app", size: "90 MB", date: "May 22, 2026", app: "games", icon: "public/assets/imgs/optimized/SteamLogo.png" },
-      { name: "App Store.app", kind: "app", size: "32 MB", date: "May 22, 2026", app: "app-store", icon: "public/assets/imgs/optimized/AppStore.png" },
-      { name: "Terminal.app", kind: "app", size: "12 MB", date: "May 23, 2026", app: "terminal", icon: "public/assets/imgs/Terminal.webp" },
-      { name: "Calculator.app", kind: "app", size: "8 MB", date: "May 23, 2026", app: "calculator", icon: "public/assets/imgs/Calculator.webp" },
-      { name: "Notes.app", kind: "app", size: "15 MB", date: "May 23, 2026", app: "textedit", icon: "public/assets/imgs/Notes.webp" },
+      { name: "MacReady.app", kind: "app", size: "45 MB", date: "May 22, 2026", app: "news", icon: "public/assets/imgs/perf/dock/news.webp" },
+      { name: "CrossOver.app", kind: "app", size: "142 MB", date: "May 22, 2026", app: "crossover", icon: "public/assets/imgs/perf/dock/crossover.webp" },
+      { name: "Steam.app", kind: "app", size: "90 MB", date: "May 22, 2026", app: "games", icon: "public/assets/imgs/perf/dock/steam.webp" },
+      { name: "App Store.app", kind: "app", size: "32 MB", date: "May 22, 2026", app: "app-store", icon: "public/assets/imgs/perf/dock/app-store.webp" },
+      { name: "Terminal.app", kind: "app", size: "12 MB", date: "May 23, 2026", app: "terminal", icon: "public/assets/imgs/perf/apps/terminal.webp" },
+      { name: "Calculator.app", kind: "app", size: "8 MB", date: "May 23, 2026", app: "calculator", icon: "public/assets/imgs/perf/apps/calculator.webp" },
+      { name: "Notes.app", kind: "app", size: "15 MB", date: "May 23, 2026", app: "textedit", icon: "public/assets/imgs/perf/apps/notes.webp" },
       { name: "Mac OS 9.app", kind: "app", size: "120 MB", date: "May 23, 2026", app: "macos9", icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='10' ry='10' fill='%2364b5f6'/><path d='M24 2a22 22 0 0 1 22 22v14a8 8 0 0 1-8 8H24V2z' fill='%231976d2'/><path d='M24 8v16h10c2 0 4 2 4 4s-2 4-4 4H20a2 2 0 0 1-2-2V14c0-2-2-4-4-4H8V8h16z' fill='%23ffffff'/><circle cx='15' cy='17' r='3' fill='%231976d2'/><circle cx='33' cy='17' r='3' fill='%23ffffff'/><path d='M14 34c2 4 8 4 10 0' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M24 34c2 4 8 4 10 0' stroke='%231976d2' stroke-width='3' stroke-linecap='round' fill='none'/></svg>" },
       { name: "Marathon.app", kind: "app", size: "80 MB", date: "May 23, 2026", app: "marathon", icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='10' ry='10' fill='%23111111' stroke='%23e65100' stroke-width='1.5'/><circle cx='24' cy='24' r='16' fill='none' stroke='%23e65100' stroke-width='3'/><path d='M16 24h16M24 16v16' stroke='%23e65100' stroke-width='3'/><circle cx='24' cy='24' r='8' fill='%23e65100'/></svg>" },
       { name: "Apple Lisa.app", kind: "app", size: "35 MB", date: "May 23, 2026", app: "lisa", icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='10' ry='10' fill='%23e0d8c0' stroke='%23bcaaa4' stroke-width='1.5'/><rect x='8' y='8' width='32' height='20' rx='2' ry='2' fill='%233e2723'/><rect x='11' y='11' width='26' height='14' fill='%23a1887f'/><rect x='6' y='32' width='36' height='8' fill='%23d7ccc8'/><line x1='12' y1='36' x2='36' y2='36' stroke='%238d6e63' stroke-width='2'/></svg>" },
@@ -4758,7 +4410,7 @@ const FINDER_FS = {
   },
   recents: {
     name: "Recents",
-    path: ["Macintosh HD", "Users", "wallsendcc", "Recents"],
+    path: ["Macintosh HD", "Users", "user", "Recents"],
     items: [
       { name: "app.js", kind: "code", size: "37.7 KB", date: "May 22, 2026", type: "javascript", file: "app.js", dir: "documents" },
       { name: "Tahoe Sunset.png", kind: "image", size: "830 KB", date: "May 22, 2026", src: "tahoe_wallpaper.png", dir: "desktop" },
@@ -4767,7 +4419,7 @@ const FINDER_FS = {
   },
   wallpapers: {
     name: "Wallpapers",
-    path: ["Macintosh HD", "Users", "wallsendcc", "Desktop", "Wallpapers"],
+    path: ["Macintosh HD", "Users", "user", "Desktop", "Wallpapers"],
     parentDir: "desktop",
     items: [
       { name: "Tahoe Liquid.webp", kind: "image", size: "2.4 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp", wallpaperId: "tahoe-liquid" },
@@ -5119,7 +4771,7 @@ function openQuickLook(file) {
       })
       .catch(err => {
         // Fallback snippet
-        const fallbackCode = `// Failed to load live ${file.name} due to sandbox constraints.\n// Showing cache mockup for development.\n\nconst project = {\n  name: "macOS Tahoe Liquid Glass Simulator",\n  version: "26.0.0",\n  developer: "wallsendcc",\n  accent: "liquid-refraction"\n};\n\nfunction render() {\n  console.log("Welcome to ${file.name}!");\n}`;
+        const fallbackCode = `// Failed to load live ${file.name} due to sandbox constraints.\n// Showing cache mockup for development.\n\nconst project = {\n  name: "macOS Tahoe Liquid Glass Simulator",\n  version: "26.0.0",\n  developer: "user",\n  accent: "liquid-refraction"\n};\n\nfunction render() {\n  console.log("Welcome to ${file.name}!");\n}`;
         const highlighted = highlightCode(escapeHtml(fallbackCode), "javascript");
         body.innerHTML = `<pre class="quick-look-code" style="text-align: left; width: 100%; height: 100%; overflow: auto;"><code>${highlighted}</code></pre>`;
       });
@@ -5198,6 +4850,14 @@ function highlightCode(code, type) {
 }
 
 
+// Define closeAllDropdowns in the global scope so all modules can access it without ReferenceError
+function closeAllDropdowns() {
+  const dropdowns = document.querySelectorAll(".dropdown-menu");
+  const menuTriggers = document.querySelectorAll(".menu-trigger");
+  if (dropdowns) dropdowns.forEach(d => d.classList.remove("show"));
+  if (menuTriggers) menuTriggers.forEach(t => t.classList.remove("active"));
+}
+
 // ==========================================
 // --- 13. Setup Interactive Event Bindings ---
 // ==========================================
@@ -5223,6 +4883,7 @@ function bindEvents() {
         const dockNews = document.querySelector('[data-app="news"] .dock-indicator');
         if (dockNews) dockNews.classList.remove("active-dot");
         pushNotification("Window Closed", "Restore open sessions by clicking active Dock items.");
+        refreshGlobalMenuBarSoon();
       } catch (err) {
         console.error("Caught error during window close:", err);
       }
@@ -5247,6 +4908,7 @@ function bindEvents() {
         if (widgetToggle) widgetToggle.classList.remove("active");
 
         pushNotification("Window Minimized", "Access items seamlessly from the desktop Dock.");
+        refreshGlobalMenuBarSoon();
       } catch (err) {
         console.error("Caught error during window minimize:", err);
       }
@@ -5260,7 +4922,7 @@ function bindEvents() {
       e.stopPropagation();
       try {
         const windowEl = document.getElementById("app-window");
-        if (windowEl) windowEl.classList.toggle("maximized");
+        toggleWindowMaximized(windowEl);
       } catch (err) {
         console.error("Caught error during window maximize:", err);
       }
@@ -5272,7 +4934,9 @@ function bindEvents() {
   if (backBtn) {
     backBtn.addEventListener("click", (e) => {
       // Mobile width sidebar toggling inside news view
-      if (window.innerWidth <= 900 && (currentApp === "news" || currentApp === "reviews")) {
+      const newsView = document.getElementById("news-app-view");
+      const newsViewVisible = newsView && window.getComputedStyle(newsView).display !== "none";
+      if (window.innerWidth <= 900 && newsViewVisible) {
         const sidebar = document.getElementById("sidebar");
         if (sidebar) {
           e.stopPropagation();
@@ -5329,7 +4993,7 @@ function bindEvents() {
         currentCategory = "all"; // Reset category filters on core library shift
         if (appTitle) {
           appTitle.textContent = 
-            navType === "today" ? "Today's Stories" :
+            navType === "today" ? "Today's Overview" :
             navType === "bookmarks" ? "Bookmarked Stories" :
             navType === "queue" ? "Reading Queue" : "My Custom Stories";
         }
@@ -5338,8 +5002,7 @@ function bindEvents() {
         currentCategory = categoryType;
         
         if (appTitle) {
-          appTitle.textContent = 
-            categoryType.charAt(0).toUpperCase() + categoryType.slice(1) + " Stories";
+          appTitle.textContent = getCategoryHeading(categoryType);
         }
       }
 
@@ -5347,7 +5010,7 @@ function bindEvents() {
       const sidebar = document.getElementById("sidebar");
       if (sidebar) sidebar.classList.remove("mobile-open");
 
-      visibleArticlesCount = 6;
+      visibleArticlesCount = INITIAL_VISIBLE_ARTICLE_COUNT;
       renderFeed();
     });
   });
@@ -5359,7 +5022,7 @@ function bindEvents() {
       currentCategory = "all";
       currentLibrary = "today";
       searchQuery = "";
-      visibleArticlesCount = 6;
+      visibleArticlesCount = INITIAL_VISIBLE_ARTICLE_COUNT;
       
       const searchInput = document.getElementById("story-search");
       if (searchInput) searchInput.value = "";
@@ -5372,7 +5035,7 @@ function bindEvents() {
       if (todayNav) todayNav.classList.add("active");
       
       const appTitle = document.querySelector(".app-title");
-      if (appTitle) appTitle.textContent = "Today's Stories";
+      if (appTitle) appTitle.textContent = "Today's Overview";
 
       renderFeed();
     });
@@ -5451,7 +5114,7 @@ function bindEvents() {
     searchInput.addEventListener("input", (e) => {
       const val = e.target.value;
       searchQuery = val;
-      visibleArticlesCount = 6;
+      visibleArticlesCount = INITIAL_VISIBLE_ARTICLE_COUNT;
       
       if (val.trim() !== "") {
         clearSearchBtn.classList.remove("hidden");
@@ -5479,7 +5142,7 @@ function bindEvents() {
       searchInput.value = "";
       searchQuery = "";
       clearSearchBtn.classList.add("hidden");
-      visibleArticlesCount = 6;
+      visibleArticlesCount = INITIAL_VISIBLE_ARTICLE_COUNT;
 
       if (currentApp === "news" || currentApp === "reviews") {
         renderFeed();
@@ -5598,10 +5261,7 @@ function bindEvents() {
     closeAllDropdowns();
   });
 
-  function closeAllDropdowns() {
-    dropdowns.forEach(d => d.classList.remove("show"));
-    menuTriggers.forEach(t => t.classList.remove("active"));
-  }
+  // Using global closeAllDropdowns function instead
 
   // --- L. Control widget drawer sliding panel toggle ---
   const widgetToggle = document.getElementById("control-center-toggle");
@@ -6234,10 +5894,70 @@ function bindEvents() {
     playGlassChime();
     closeSpotlight();
 
+    const openUtilityWindow = (utility) => {
+      if (utility === "terminal") {
+        const win = document.getElementById("terminal-window");
+        if (win) {
+          win.classList.remove("hidden-window", "minimized");
+          addAppToDock("terminal");
+          bringWindowToFront(win);
+          const input = document.getElementById("terminal-input");
+          if (input) input.focus();
+        }
+      } else if (utility === "calculator") {
+        const win = document.getElementById("calculator-window");
+        if (win) {
+          win.classList.remove("hidden-window", "minimized");
+          addAppToDock("calculator");
+          bringWindowToFront(win);
+        }
+      } else if (utility === "textedit") {
+        openTextEditFile({ name: "Untitled.txt", content: "" });
+      } else if (utility === "account") {
+        openAccountWindow();
+      } else if (utility === "settings") {
+        openSpotlightSettingsTab("wallpaper");
+      }
+    };
+
+    const runSpotlightCommand = (command) => {
+      if (command === "new-note") {
+        openTextEditFile({ name: `Untitled ${Date.now()}.txt`, content: "" });
+      } else if (command === "refresh-news") {
+        loadNewsFromRSS();
+        pushNotification("News Refresh Started", "Latest stories are being loaded.");
+      } else if (command === "refresh-games") {
+        loadAllGamesData({ force: true });
+        pushNotification("SteamDB Refresh Started", "Latest game data is being loaded.");
+      } else if (command === "open-launchpad") {
+        toggleLaunchpad();
+      } else if (command === "open-editor") {
+        openStoryEditor();
+      } else if (command === "lock") {
+        lockSystem();
+      }
+    };
+
     if (item.type === "story") {
       openArticle(item.value);
     } else if (item.type === "app") {
       switchApp(item.value);
+    } else if (item.type === "utility") {
+      openUtilityWindow(item.value);
+    } else if (item.type === "note") {
+      const note = getNotesData().find(n => n.id === item.value);
+      if (note) openTextEditFile(note);
+    } else if (item.type === "settings-tab") {
+      openSpotlightSettingsTab(item.value);
+    } else if (item.type === "wallpaper") {
+      if (item.value === "gaming-cycle") {
+        refreshGamingWallpaper({ notify: true });
+      } else {
+        setWallpaper(item.value);
+        pushNotification("Wallpaper Changed", `Desktop wallpaper set to ${item.title}.`);
+      }
+    } else if (item.type === "command") {
+      runSpotlightCommand(item.value);
     } else if (item.type === "steam-game") {
       switchApp("games");
       openSteamGameDetail(item.value);
@@ -6267,6 +5987,39 @@ function bindEvents() {
         goForward();
       }
     }
+  };
+
+  const openSpotlightSettingsTab = (tab) => {
+    const settingsWin = document.getElementById("settings-window");
+    if (!settingsWin) return;
+    settingsWin.classList.remove("hidden-window", "minimized");
+    bringWindowToFront(settingsWin);
+    const indicator = document.getElementById("dock-settings-indicator");
+    if (indicator) indicator.classList.add("active-dot");
+    document.querySelectorAll(".settings-sidebar .sidebar-item").forEach(item => {
+      const isTarget = item.getAttribute("data-settings-tab") === tab;
+      item.classList.toggle("active", isTarget);
+    });
+    document.querySelectorAll(".settings-content .settings-pane").forEach(pane => {
+      pane.classList.remove("active");
+    });
+    const targetPane = document.getElementById(`pane-${tab}`);
+    if (targetPane) targetPane.classList.add("active");
+  };
+
+  const getSpotlightWallpaperItems = () => {
+    return [...document.querySelectorAll(".wallpaper-card[data-wallpaper]")].map(card => {
+      const value = card.getAttribute("data-wallpaper");
+      const label = card.querySelector(".wallpaper-label span")?.textContent.trim() ||
+        card.querySelector(".wallpaper-label")?.textContent.trim();
+      return {
+        title: label,
+        desc: "Set desktop wallpaper",
+        value,
+        type: "wallpaper",
+        icon: value === "gaming-cycle" ? "🎮" : "🖼️"
+      };
+    });
   };
 
   const renderSpotlightResults = (categories) => {
@@ -6326,15 +6079,31 @@ function bindEvents() {
     const q = spotlightInput.value.toLowerCase().trim();
     spotlightResults = [];
     
+    const matchesSpotlightQuery = (item) => {
+      const text = `${item.title} ${item.desc} ${item.keywords || ""}`.toLowerCase();
+      return text.includes(q);
+    };
+
     const apps = [
-      { title: "News & Stories", desc: "Explore apple news and dynamic updates", value: "news", type: "app", icon: "📰" },
-      { title: "SteamDB Games", desc: "Track sales and active steam database apps", value: "games", type: "app", icon: "🎮" },
-      { title: "App Store", desc: "Download verified system tools and simulated apps", value: "app-store", type: "app", icon: "💎" },
-      { title: "Finder & Files", desc: "Browse folders, local file lists, and desktop files", value: "finder", type: "app", icon: "📂" },
-      { title: "Crossover Update", desc: "Check system updates, packages, and crossover details", value: "crossover", type: "app", icon: "🧪" }
+      { title: "News & Stories", desc: "Explore Apple news and dynamic updates", value: "news", type: "app", icon: "📰", keywords: "today articles stories reviews headlines rss" },
+      { title: "SteamDB Games", desc: "Track sales and active Steam database apps", value: "games", type: "app", icon: "🎮", keywords: "games steam gaming database mac games" },
+      { title: "App Store", desc: "Download verified system tools and simulated apps", value: "app-store", type: "app", icon: "💎", keywords: "store apps downloads software" },
+      { title: "Finder & Files", desc: "Browse folders, local file lists, and desktop files", value: "finder", type: "app", icon: "📂", keywords: "files folders finder desktop" },
+      { title: "Crossover Update", desc: "Check system updates, packages, and crossover details", value: "crossover", type: "app", icon: "🧪", keywords: "updates bottles crossover wine" }
+    ];
+
+    const utilities = [
+      { title: "System Settings", desc: "Open wallpaper, general, and accessibility controls", value: "settings", type: "utility", icon: "⚙️", keywords: "settings preferences wallpaper appearance accessibility" },
+      { title: "User Account", desc: "Open account, hardware profile, and security details", value: "account", type: "utility", icon: "👤", keywords: "account profile hardware passkey security sign out" },
+      { title: "Notes", desc: "Open Notes and text files", value: "textedit", type: "utility", icon: "📝", keywords: "notes textedit text file writing" },
+      { title: "Terminal", desc: "Open the command line simulator", value: "terminal", type: "utility", icon: "▣", keywords: "terminal command shell console" },
+      { title: "Calculator", desc: "Open calculator", value: "calculator", type: "utility", icon: "🧮", keywords: "calculator math numbers" }
     ];
 
     const settings = [
+      { title: "Wallpaper Settings", desc: "Open the wallpaper picker", value: "wallpaper", type: "settings-tab", icon: "🖼️", keywords: "desktop background gaming wallpaper" },
+      { title: "General Settings", desc: "Open appearance, theme, language, and display controls", value: "general", type: "settings-tab", icon: "⚙️", keywords: "appearance accent theme language dark mode" },
+      { title: "Accessibility Settings", desc: "Open text size, motion, and contrast controls", value: "accessibility", type: "settings-tab", icon: "◐", keywords: "accessibility text size reduce motion contrast" },
       { title: "Toggle Dark Mode", desc: "Toggle light-mode or dark-mode layout instantly", value: "darkmode", type: "system", icon: "🌗" },
       { title: "Toggle Night Light", desc: "Switch eye-strain warmth overlay filter", value: "nightlight", type: "system", icon: "🔆" },
       { title: "Switch View Layout", desc: "Cycle between Grid Gallery and List details", value: "layout", type: "system", icon: "🎛️" },
@@ -6349,8 +6118,21 @@ function bindEvents() {
       { title: "Go Forward", desc: "Navigate forward in browser simulation history", value: "forward", type: "system", icon: "▶️" }
     ];
 
+    const commands = [
+      { title: "New Note", desc: "Create a blank note", value: "new-note", type: "command", icon: "✎", keywords: "notes create write textedit" },
+      { title: "Refresh News", desc: "Reload latest news stories", value: "refresh-news", type: "command", icon: "↻", keywords: "rss stories reload articles" },
+      { title: "Refresh Steam Games", desc: "Reload SteamDB game data", value: "refresh-games", type: "command", icon: "↻", keywords: "games steam reload refresh" },
+      { title: "Open Launchpad", desc: "Show all apps", value: "open-launchpad", type: "command", icon: "▦", keywords: "apps launcher launchpad grid" },
+      { title: "Open Story Editor", desc: "Create or edit a story card", value: "open-editor", type: "command", icon: "✚", keywords: "story article editor create" },
+      { title: "Lock Screen", desc: "Lock MacReady", value: "lock", type: "command", icon: "⌘", keywords: "lock screen secure" }
+    ];
+
     const matchedApps = [];
+    const matchedUtilities = [];
+    const matchedNotes = [];
+    const matchedWallpaper = [];
     const matchedSettings = [];
+    const matchedCommands = [];
     const matchedStories = [];
     const matchedSteamGames = [];
     const matchedStoreApps = [];
@@ -6364,15 +6146,47 @@ function bindEvents() {
     } else {
       // Filter Apps
       apps.forEach(app => {
-        if (app.title.toLowerCase().includes(q) || app.desc.toLowerCase().includes(q)) {
+        if (matchesSpotlightQuery(app)) {
           matchedApps.push(app);
+        }
+      });
+
+      utilities.forEach(utility => {
+        if (matchesSpotlightQuery(utility)) {
+          matchedUtilities.push(utility);
+        }
+      });
+
+      getNotesData().forEach(note => {
+        const noteText = `${note.name} ${note.content || ""}`.toLowerCase();
+        if (noteText.includes(q)) {
+          const cleanContent = (note.content || "").replace(/[\n\r]+/g, " ").trim();
+          matchedNotes.push({
+            title: note.name,
+            desc: cleanContent ? cleanContent.substring(0, 72) : "Open note",
+            value: note.id,
+            type: "note",
+            icon: "📝"
+          });
+        }
+      });
+
+      getSpotlightWallpaperItems().forEach(wallpaper => {
+        if (matchesSpotlightQuery(wallpaper)) {
+          matchedWallpaper.push(wallpaper);
         }
       });
 
       // Filter Settings
       settings.forEach(setting => {
-        if (setting.title.toLowerCase().includes(q) || setting.desc.toLowerCase().includes(q)) {
+        if (matchesSpotlightQuery(setting)) {
           matchedSettings.push(setting);
+        }
+      });
+
+      commands.forEach(command => {
+        if (matchesSpotlightQuery(command)) {
+          matchedCommands.push(command);
         }
       });
 
@@ -6384,7 +6198,7 @@ function bindEvents() {
               (article.category && article.category.toLowerCase().includes(q))) {
             matchedStories.push({
               title: article.title,
-              desc: `${article.author} · ${article.category.toUpperCase()}`,
+              desc: `${article.author} · ${getCategoryTitle(article.category)}`,
               value: article.id,
               type: "story",
               icon: "📰"
@@ -6451,12 +6265,20 @@ function bindEvents() {
     if (q) {
       if (matchedApps.length > 0) {
         bestMatch = matchedApps[0];
+      } else if (matchedUtilities.length > 0) {
+        bestMatch = matchedUtilities[0];
+      } else if (matchedNotes.length > 0) {
+        bestMatch = matchedNotes[0];
+      } else if (matchedWallpaper.length > 0) {
+        bestMatch = matchedWallpaper[0];
+      } else if (matchedSettings.length > 0) {
+        bestMatch = matchedSettings[0];
+      } else if (matchedCommands.length > 0) {
+        bestMatch = matchedCommands[0];
       } else if (matchedStoreApps.length > 0) {
         bestMatch = matchedStoreApps[0];
       } else if (matchedSteamGames.length > 0) {
         bestMatch = matchedSteamGames[0];
-      } else if (matchedSettings.length > 0) {
-        bestMatch = matchedSettings[0];
       } else if (matchedStories.length > 0) {
         bestMatch = matchedStories[0];
       }
@@ -6478,6 +6300,39 @@ function bindEvents() {
           items: items.length > 0 ? items : matchedApps
         });
         finalResults = finalResults.concat(items.length > 0 ? items : matchedApps);
+      }
+    }
+
+    if (matchedUtilities.length > 0) {
+      const items = matchedUtilities.filter(x => x !== bestMatch);
+      if (items.length > 0 || !bestMatch) {
+        categories.push({
+          title: "Utilities",
+          items: items.length > 0 ? items : matchedUtilities
+        });
+        finalResults = finalResults.concat(items.length > 0 ? items : matchedUtilities);
+      }
+    }
+
+    if (matchedNotes.length > 0) {
+      const items = matchedNotes.filter(x => x !== bestMatch);
+      if (items.length > 0 || !bestMatch) {
+        categories.push({
+          title: "Notes",
+          items: items.length > 0 ? items : matchedNotes
+        });
+        finalResults = finalResults.concat(items.length > 0 ? items : matchedNotes);
+      }
+    }
+
+    if (matchedWallpaper.length > 0) {
+      const items = matchedWallpaper.filter(x => x !== bestMatch);
+      if (items.length > 0 || !bestMatch) {
+        categories.push({
+          title: "Wallpapers",
+          items: items.length > 0 ? items : matchedWallpaper
+        });
+        finalResults = finalResults.concat(items.length > 0 ? items : matchedWallpaper);
       }
     }
 
@@ -6518,10 +6373,21 @@ function bindEvents() {
       const items = matchedSettings.filter(x => x !== bestMatch);
       if (items.length > 0 || !bestMatch) {
         categories.push({
-          title: "System Actions",
+          title: "Settings",
           items: items.length > 0 ? items : matchedSettings
         });
         finalResults = finalResults.concat(items.length > 0 ? items : matchedSettings);
+      }
+    }
+
+    if (matchedCommands.length > 0) {
+      const items = matchedCommands.filter(x => x !== bestMatch);
+      if (items.length > 0 || !bestMatch) {
+        categories.push({
+          title: "Actions",
+          items: items.length > 0 ? items : matchedCommands
+        });
+        finalResults = finalResults.concat(items.length > 0 ? items : matchedCommands);
       }
     }
 
@@ -7107,7 +6973,7 @@ function initReportFormBindings() {
         if (blurPanel && !blurPanel.classList.contains("fade-out")) {
           blurPanel.classList.add("fade-out");
           setTimeout(() => {
-            visibleArticlesCount += 4;
+            visibleArticlesCount += 5;
             renderFeed();
           }, 300);
         }
@@ -7184,8 +7050,9 @@ function initCollapsibleSidebarSections() {
 }
 
 // --- 15. Entry point on Document Ready ---
-document.addEventListener("DOMContentLoaded", () => {
+function initAll() {
   initCustomDropdowns();
+  initSiriAssistant();
   startClock();
   initData();
   initDockMagnification();
@@ -7265,12 +7132,14 @@ document.addEventListener("DOMContentLoaded", () => {
   initCollapsibleSidebarSections();
   
   // Initialize macOS Settings Window & Lock Screen
+  const mainWindow = document.getElementById("app-window");
+  if (mainWindow) makeWindowDraggable(mainWindow);
   initSettingsWindow();
   initLockScreen();
   initUtilityApps();
   initPwaManager();
   initLaunchpad();
-});
+}
 
 // --- 16. Apple Events Calendar Widget Controller ---
 function initAppleEventsCalendar() {
@@ -7580,33 +7449,78 @@ const translations = {
   }
 };
 
-const GAMING_WALLPAPERS = [
-  "url('https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Cyberpunk Character Render
-  "url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Epic Dark Fantasy Landscape
-  "url('https://images.unsplash.com/photo-1515621061946-eff1c2a352bd?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Neon Cyberpunk City Street
-  "url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Synthwave Neon Sunset Grid
-  "url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Sci-fi Deep Space & Nebula
-  "url('https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Cinematic Futuristic Sunset Landscape
-  "url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1280&q=60&fm=webp')", // Nordic Nordic Mountains (Adventure vibes)
-  "url('https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1280&q=60&fm=webp')"  // Digital 3D Sci-fi City concept
+const GAMING_WALLPAPER_APPIDS = [
+  "1086940", "1091500", "1145360", "1245620", "2050650", "1174180",
+  "292030", "1817070", "2215430", "2420110", "367520", "646570",
+  "413150", "2073850", "1868140", "1850570", "1238810", "2096610",
+  "582010", "1172470", "730", "570", "578080", "271590", "252490",
+  "359550", "381210", "105600", "1057090", "1599340", "394360",
+  "489830", "252950", "440", "4000", "236390", "306130", "322330",
+  "230410", "444090", "275850", "632360", "892970", "1282100"
 ];
+let activeGamingWallpaperCssUrl = "";
 
-function cycleGamingWallpaper() {
-  const currentUrl = localStorage.getItem("tahoe_gaming_wallpaper_url");
-  let nextUrl = currentUrl;
-  
-  if (GAMING_WALLPAPERS.length > 1) {
-    while (nextUrl === currentUrl) {
-      const randomIndex = Math.floor(Math.random() * GAMING_WALLPAPERS.length);
-      nextUrl = GAMING_WALLPAPERS[randomIndex];
-    }
-  } else {
-    nextUrl = GAMING_WALLPAPERS[0];
+function clearGamingWallpaperSurface() {
+  localStorage.removeItem("tahoe_gaming_wallpaper_url");
+  localStorage.removeItem("tahoe_gaming_wallpaper_source");
+  activeGamingWallpaperCssUrl = "";
+
+  const desktop = document.getElementById("desktop");
+  const base = document.getElementById("desktop-bg-base");
+  const overlay = document.getElementById("desktop-bg-overlay");
+  const lockScreen = document.getElementById("lock-screen");
+  [base, overlay].forEach(layer => {
+    if (!layer) return;
+    layer.style.backgroundImage = "none";
+    layer.style.background = "transparent";
+    layer.style.opacity = "0";
+  });
+  if (desktop) {
+    desktop.style.backgroundImage = "none";
   }
-  
-  localStorage.setItem("tahoe_gaming_wallpaper_url", nextUrl);
+  if (lockScreen && !lockScreen.classList.contains("hidden-lock")) {
+    lockScreen.style.backgroundImage = "none";
+  }
+}
+
+function applyGamingWallpaperUrl(imageUrl) {
+  activeGamingWallpaperCssUrl = `url('${imageUrl}')`;
+  return activeGamingWallpaperCssUrl;
+}
+
+function createGamingWallpaperSeed() {
+  const currentSource = localStorage.getItem("tahoe_gaming_wallpaper_source");
+  const candidates = GAMING_WALLPAPER_APPIDS.filter(appid => appid !== currentSource);
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+function getGamingWallpaperUrl(appid) {
+  return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/library_hero.jpg`;
+}
+
+function applySavedGamingWallpaper() {
+  let currentSource = localStorage.getItem("tahoe_gaming_wallpaper_source");
+  if (!currentSource) {
+    currentSource = createGamingWallpaperSeed();
+    localStorage.setItem("tahoe_gaming_wallpaper_source", currentSource);
+  }
+  applyGamingWallpaperUrl(getGamingWallpaperUrl(currentSource));
   setWallpaper("gaming-cycle");
-  pushNotification("Gaming Wallpaper Cycled", "Enjoy your new gaming wallpaper background!");
+  return true;
+}
+
+async function refreshGamingWallpaper({ notify = true } = {}) {
+  const source = createGamingWallpaperSeed();
+  applyGamingWallpaperUrl(getGamingWallpaperUrl(source));
+  localStorage.setItem("tahoe_gaming_wallpaper_source", source);
+  setWallpaper("gaming-cycle");
+  if (notify) {
+    pushNotification("Gaming Wallpaper Refreshed", "A new gaming wallpaper has been applied.");
+  }
+}
+
+async function cycleGamingWallpaper() {
+  await refreshGamingWallpaper();
 }
 
 const wallpaperGlows = {
@@ -7660,7 +7574,7 @@ function setWallpaper(wallpaperName) {
     "ventura-dark": "url('public/assets/imgs/wallpapers/optimized/13-Ventura-Dark.webp')",
     "macbook-neo-blue": "url('public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Blue.webp')",
     "macbook-neo-purple": "url('public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp')",
-    "gaming-cycle": localStorage.getItem("tahoe_gaming_wallpaper_url") || "url('https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1920&q=80')"
+    "gaming-cycle": activeGamingWallpaperCssUrl
   };
 
   const physicalImages = [
@@ -7691,6 +7605,15 @@ function setWallpaper(wallpaperName) {
   const overlayBg = document.getElementById("desktop-bg-overlay");
   
   if (baseBg && overlayBg) {
+    if (wallpaperName === "gaming-cycle" && !activeGamingWallpaperCssUrl) {
+      clearGamingWallpaperSurface();
+      localStorage.setItem("tahoe_wallpaper", wallpaperName);
+      document.querySelectorAll(".wallpaper-card").forEach(card => {
+        card.classList.toggle("active", card.getAttribute("data-wallpaper") === wallpaperName);
+      });
+      return;
+    }
+
     const newBgValue = wallpapers[wallpaperName] || "url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp')";
     const isImage = physicalImages.includes(wallpaperName);
     
@@ -7902,30 +7825,17 @@ function applyLanguage(lang) {
 }
 
 // --- Initialize Settings Window Controller ---
-function initSettingsWindow() {
+async function initSettingsWindow() {
   // A. Load saved values on startup
   try {
     const savedWallpaper = localStorage.getItem("tahoe_wallpaper") || "tahoe-liquid";
     if (savedWallpaper === "gaming-cycle") {
-      const navEntries = performance.getEntriesByType("navigation");
-      const isReload = navEntries.length > 0 && navEntries[0].type === "reload";
-      
-      // Only cycle if this was an actual reload/refresh
-      if (isReload) {
-        const currentUrl = localStorage.getItem("tahoe_gaming_wallpaper_url");
-        let nextUrl = currentUrl;
-        if (GAMING_WALLPAPERS.length > 1) {
-          while (nextUrl === currentUrl) {
-            const randomIndex = Math.floor(Math.random() * GAMING_WALLPAPERS.length);
-            nextUrl = GAMING_WALLPAPERS[randomIndex];
-          }
-        } else {
-          nextUrl = GAMING_WALLPAPERS[0];
-        }
-        localStorage.setItem("tahoe_gaming_wallpaper_url", nextUrl);
-      }
+      refreshGamingWallpaper({ notify: false }).catch(err => {
+        console.error("Failed to refresh gaming wallpaper on startup:", err);
+      });
+    } else {
+      setWallpaper(savedWallpaper);
     }
-    setWallpaper(savedWallpaper);
   } catch (err) {
     console.error("Failed to load wallpaper on startup:", err);
   }
@@ -7981,7 +7891,11 @@ function initSettingsWindow() {
     closeBtn.addEventListener("click", () => {
       const settingsWin = document.getElementById("settings-window");
       if (settingsWin) {
-        settingsWin.classList.add("hidden-window");
+        settingsWin.classList.add("settings-closing");
+        window.setTimeout(() => {
+          settingsWin.classList.add("hidden-window");
+          settingsWin.classList.remove("settings-closing");
+        }, 220);
         playGlassChime();
         
         // Remove active-dot under the Settings dock icon
@@ -7989,6 +7903,7 @@ function initSettingsWindow() {
         if (indicator) {
           indicator.classList.remove("active-dot");
         }
+        refreshGlobalMenuBarSoon();
       }
     });
   }
@@ -8000,6 +7915,7 @@ function initSettingsWindow() {
       if (settingsWin) {
         settingsWin.classList.add("minimized");
         playGlassChime();
+        refreshGlobalMenuBarSoon();
       }
     });
   }
@@ -8009,7 +7925,7 @@ function initSettingsWindow() {
     maximizeBtn.addEventListener("click", () => {
       const settingsWin = document.getElementById("settings-window");
       if (settingsWin) {
-        settingsWin.classList.toggle("maximized");
+        toggleWindowMaximized(settingsWin);
         playGlassChime();
       }
     });
@@ -8020,8 +7936,10 @@ function initSettingsWindow() {
     if (e) e.preventDefault();
     const settingsWin = document.getElementById("settings-window");
     if (settingsWin) {
+      settingsWin.classList.remove("settings-closing");
       settingsWin.classList.remove("hidden-window");
       settingsWin.classList.remove("minimized");
+      bringWindowToFront(settingsWin);
       playGlassChime();
       
       // Add active-dot under the Settings dock icon
@@ -8060,6 +7978,9 @@ function initSettingsWindow() {
 
         if (isHidden || isMinimized) {
           openSettings();
+        } else if (settingsWin !== getTopVisibleWindow()) {
+          bringWindowToFront(settingsWin);
+          playGlassChime();
         } else {
           // If already open and active, toggle minimize
           settingsWin.classList.add("minimized");
@@ -8092,7 +8013,21 @@ function initSettingsWindow() {
   wallpaperCards.forEach(card => {
     card.addEventListener("click", () => {
       const wallpaperName = card.getAttribute("data-wallpaper");
-      setWallpaper(wallpaperName);
+      if (wallpaperName === "gaming-cycle") {
+        if (!applySavedGamingWallpaper()) {
+          setWallpaper("gaming-cycle");
+        }
+        card.classList.add("loading");
+        refreshGamingWallpaper({ notify: false })
+          .catch(err => {
+            console.error("Failed to refresh gaming wallpaper:", err);
+          })
+          .finally(() => {
+            card.classList.remove("loading");
+          });
+      } else {
+        setWallpaper(wallpaperName);
+      }
       playGlassChime();
       
       const capitalized = wallpaperName.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
@@ -8102,9 +8037,14 @@ function initSettingsWindow() {
 
   const cycleBtn = document.getElementById("cycle-gaming-btn");
   if (cycleBtn) {
-    cycleBtn.addEventListener("click", (e) => {
+    cycleBtn.addEventListener("click", async (e) => {
       e.stopPropagation();
-      cycleGamingWallpaper();
+      cycleBtn.disabled = true;
+      try {
+        await cycleGamingWallpaper();
+      } finally {
+        cycleBtn.disabled = false;
+      }
       playGlassChime();
     });
   }
@@ -8302,178 +8242,6 @@ function initSettingsWindow() {
   }
 }
 
-// --- macOS Tahoe Premium Dragging & Focusing System ---
-let maxZIndex = 100;
-
-function getTopVisibleWindow() {
-  const visibleWindows = [...document.querySelectorAll("#app-window, #settings-window, #calculator-window, #textedit-window, .utility-window")]
-    .filter(win => !win.classList.contains("hidden-window") && !win.classList.contains("minimized"));
-
-  return visibleWindows.reduce((topWindow, win) => {
-    const winZ = parseInt(getComputedStyle(win).zIndex, 10) || 0;
-    const topZ = topWindow ? parseInt(getComputedStyle(topWindow).zIndex, 10) || 0 : -1;
-    return winZ > topZ ? win : topWindow;
-  }, null);
-}
-
-function updateGlobalMenuBar() {
-  const topWin = getTopVisibleWindow();
-  const notesMenuGroup = document.getElementById("notes-menu-group");
-  const activeAppLabel = document.getElementById("menu-active-app");
-  
-  if (activeAppLabel) {
-    if (topWin) {
-      if (topWin.id === "textedit-window") {
-        activeAppLabel.textContent = "Notes";
-      } else if (topWin.id === "calculator-window") {
-        activeAppLabel.textContent = "Calculator";
-      } else if (topWin.id === "terminal-window") {
-        activeAppLabel.textContent = "Terminal";
-      } else if (topWin.id === "settings-window") {
-        activeAppLabel.textContent = "Settings";
-      } else if (topWin.id === "account-window") {
-        activeAppLabel.textContent = "User Account";
-      } else if (topWin.id === "app-window") {
-        const appNames = {
-          news: "News",
-          reviews: "Reviews",
-          crossover: "CrossOver",
-          macos: "macOS Notes",
-          games: "Games",
-          "app-store": "App Store",
-          finder: "Finder"
-        };
-        activeAppLabel.textContent = appNames[currentApp] || "News";
-      } else {
-        activeAppLabel.textContent = "";
-      }
-    } else {
-      activeAppLabel.textContent = "";
-    }
-  }
-  
-  if (notesMenuGroup) {
-    if (topWin && topWin.id === "textedit-window") {
-      notesMenuGroup.style.display = "flex";
-    } else {
-      notesMenuGroup.style.display = "none";
-    }
-  }
-}
-
-function bringWindowToFront(windowEl) {
-  maxZIndex++;
-  windowEl.style.zIndex = maxZIndex;
-  setTimeout(updateGlobalMenuBar, 10);
-}
-
-function makeWindowDraggable(windowEl) {
-  const titlebar = windowEl.querySelector(".window-titlebar");
-  if (!titlebar) return;
-
-  let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-  const isMainWindow = windowEl.id === "app-window";
-  const isSettingsWindow = windowEl.id === "settings-window";
-  const isAccountWindow = windowEl.id === "account-window";
-  const isBoundedWindow = isMainWindow || isSettingsWindow || isAccountWindow;
-
-  function getWindowDragBounds(width, height) {
-    const menuBar = document.getElementById("menu-bar");
-    const dock = document.getElementById("dock-container");
-    const menuRect = menuBar?.getBoundingClientRect();
-    const dockRect = dock?.getBoundingClientRect();
-    const top = menuRect && menuRect.height > 0 ? menuRect.bottom + 8 : 8;
-    const bottom = dockRect && dockRect.height > 0 ? dockRect.top - 8 : window.innerHeight - 8;
-    const maxHeight = Math.max(220, bottom - top);
-    const adjustedHeight = Math.min(height, maxHeight);
-
-    return {
-      minLeft: 8,
-      maxLeft: Math.max(8, window.innerWidth - width - 8),
-      minTop: top,
-      maxTop: Math.max(top, bottom - adjustedHeight),
-      height: adjustedHeight
-    };
-  }
-
-  titlebar.style.cursor = "grab";
-  titlebar.addEventListener("mousedown", dragMouseDown);
-
-  function dragMouseDown(e) {
-    e = e || window.event;
-    if (e.button !== 0) return;
-    if (e.target.closest(".traffic-lights") || e.target.closest("button, input, textarea, select, a")) return;
-    
-    e.preventDefault();
-    bringWindowToFront(windowEl);
-
-    if (isBoundedWindow) {
-      const rect = windowEl.getBoundingClientRect();
-      const bounds = getWindowDragBounds(rect.width, rect.height);
-      windowEl.classList.remove("maximized");
-      windowEl.classList.add("freeform-window");
-      windowEl.style.position = "fixed";
-      windowEl.style.left = `${Math.min(Math.max(rect.left, bounds.minLeft), bounds.maxLeft)}px`;
-      windowEl.style.top = `${Math.min(Math.max(rect.top, bounds.minTop), bounds.maxTop)}px`;
-      windowEl.style.width = `${rect.width}px`;
-      windowEl.style.height = `${bounds.height}px`;
-      windowEl.style.maxWidth = "none";
-      windowEl.style.margin = "0";
-      if (isSettingsWindow) {
-        windowEl.style.animation = "none";
-      }
-    }
-    
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    
-    windowEl.classList.add("dragging-window");
-    windowEl.style.transition = "none";
-    windowEl.style.transform = "none";
-    windowEl.style.rotate = "0deg";
-    titlebar.style.cursor = "grabbing";
-    
-    document.addEventListener("mouseup", closeDragElement);
-    document.addEventListener("mousemove", elementDrag);
-  }
-
-  function elementDrag(e) {
-    e = e || window.event;
-    e.preventDefault();
-    
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    
-    let nextTop = windowEl.offsetTop - pos2;
-    let nextLeft = windowEl.offsetLeft - pos1;
-
-    if (isBoundedWindow) {
-      const bounds = getWindowDragBounds(windowEl.offsetWidth, windowEl.offsetHeight);
-      nextTop = Math.min(Math.max(nextTop, bounds.minTop), bounds.maxTop);
-      nextLeft = Math.min(Math.max(nextLeft, bounds.minLeft), bounds.maxLeft);
-    }
-
-    windowEl.style.top = `${nextTop}px`;
-    windowEl.style.left = `${nextLeft}px`;
-    
-    windowEl.style.transform = "none";
-    windowEl.style.rotate = "0deg";
-  }
-
-  function closeDragElement() {
-    document.removeEventListener("mouseup", closeDragElement);
-    document.removeEventListener("mousemove", elementDrag);
-    
-    windowEl.classList.remove("dragging-window");
-    windowEl.style.transition = "opacity 0.5s ease, filter 0.5s ease";
-    windowEl.style.transform = "none";
-    windowEl.style.rotate = "0deg";
-    titlebar.style.cursor = "grab";
-  }
-}
-
 // --- macOS Tahoe Retro Iframe Window Spawner ---
 function openIframeApp(title, url, icon, appId) {
   const existingId = `iframe-win-${title.replace(/\s+/g, '-').toLowerCase()}`;
@@ -8560,6 +8328,7 @@ function openIframeApp(title, url, icon, appId) {
         removeAppFromDock(appId);
       }
       playGlassChime();
+      refreshGlobalMenuBarSoon();
     };
   }
 
@@ -8569,6 +8338,7 @@ function openIframeApp(title, url, icon, appId) {
       win.classList.add("minimized");
       pushNotification(`${title} Minimized`, "Access emulator seamlessly from your desktop Dock.");
       playGlassChime();
+      refreshGlobalMenuBarSoon();
     };
   }
 
@@ -8895,7 +8665,8 @@ function addAppToDock(appId) {
     tooltipName = "System 7";
   } else if (appId.startsWith("pwa-")) {
     const customPwas = JSON.parse(localStorage.getItem("tahoe_custom_pwas") || "[]");
-    const pwa = customPwas.find(p => p.id === appId) || FEATURED_PWAS.find(p => p.id === appId) || { name: "Web App", emoji: "🌐", color: "#007aff" };
+    const pwa = customPwas.find(p => p.id === appId) || FEATURED_PWAS.find(p => p.id === appId);
+    if (!pwa) return;
     iconHtmlContent = `<div class="pwa-dock-icon" style="background: ${pwa.color}; display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 10px; font-size: 22px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), 0 3px 6px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.25);">${pwa.emoji}</div>`;
     tooltipName = pwa.name;
   }
@@ -8948,14 +8719,13 @@ function addAppToDock(appId) {
     const appsWrapper = document.querySelector('.dock-item-wrapper[data-app="applications"]');
     const settingsWrapper = document.querySelector('.dock-item-wrapper[data-app="settings"]');
     const targetSibling = appsWrapper || settingsWrapper;
-    
+
     if (targetSibling) {
       dock.insertBefore(wrapper, targetSibling);
     } else {
       dock.appendChild(wrapper);
     }
 
-    // Refresh dynamic magnification motion targets
     if (typeof window.refreshDockMagnification === "function") {
       window.refreshDockMagnification();
     }
@@ -8963,58 +8733,175 @@ function addAppToDock(appId) {
 }
 
 // --- macOS Tahoe Custom PWA Manager Engine ---
-const FEATURED_PWAS = [
-  { id: "pwa-googlesearch", name: "Google Search", url: "https://www.google.com/search?igu=1", emoji: "🔍", color: "#4285f4" },
-  { id: "pwa-wikipedia", name: "Wikipedia Mobile", url: "https://en.m.wikipedia.org", emoji: "📖", color: "#6366f1" },
-  { id: "pwa-tetris", name: "Retro Arcade Tetris", url: "https://chvin.github.io/react-tetris/", emoji: "🧱", color: "#ef4444" },
-  { id: "pwa-elevatorsaga", name: "Elevator Saga", url: "https://play.elevatorsaga.com/", emoji: "🛗", color: "#10b981" },
-  { id: "pwa-telegram", name: "Telegram Web", url: "https://web.telegram.org/a/", emoji: "💬", color: "#24A1DE" },
-  { id: "pwa-discord", name: "Discord App", url: "https://discord.com/app", emoji: "👾", color: "#5865F2" },
-  { id: "pwa-whatsapp", name: "WhatsApp Web", url: "https://web.whatsapp.com", emoji: "🟢", color: "#25D366" },
-  { id: "pwa-notion", name: "Notion Workspaces", url: "https://www.notion.so", emoji: "📓", color: "#000000" },
-  { id: "pwa-googlemaps", name: "Google Maps Mobile", url: "https://www.google.com/maps", emoji: "🗺️", color: "#34A853" },
-  { id: "pwa-retrogames", name: "Retro Console Games", url: "https://www.retrogames.cc/", emoji: "🕹️", color: "#e11d48" },
-  { id: "pwa-spotify", name: "Spotify Player", url: "https://open.spotify.com", emoji: "🎵", color: "#1DB954" },
-  { id: "pwa-github", name: "GitHub Codespaces", url: "https://github.com", emoji: "🐙", color: "#24292e" },
-  { id: "pwa-stackoverflow", name: "StackOverflow", url: "https://stackoverflow.com", emoji: "🥞", color: "#f48024" },
-  { id: "pwa-codepen", name: "CodePen Playgrounds", url: "https://codepen.io", emoji: "✒️", color: "#111111" }
-];
+const PWA_ICONS = {
+  compress: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M16 3h3a2 2 0 0 1 2 2v3"></path><path d="M8 21H5a2 2 0 0 1-2-2v-3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path><path d="M10 8h4v8h-4z"></path></svg>`,
+  pencil: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 0 1 4 4L7 21l-5 1 1-5Z"></path><path d="m15 5 4 4"></path></svg>`,
+  photo: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg>`,
+  grid: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`,
+  book: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z"></path></svg>`,
+  graph: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 15 11 9l4 4 5-8"></path></svg>`,
+  palette: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 22a10 10 0 1 1 10-10 3.5 3.5 0 0 1-3.5 3.5h-1.2a2.3 2.3 0 0 0-1.6 4 2 2 0 0 1-1.2 2.5z"></path></svg>`,
+  terminal: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>`,
+  braces: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4a4 4 0 0 0-4 4v1a3 3 0 0 1-2 3 3 3 0 0 1 2 3v1a4 4 0 0 0 4 4"></path><path d="M16 4a4 4 0 0 1 4 4v1a3 3 0 0 0 2 3 3 3 0 0 0-2 3v1a4 4 0 0 1-4 4"></path></svg>`,
+  ruler: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h18v8H3z"></path><path d="M7 8v4"></path><path d="M11 8v3"></path><path d="M15 8v4"></path><path d="M19 8v3"></path></svg>`,
+  chef: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h12a2 2 0 0 1 2 2v2H4v-2a2 2 0 0 1 2-2z"></path><path d="M12 2a7 7 0 0 0-7 7v3h14V9a7 7 0 0 0-7-7z"></path></svg>`,
+  news: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><path d="M16 8h2"></path><path d="M16 12h2"></path><path d="M6 8h6v8H6z"></path></svg>`,
+  shapes: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.4 0-8 2.5-8 7s4 6.5 8 6.5 8-2 8-6.5-3.6-7-8-7zM8.5 17.5c-2.5.5-4.5 2-4.5 3.5h16c0-1.5-2-3-4.5-3.5"></path></svg>`,
+  gamepad: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"></rect><path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"></path></svg>`,
+  calculator: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><circle cx="8" cy="11" r="1"></circle><circle cx="12" cy="11" r="1"></circle><circle cx="16" cy="11" r="1"></circle><circle cx="8" cy="15" r="1"></circle><circle cx="12" cy="15" r="1"></circle><circle cx="16" cy="15" r="1"></circle><circle cx="8" cy="19" r="1"></circle><circle cx="12" cy="19" r="1"></circle><circle cx="16" cy="19" r="1"></circle></svg>`
+};
+
+const PWA_APPS = {
+  squoosh: { id: "pwa-squoosh", name: "Squoosh", url: "https://squoosh.app/", emoji: PWA_ICONS.compress, color: "#ff6f00", desc: "Compress and convert images in a fast installable web app." },
+  excalidraw: { id: "pwa-excalidraw", name: "Excalidraw", url: "https://excalidraw.com/", emoji: PWA_ICONS.pencil, color: "#6965db", desc: "Sketch diagrams and collaborative whiteboards." },
+  photopea: { id: "pwa-photopea", name: "Photopea", url: "https://www.photopea.com/", emoji: PWA_ICONS.photo, color: "#17a2b8", desc: "Advanced image editing with PSD support." },
+  cyberchef: { id: "pwa-cyberchef", name: "CyberChef", url: "https://gchq.github.io/CyberChef/", emoji: PWA_ICONS.chef, color: "#0d9488", desc: "The ultimate developer multi-tool for data parsing and encoding." },
+  wikipedia: { id: "pwa-wikipedia", name: "Wikipedia Mobile", url: "https://en.m.wikipedia.org", emoji: PWA_ICONS.book, color: "#6366f1", desc: "Fast mobile encyclopedia that opens inside MacReady." },
+  desmos: { id: "pwa-desmos", name: "Desmos Calculator", url: "https://www.desmos.com/calculator", emoji: PWA_ICONS.calculator, color: "#2f855a", desc: "Graphing calculator for equations and visual math." },
+  geogebra: { id: "pwa-geogebra", name: "GeoGebra Calculator", url: "https://www.geogebra.org/calculator", emoji: PWA_ICONS.calculator, color: "#6557d2", desc: "Interactive geometry, graphing and algebra tools." },
+  hackernews: { id: "pwa-hackernews", name: "Hacker News", url: "https://hn.premii.com/", emoji: PWA_ICONS.news, color: "#ea580c", desc: "A clean, modern, and beautiful Hacker News desktop client." },
+  jspaint: { id: "pwa-jspaint", name: "JS Paint", url: "https://jspaint.app/", emoji: PWA_ICONS.palette, color: "#2563eb", desc: "Classic desktop-style paint app for the web." },
+  tldraw: { id: "pwa-tldraw", name: "tldraw", url: "https://www.tldraw.com/", emoji: PWA_ICONS.pencil, color: "#111827", desc: "Clean collaborative canvas for sketches and notes." },
+  tints: { id: "pwa-tints", name: "Tints & Shades", url: "https://maketintsandshades.com/", emoji: PWA_ICONS.palette, color: "#7c3aed", desc: "Generate professional color ramps from a base color." },
+  blobmaker: { id: "pwa-blobmaker", name: "Blobmaker", url: "https://www.blobmaker.app/", emoji: PWA_ICONS.shapes, color: "#db2777", desc: "Generate clean organic SVG blob shapes for your web layouts." },
+  neumorphism: { id: "pwa-neumorphism", name: "Neumorphism CSS", url: "https://neumorphism.io/", emoji: PWA_ICONS.palette, color: "#8b5cf6", desc: "Generate premium Neumorphic soft-shadow CSS styling code." },
+  dillinger: { id: "pwa-dillinger", name: "Dillinger MD", url: "https://dillinger.io/", emoji: PWA_ICONS.pencil, color: "#16a34a", desc: "Modern Markdown editor with offline storage and export capabilities." },
+  cssgradient: { id: "pwa-cssgradient", name: "CSS Gradient", url: "https://cssgradient.io/", emoji: PWA_ICONS.palette, color: "#2563eb", desc: "Generate beautiful multi-color web gradients and CSS code." },
+  sudoku: { id: "pwa-sudoku", name: "Sudoku Game", url: "https://html5sudoku.com/", emoji: PWA_ICONS.grid, color: "#06b6d4", desc: "Classic numbers grid puzzle game with daily challenges." },
+  jsonhero: { id: "pwa-jsonhero", name: "JSON Hero", url: "https://jsonhero.io/", emoji: PWA_ICONS.braces, color: "#eab308", desc: "Beautiful interactive browser for reading and parsing JSON datasets." },
+  carbon: { id: "pwa-carbon", name: "Carbon Code", url: "https://carbon.now.sh/", emoji: PWA_ICONS.photo, color: "#1e293b", desc: "Design and share beautiful images of your source code snippets." },
+  game2048: { id: "pwa-2048", name: "2048 Puzzle", url: "https://2048game.com/", emoji: PWA_ICONS.gamepad, color: "#d97706", desc: "The classic installable slide-puzzle game." },
+  floppybird: { id: "pwa-floppybird", name: "Floppy Bird", url: "https://nebez.github.io/floppybird/", emoji: PWA_ICONS.gamepad, color: "#16a34a", desc: "Immersive side-scrolling arcade flappy flight clone." },
+  tictactoe: { id: "pwa-tictactoe", name: "Tic-Tac-Toe", url: "https://playtictactoe.org/", emoji: PWA_ICONS.gamepad, color: "#4f46e5", desc: "Interactive classic tic-tac-toe with multiple game modes." },
+  hextris: { id: "pwa-hextris", name: "Hextris Puzzle", url: "https://hextris.io/", emoji: PWA_ICONS.gamepad, color: "#ec4899", desc: "Fast-paced hexagonal puzzle game inspired by retro classics." },
+  spaceinvaders: { id: "pwa-spaceinvaders", name: "Space Invaders", url: "https://macek.github.io/spaceinvaders/", emoji: PWA_ICONS.gamepad, color: "#ef4444", desc: "Classic responsive HTML5 clone of the iconic arcade shooter." },
+  svgviewer: { id: "pwa-svgviewer", name: "SVG Viewer", url: "https://www.svgviewer.dev/", emoji: PWA_ICONS.photo, color: "#06b6d4", desc: "Inspect, format, optimize, and preview SVG vector code." },
+  micropad: { id: "pwa-micropad", name: "µPad Notes", url: "https://micropad.jele.co/", emoji: PWA_ICONS.book, color: "#6366f1", desc: "Premium minimalist cloud note-taking canvas and journal." },
+  jsfiddle: { id: "pwa-jsfiddle", name: "JSFiddle Editor", url: "https://jsfiddle.net/", emoji: PWA_ICONS.braces, color: "#3b82f6", desc: "Popular browser sandbox editor for HTML, CSS, and JS development." },
+  jsonlint: { id: "pwa-jsonlint", name: "JSONLint", url: "https://jsonlint.com/", emoji: PWA_ICONS.braces, color: "#0d9488", desc: "Clean validator, validator syntax corrector, and JSON formatter." }
+};
+
+const FEATURED_PWAS = Object.values(PWA_APPS);
 
 const PWA_LIBRARY = {
   discover: [
-    { id: "pwa-googlesearch", name: "Google Search", url: "https://www.google.com/search?igu=1", emoji: "🔍", color: "#4285f4", desc: "Live web search engine." },
-    { id: "pwa-wikipedia", name: "Wikipedia Mobile", url: "https://en.m.wikipedia.org", emoji: "📖", color: "#6366f1", desc: "Free web-based encyclopedia." },
-    { id: "pwa-tetris", name: "Retro Arcade Tetris", url: "https://chvin.github.io/react-tetris/", emoji: "🧱", color: "#ef4444", desc: "Playable classic brick game." },
-    { id: "pwa-elevatorsaga", name: "Elevator Saga", url: "https://play.elevatorsaga.com/", emoji: "🛗", color: "#10b981", desc: "Programming elevator simulation." }
+    PWA_APPS.squoosh,
+    PWA_APPS.excalidraw,
+    PWA_APPS.photopea,
+    PWA_APPS.cyberchef,
+    PWA_APPS.hackernews,
+    PWA_APPS.dillinger,
+    PWA_APPS.hextris,
+    PWA_APPS.jsonhero,
+    PWA_APPS.spaceinvaders,
+    PWA_APPS.micropad
   ],
   social: [
-    { id: "pwa-telegram", name: "Telegram Web", url: "https://web.telegram.org/a/", emoji: "💬", color: "#24A1DE", desc: "Fast & secure instant messenger." },
-    { id: "pwa-discord", name: "Discord App", url: "https://discord.com/app", emoji: "👾", color: "#5865F2", desc: "Hang out with friends and communities." },
-    { id: "pwa-whatsapp", name: "WhatsApp Web", url: "https://web.whatsapp.com", emoji: "🟢", color: "#25D366", desc: "Secure messaging and calling." }
+    PWA_APPS.excalidraw,
+    PWA_APPS.tldraw,
+    PWA_APPS.hackernews,
+    PWA_APPS.wikipedia,
+    PWA_APPS.carbon,
+    PWA_APPS.micropad
   ],
   productivity: [
-    { id: "pwa-notion", name: "Notion Workspaces", url: "https://www.notion.so", emoji: "📓", color: "#000000", desc: "Wiki, docs & project organization." },
-    { id: "pwa-wikipedia", name: "Wikipedia Mobile", url: "https://en.m.wikipedia.org", emoji: "📖", color: "#6366f1", desc: "Free web-based encyclopedia." },
-    { id: "pwa-googlesearch", name: "Google Search", url: "https://www.google.com/search?igu=1", emoji: "🔍", color: "#4285f4", desc: "Live web search engine." },
-    { id: "pwa-googlemaps", name: "Google Maps Mobile", url: "https://www.google.com/maps", emoji: "🗺️", color: "#34A853", desc: "Live GPS routing and street maps." }
+    PWA_APPS.squoosh,
+    PWA_APPS.cyberchef,
+    PWA_APPS.desmos,
+    PWA_APPS.geogebra,
+    PWA_APPS.tints,
+    PWA_APPS.dillinger,
+    PWA_APPS.jsonhero,
+    PWA_APPS.blobmaker,
+    PWA_APPS.neumorphism,
+    PWA_APPS.micropad
   ],
   entertainment: [
-    { id: "pwa-tetris", name: "Retro Arcade Tetris", url: "https://chvin.github.io/react-tetris/", emoji: "🧱", color: "#ef4444", desc: "Playable classic brick game." },
-    { id: "pwa-elevatorsaga", name: "Elevator Saga", url: "https://play.elevatorsaga.com/", emoji: "🛗", color: "#10b981", desc: "Programming elevator simulation." },
-    { id: "pwa-retrogames", name: "Retro Console Games", url: "https://www.retrogames.cc/", emoji: "🕹️", color: "#e11d48", desc: "Play standard emulator ROMs." },
-    { id: "pwa-spotify", name: "Spotify Player", url: "https://open.spotify.com", emoji: "🎵", color: "#1DB954", desc: "Stream millions of songs and podcasts." }
+    PWA_APPS.game2048,
+    PWA_APPS.floppybird,
+    PWA_APPS.sudoku,
+    PWA_APPS.tictactoe,
+    PWA_APPS.hextris,
+    PWA_APPS.spaceinvaders,
+    PWA_APPS.jspaint
   ],
   developer: [
-    { id: "pwa-github", name: "GitHub Codespaces", url: "https://github.com", emoji: "🐙", color: "#24292e", desc: "Collab, host code & track issues." },
-    { id: "pwa-stackoverflow", name: "StackOverflow", url: "https://stackoverflow.com", emoji: "🥞", color: "#f48024", desc: "Developer community Q&A." },
-    { id: "pwa-codepen", name: "CodePen Playgrounds", url: "https://codepen.io", emoji: "✒️", color: "#111111", desc: "Social sandbox editor for developers." }
+    PWA_APPS.cyberchef,
+    PWA_APPS.squoosh,
+    PWA_APPS.tldraw,
+    PWA_APPS.cssgradient,
+    PWA_APPS.jsonhero,
+    PWA_APPS.carbon,
+    PWA_APPS.blobmaker,
+    PWA_APPS.neumorphism,
+    PWA_APPS.svgviewer,
+    PWA_APPS.jsfiddle,
+    PWA_APPS.jsonlint
   ]
 };
+
+const BLOCKED_LEGACY_PWA_IDS = new Set([
+  "pwa-googlesearch",
+  "pwa-tetris",
+  "pwa-elevatorsaga",
+  "pwa-telegram",
+  "pwa-discord",
+  "pwa-whatsapp",
+  "pwa-slack",
+  "pwa-zoom",
+  "pwa-twitter",
+  "pwa-notion",
+  "pwa-googlemaps",
+  "pwa-trello",
+  "pwa-figma",
+  "pwa-spotify",
+  "pwa-youtube",
+  "pwa-soundcloud",
+  "pwa-github",
+  "pwa-stackoverflow",
+  "pwa-codepen",
+  "pwa-jsonformatter",
+  "pwa-caniuse"
+]);
+
+const BLOCKED_LEGACY_PWA_URLS = new Set([
+  "https://www.google.com/search?igu=1",
+  "https://chvin.github.io/react-tetris/",
+  "https://play.elevatorsaga.com/",
+  "https://web.telegram.org/a/",
+  "https://discord.com/app",
+  "https://web.whatsapp.com",
+  "https://slack.com",
+  "https://zoom.us",
+  "https://x.com",
+  "https://www.notion.so",
+  "https://www.google.com/maps",
+  "https://trello.com",
+  "https://figma.com",
+  "https://open.spotify.com",
+  "https://www.youtube.com/embed/",
+  "https://soundcloud.com",
+  "https://github.com",
+  "https://stackoverflow.com",
+  "https://codepen.io",
+  "https://jsonformatter.org",
+  "https://caniuse.com"
+]);
+
+function isBlockedLegacyPwa(pwa) {
+  return BLOCKED_LEGACY_PWA_IDS.has(pwa.id) || BLOCKED_LEGACY_PWA_URLS.has(pwa.url);
+}
 
 function getCustomPwas() {
   const saved = localStorage.getItem("tahoe_custom_pwas");
   if (saved) {
-    try { return JSON.parse(saved); } catch(e) { return []; }
+    try {
+      const pwas = JSON.parse(saved).filter(pwa => !isBlockedLegacyPwa(pwa));
+      if (pwas.length !== JSON.parse(saved).length) {
+        saveCustomPwas(pwas);
+      }
+      return pwas;
+    } catch(e) { return []; }
   }
   return [];
 }
@@ -9153,21 +9040,27 @@ function initPwaManager() {
 
       PWA_LIBRARY[cat].forEach(pwa => {
         const isInstalled = customPwas.some(p => p.url === pwa.url);
+        const activePwa = customPwas.find(p => p.url === pwa.url) || pwa;
 
         const card = document.createElement("div");
         card.className = "pwa-card";
-        card.style = "background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.1);";
+        card.style = "background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: relative; overflow: hidden; width: 100%; box-sizing: border-box;";
         card.innerHTML = `
-          <div class="pwa-card-icon" style="background: ${pwa.color}; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.2);">${pwa.emoji}</div>
-          <div class="pwa-card-name" style="font-size: 13px; font-weight: 600; color: #fff; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${pwa.name}</div>
-          <div style="font-size: 10px; opacity: 0.5; height: 28px; overflow: hidden; line-height: 1.3;">${pwa.desc || 'Native web utility.'}</div>
-          <button class="btn-pwa-action ${isInstalled ? 'installed' : ''}" ${isInstalled ? 'disabled' : ''} style="width: 100%; border: none; outline: none; border-radius: 6px; padding: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; background: ${isInstalled ? 'rgba(255,255,255,0.08)' : '#10b981'}; color: ${isInstalled ? 'rgba(255,255,255,0.4)' : '#fff'};">
-            ${isInstalled ? 'Installed' : 'Install'}
+          <div class="pwa-card-icon" style="background: ${pwa.color}; width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.25);">${pwa.emoji}</div>
+          <div class="pwa-card-name" style="font-size: 13px; font-weight: 600; color: #fff; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-ui), sans-serif; margin-top: 4px;">${pwa.name}</div>
+          <div style="font-size: 10px; opacity: 0.5; height: 28px; overflow: hidden; line-height: 1.3; font-family: var(--font-ui), sans-serif;">${pwa.desc || 'Native web utility.'}</div>
+          <button class="btn-pwa-action" style="width: 72px; border: none; outline: none; border-radius: 20px; padding: 5px 0; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: var(--font-ui), sans-serif; text-align: center; margin-top: 6px; background: ${isInstalled ? 'rgba(255,255,255,0.1)' : '#007aff'}; color: ${isInstalled ? '#3b82f6' : '#fff'};">
+            ${isInstalled ? 'OPEN' : 'GET'}
           </button>
         `;
 
-        if (!isInstalled) {
-          card.querySelector(".btn-pwa-action").addEventListener("click", () => {
+        const actionBtn = card.querySelector(".btn-pwa-action");
+        actionBtn.addEventListener("click", () => {
+          if (isInstalled) {
+            // Instant Launch
+            openIframeApp(activePwa.name, activePwa.url, activePwa.emoji, activePwa.id);
+          } else {
+            // Install
             const activeCustoms = getCustomPwas();
             activeCustoms.push(pwa);
             saveCustomPwas(activeCustoms);
@@ -9180,12 +9073,90 @@ function initPwaManager() {
               "App Installed Successfully",
               `"${pwa.name}" has been added to your system and docked.`
             );
-          });
-        }
+          }
+        });
 
         grid.appendChild(card);
       });
     });
+
+    // Render Discover Page Featured App Store Carousel
+    const discoverPane = document.getElementById("store-pane-discover");
+    if (discoverPane) {
+      // Remove any existing featured header
+      const existingHero = discoverPane.querySelector(".discover-hero-wrapper");
+      if (existingHero) existingHero.remove();
+
+      // Create new Apple-like Discover Hero Section
+      const heroWrapper = document.createElement("div");
+      heroWrapper.className = "discover-hero-wrapper";
+      heroWrapper.style = "display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px;";
+      
+      const customPwas = getCustomPwas();
+      const isSquooshInstalled = customPwas.some(p => p.url === PWA_APPS.squoosh.url);
+      const isExcalidrawInstalled = customPwas.some(p => p.url === PWA_APPS.excalidraw.url);
+
+      heroWrapper.innerHTML = `
+        <div style="background: linear-gradient(135deg, #1e1b4b, #311042); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; min-height: 180px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: left;">
+          <div style="font-size: 10px; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-ui), sans-serif;">FEATURED APP</div>
+          <div style="margin-top: 12px; margin-bottom: 12px;">
+            <h3 style="font-size: 22px; font-weight: 700; color: #fff; margin: 0; font-family: var(--font-ui), sans-serif;">Squoosh</h3>
+            <p style="font-size: 13px; opacity: 0.7; max-width: 320px; margin: 4px 0 0 0; line-height: 1.4; font-family: var(--font-ui), sans-serif;">A polished installable image compressor that opens cleanly inside MacReady.</p>
+          </div>
+          <button class="btn-hero-install-squoosh" style="background: rgba(255,255,255,0.18); border: none; padding: 6px 18px; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 800; cursor: pointer; align-self: flex-start; backdrop-filter: blur(10px); text-transform: uppercase; font-family: var(--font-ui), sans-serif;">
+            ${isSquooshInstalled ? 'OPEN' : 'GET'}
+          </button>
+          <div style="position: absolute; right: 50px; bottom: 52px; opacity: 0.16; transform: scale(4); transform-origin: center; pointer-events: none;">${PWA_APPS.squoosh.emoji}</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #0f172a, #1e293b); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: left;">
+          <div style="font-size: 10px; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-ui), sans-serif;">COLLABORATION</div>
+          <div>
+            <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin: 0; font-family: var(--font-ui), sans-serif;">Excalidraw</h3>
+            <p style="font-size: 11px; opacity: 0.6; margin: 4px 0 0 0; line-height: 1.3; font-family: var(--font-ui), sans-serif;">Sketch diagrams and shared ideas without leaving the desktop.</p>
+          </div>
+          <button class="btn-hero-install-excalidraw" style="background: #fff; color: #0f172a; border: none; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; cursor: pointer; align-self: flex-start; text-transform: uppercase; font-family: var(--font-ui), sans-serif;">
+            ${isExcalidrawInstalled ? 'OPEN' : 'GET'}
+          </button>
+        </div>
+      `;
+
+      discoverPane.insertBefore(heroWrapper, discoverPane.querySelector("h2"));
+
+      // Bind hero button click actions
+      const squooshHeroBtn = heroWrapper.querySelector(".btn-hero-install-squoosh");
+      if (squooshHeroBtn) {
+        squooshHeroBtn.addEventListener("click", () => {
+          const squooshPwa = PWA_APPS.squoosh;
+          if (isSquooshInstalled) {
+            openIframeApp(squooshPwa.name, squooshPwa.url, squooshPwa.emoji, squooshPwa.id);
+          } else {
+            const activeCustoms = getCustomPwas();
+            activeCustoms.push(squooshPwa);
+            saveCustomPwas(activeCustoms);
+            renderGrids();
+            openIframeApp(squooshPwa.name, squooshPwa.url, squooshPwa.emoji, squooshPwa.id);
+            pushNotification("App Installed Successfully", '"Squoosh" has been added and docked.');
+          }
+        });
+      }
+
+      const excalidrawHeroBtn = heroWrapper.querySelector(".btn-hero-install-excalidraw");
+      if (excalidrawHeroBtn) {
+        excalidrawHeroBtn.addEventListener("click", () => {
+          const excalidrawPwa = PWA_APPS.excalidraw;
+          if (isExcalidrawInstalled) {
+            openIframeApp(excalidrawPwa.name, excalidrawPwa.url, excalidrawPwa.emoji, excalidrawPwa.id);
+          } else {
+            const activeCustoms = getCustomPwas();
+            activeCustoms.push(excalidrawPwa);
+            saveCustomPwas(activeCustoms);
+            renderGrids();
+            openIframeApp(excalidrawPwa.name, excalidrawPwa.url, excalidrawPwa.emoji, excalidrawPwa.id);
+            pushNotification("App Installed Successfully", '"Excalidraw" has been added and docked.');
+          }
+        });
+      }
+    }
 
     // Render Installed Tab
     const installedList = document.getElementById("pwa-store-installed-list");
@@ -9195,25 +9166,25 @@ function initPwaManager() {
     const customPwas = getCustomPwas();
 
     if (customPwas.length === 0) {
-      installedList.innerHTML = `<div style="text-align: center; font-size: 13px; opacity: 0.5; padding: 30px 0;">No custom web apps installed yet. Install from other categories or add your own!</div>`;
+      installedList.innerHTML = `<div style="text-align: center; font-size: 13px; opacity: 0.5; padding: 30px 0; font-family: var(--font-ui), sans-serif;">No custom web apps installed yet. Install from other categories or add your own!</div>`;
       return;
     }
 
     customPwas.forEach(pwa => {
       const row = document.createElement("div");
       row.className = "pwa-installed-row";
-      row.style = "display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 14px; transition: all 0.2s;";
+      row.style = "display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 10px 14px; transition: all 0.2s; font-family: var(--font-ui), sans-serif;";
       row.innerHTML = `
         <div class="pwa-installed-info" style="display: flex; align-items: center; gap: 12px;">
-          <div class="pwa-installed-icon" style="background: ${pwa.color}; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.2);">${pwa.emoji}</div>
+          <div class="pwa-installed-icon" style="background: ${pwa.color}; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(255,255,255,0.25);">${pwa.emoji}</div>
           <div>
             <div class="pwa-installed-name" style="font-size: 13px; font-weight: 600; color: #fff;">${pwa.name}</div>
             <div class="pwa-installed-url" style="font-size: 11px; opacity: 0.4;">${pwa.url.substring(0, 50)}${pwa.url.length > 50 ? '...' : ''}</div>
           </div>
         </div>
         <div class="pwa-installed-actions" style="display: flex; gap: 8px;">
-          <button class="btn-pwa-row-action btn-pwa-row-launch" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500;">Launch</button>
-          <button class="btn-pwa-row-action btn-pwa-row-delete" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500;">Delete</button>
+          <button class="btn-pwa-row-action btn-pwa-row-launch" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500; font-family: var(--font-ui), sans-serif;">Launch</button>
+          <button class="btn-pwa-row-action btn-pwa-row-delete" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500; font-family: var(--font-ui), sans-serif;">Delete</button>
         </div>
       `;
 
@@ -9249,26 +9220,6 @@ function initPwaManager() {
   }
 }
 
-function removeAppFromDock(appId) {
-  const wrapper = document.querySelector(`.dock-item-wrapper[data-app="${appId}"]`);
-  if (!wrapper) return;
-
-  const indicator = wrapper.querySelector(".dock-indicator");
-  if (indicator) indicator.classList.remove("active-dot");
-
-  wrapper.classList.remove("dynamic-app-opening");
-  wrapper.classList.add("dynamic-app-closing");
-
-  setTimeout(() => {
-    if (wrapper.parentNode) {
-      wrapper.parentNode.removeChild(wrapper);
-    }
-    // Refresh dynamic magnification motion targets
-    if (typeof window.refreshDockMagnification === "function") {
-      window.refreshDockMagnification();
-    }
-  }, 400);
-}
 
 let texteditActiveFile = null;
 let notesData = [];
@@ -9418,6 +9369,23 @@ function openTextEditFile(file) {
   playGlassChime();
 }
 
+function removeAppFromDock(appId) {
+  const wrapper = document.querySelector(`.dock-item-wrapper[data-app="${appId}"]`);
+  if (!wrapper) return;
+
+  const indicator = wrapper.querySelector(".dock-indicator");
+  if (indicator) indicator.classList.remove("active-dot");
+
+  wrapper.classList.remove("dynamic-app-opening");
+  wrapper.classList.add("dynamic-app-closing");
+
+  setTimeout(() => {
+    if (wrapper.parentNode) {
+      wrapper.parentNode.removeChild(wrapper);
+    }
+  }, 400);
+}
+
 // Calculator Logic
 let calcDisplayVal = "0";
 let calcPendingVal = null;
@@ -9556,7 +9524,7 @@ Available commands:<br>
          \`x888x'          \`x888x'
 </pre>
 <div style="display: inline-block; margin-left: 20px; font-family: monospace; font-size: 11px; vertical-align: top; color: #fff;">
-  <b style="color: var(--accent-color)">wallsendcc@tahoe-mac</b><br>
+  <b style="color: var(--accent-color)">user@tahoe-mac</b><br>
   ------------------------<br>
   <b>OS:</b> macOS 26 Tahoe (64-bit)<br>
   <b>Model:</b> Apple Silicon iMac (2026)<br>
@@ -9591,6 +9559,7 @@ Available commands:<br>
   } else if (command === "exit") {
     document.getElementById("terminal-window").classList.add("hidden-window");
     removeAppFromDock("terminal");
+    refreshGlobalMenuBarSoon();
     input.value = "";
     return;
   } else {
@@ -9599,7 +9568,7 @@ Available commands:<br>
 
   output.innerHTML += `
     <div style="margin-bottom: 8px;">
-      <span style="color: #30d158;">tahoe-mac:~ wallsendcc$</span> ${escapeHtml(cmdString)}<br>
+      <span style="color: #30d158;">tahoe-mac:~ user$</span> ${escapeHtml(cmdString)}<br>
       <div style="margin-top: 4px;">${response}</div>
     </div>
   `;
@@ -10073,17 +10042,19 @@ function initAccountSystem() {
     const accClose = document.getElementById("account-close");
     if (accClose) {
       accClose.addEventListener("click", () => {
-        accountWin.classList.add("hidden-window");
-      });
-    }
+      accountWin.classList.add("hidden-window");
+      refreshGlobalMenuBarSoon();
+    });
+  }
     
     // Minimize button
     const accMin = document.getElementById("account-minimize");
     if (accMin) {
       accMin.addEventListener("click", () => {
-        accountWin.classList.add("minimized");
-      });
-    }
+      accountWin.classList.add("minimized");
+      refreshGlobalMenuBarSoon();
+    });
+  }
 
     // Maximize button
     const accMax = document.getElementById("account-maximize");
@@ -10330,6 +10301,7 @@ function performSignIn(username, email, authType = "standard") {
   
   updateAppHeader();
   syncAccountDetailsToWindow();
+  updateAdminControls();
   
   pushNotification("Signed In", `Welcome back, ${username}!`, { silent: true });
   
@@ -10351,16 +10323,10 @@ function performSignOut() {
   
   updateAppHeader();
   syncAccountDetailsToWindow();
+  updateAdminControls();
   
   const accWin = document.getElementById("account-window");
   if (accWin) accWin.classList.add("hidden-window");
-}
-
-function updateAppHeader() {
-  const appHeader = document.querySelector('button[data-menu="app-menu"]');
-  if (appHeader) {
-    appHeader.textContent = currentUsername;
-  }
 }
 
 function syncAccountDetailsToWindow() {
@@ -10430,4 +10396,28 @@ function openAccountWindow() {
     syncAccountDetailsToWindow();
     bringWindowToFront(win);
   }
+}
+
+function openSettingsTab(tab = "wallpaper") {
+  const settingsWin = document.getElementById("settings-window");
+  if (!settingsWin) return;
+  settingsWin.classList.remove("hidden-window", "minimized");
+  bringWindowToFront(settingsWin);
+  const indicator = document.getElementById("dock-settings-indicator");
+  if (indicator) indicator.classList.add("active-dot");
+  document.querySelectorAll(".settings-sidebar .sidebar-item").forEach(item => {
+    item.classList.toggle("active", item.getAttribute("data-settings-tab") === tab);
+  });
+  document.querySelectorAll(".settings-content .settings-pane").forEach(pane => {
+    pane.classList.remove("active");
+  });
+  const targetPane = document.getElementById(`pane-${tab}`);
+  if (targetPane) targetPane.classList.add("active");
+}
+
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initAll);
+} else {
+  initAll();
 }

@@ -68,6 +68,60 @@ struct Filters {
     boilerplate: Regex,
 }
 
+const ARTICLE_LEADING_LABELS: &[&str] = &[
+    "ai",
+    "app store",
+    "apple",
+    "apple intelligence",
+    "apple silicon",
+    "apple tv",
+    "apple watch",
+    "apps",
+    "all about mac",
+    "chatgpt",
+    "claude",
+    "codex",
+    "deals",
+    "featured",
+    "gemini",
+    "google",
+    "ios",
+    "ipad",
+    "ipados",
+    "iphone",
+    "mac",
+    "macos",
+    "messages",
+    "microsoft",
+    "openai",
+    "reviews",
+    "siri",
+    "vision pro",
+    "watchos",
+];
+
+const ARTICLE_RELATED_SECTION_LABELS: &[&str] = &[
+    "active discussions",
+    "deals",
+    "do more with your apple products",
+    "latest news",
+    "more from appleinsider",
+    "more stories",
+    "popular stories",
+    "read more",
+    "related articles",
+    "related stories",
+    "table of contents",
+    "top stories",
+    "videos",
+];
+
+const ARTICLE_AD_LINK_LABELS: &[&str] = &[
+    "discounted airpods pro 3",
+    "get weekly updates",
+    "official apple store on amazon",
+];
+
 fn main() -> Result<()> {
     let client = Client::builder()
         .user_agent("MacReady RSS Builder")
@@ -167,7 +221,7 @@ impl Filters {
                 r"(?i)\b(iPhone|iPad|AirPods|Apple Watch|Watch|Vision Pro|MagSafe Battery)\b",
             )?,
             boilerplate: Regex::new(
-                r"(?i)^(source:|read on|continue reading|go to the linked site|go to the podcast page|advertisement|sponsor|subscribe|share this|related articles|sign up|you are using an ad blocker)",
+                r"(?i)^(source:|read on|continue reading|go to the linked site|go to the podcast page|advertisement|sponsor|sponsored|subscribe|share this|related articles|related stories|sign up|you are using an ad blocker|ftc:)",
             )?,
         })
     }
@@ -439,6 +493,9 @@ fn fetch_html_source(client: &Client, filters: &Filters, source: &Source) -> Res
         };
 
         let title = clean_article_text(&link.text().collect::<Vec<_>>().join(" "));
+        if is_non_article_title(&title) {
+            continue;
+        }
         let source_url = absolutize(source.url, link.value().attr("href").unwrap_or_default());
         if !source_url.starts_with("https://appleinsider.com/") {
             continue;
@@ -484,12 +541,7 @@ fn fetch_html_source(client: &Client, filters: &Filters, source: &Source) -> Res
             break;
         }
 
-        let content = format!(
-            "<p>{}</p><p><a href=\"{}\" target=\"_blank\" rel=\"noopener\">Source: {}</a></p>",
-            encode_text(&subtitle),
-            encode_text(&source_url),
-            encode_text(source.name)
-        );
+        let content = format!("<p>{}</p>", encode_text(&subtitle));
 
         articles.push(Article {
             id: article_id(source.name, timestamp, index),
@@ -551,8 +603,13 @@ fn should_include_article(
     raw_description: &Option<String>,
     content: &Option<String>,
 ) -> bool {
+    if is_non_article_title(title) {
+        return false;
+    }
+
     let headline_text = format!("{} {}", title, strip_html_option(raw_description));
-    if source.category != "design" && source.category != "deals" && is_ios_led_title(filters, title) {
+    if source.category != "design" && source.category != "deals" && is_ios_led_title(filters, title)
+    {
         return false;
     }
 
@@ -568,12 +625,11 @@ fn should_include_article(
     }
 
     if source.category == "deals" {
-        if filters.mobile_product.is_match(title)
-            && !filters.mac_deal_product.is_match(title)
-        {
+        if filters.mobile_product.is_match(title) && !filters.mac_deal_product.is_match(title) {
             return false;
         }
-        return filters.deal.is_match(&combined_text) && filters.macbook_deals.is_match(&headline_text);
+        return filters.deal.is_match(&combined_text)
+            && filters.macbook_deals.is_match(&headline_text);
     }
 
     if source.category != "technology" {
@@ -592,6 +648,10 @@ fn should_include_article(
 }
 
 fn should_render_article(filters: &Filters, article: &Article) -> bool {
+    if is_non_article_title(&article.title) {
+        return false;
+    }
+
     if article.category != "design" && article.category != "deals" {
         let headline = format!("{} {}", article.title, article.subtitle);
         if filters.ios_only.is_match(&headline) && !filters.strong_mac.is_match(&headline) {
@@ -860,25 +920,186 @@ fn readable_blocks(html: &str, filters: &Filters) -> Vec<(String, String)> {
             continue;
         }
         previous = text.clone();
-
-        for paragraph in split_long_paragraph(&text) {
-            blocks.push((tag.to_string(), paragraph));
-        }
+        blocks.push((tag.to_string(), text));
     }
 
+    clean_article_blocks(blocks)
+        .into_iter()
+        .flat_map(|(tag, text)| {
+            split_long_paragraph(&text)
+                .into_iter()
+                .map(move |paragraph| (tag.clone(), paragraph))
+        })
+        .collect()
+}
+
+fn clean_article_blocks(mut blocks: Vec<(String, String)>) -> Vec<(String, String)> {
+    remove_leading_related_sections(&mut blocks);
+    remove_leading_article_labels(&mut blocks);
+    remove_leading_related_sections(&mut blocks);
+    remove_trailing_related_sections(&mut blocks);
+    remove_article_ad_links(&mut blocks);
+    remove_trailing_link_lists(&mut blocks);
     blocks
 }
 
-fn article_html_from_blocks(blocks: &[(String, String)], link: &str, source_name: &str) -> String {
+fn remove_leading_article_labels(blocks: &mut Vec<(String, String)>) {
+    let mut removed = 0;
+    while removed < 12 && !blocks.is_empty() && is_leading_article_label(&blocks[0].1) {
+        blocks.remove(0);
+        removed += 1;
+    }
+}
+
+fn remove_leading_related_sections(blocks: &mut Vec<(String, String)>) {
+    let mut removing_related = false;
+    let mut removed = 0;
+
+    while removed < 24 && !blocks.is_empty() {
+        let starts_related = is_related_section_label(&blocks[0].1);
+
+        if !removing_related && !starts_related {
+            return;
+        }
+
+        if removing_related && blocks[0].0 == "h2" && !starts_related {
+            return;
+        }
+
+        blocks.remove(0);
+        removed += 1;
+        removing_related = true;
+    }
+}
+
+fn remove_trailing_related_sections(blocks: &mut Vec<(String, String)>) {
+    if let Some(index) = blocks
+        .iter()
+        .position(|(_, text)| is_related_section_label(text))
+    {
+        blocks.truncate(index);
+    }
+}
+
+fn remove_article_ad_links(blocks: &mut Vec<(String, String)>) {
+    blocks.retain(|(_, text)| !is_article_ad_link(text));
+}
+
+fn remove_trailing_link_lists(blocks: &mut Vec<(String, String)>) {
+    let Some(newsletter_index) = blocks
+        .iter()
+        .position(|(_, text)| normalized(text) == "get weekly updates")
+    else {
+        return;
+    };
+
+    let mut start = newsletter_index;
+    let mut cursor = newsletter_index;
+    let mut headline_count = 0;
+
+    while cursor > 0 && headline_count < 8 {
+        cursor -= 1;
+        if !is_related_headline_text(&blocks[cursor].1) {
+            break;
+        }
+        start = cursor;
+        headline_count += 1;
+    }
+
+    blocks.truncate(if headline_count >= 2 {
+        start
+    } else {
+        newsletter_index
+    });
+}
+
+fn is_leading_article_label(text: &str) -> bool {
+    let normalized = normalized(text);
+    if normalized.is_empty() || ARTICLE_LEADING_LABELS.contains(&normalized.as_str()) {
+        return true;
+    }
+
+    if text.len() > 36 || text.chars().any(|ch| ".!?;:".contains(ch)) {
+        return false;
+    }
+
+    let words = text.split_whitespace().collect::<Vec<_>>();
+    if words.is_empty() || words.len() > 4 {
+        return false;
+    }
+
+    words.iter().all(|word| is_heading_token(word))
+}
+
+fn is_heading_token(word: &str) -> bool {
+    let mut chars = word.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+
+    let starts_heading = first.is_ascii_uppercase() || first.is_ascii_digit();
+    let rest_ok = chars.all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '&' | '+' | '-'));
+    starts_heading && rest_ok
+}
+
+fn is_related_section_label(text: &str) -> bool {
+    let normalized = normalized(text);
+    ARTICLE_RELATED_SECTION_LABELS.contains(&normalized.as_str())
+        || normalized.starts_with("top comment by ")
+        || normalized == "comments"
+}
+
+fn is_article_ad_link(text: &str) -> bool {
+    let normalized = normalized(text);
+    if ARTICLE_AD_LINK_LABELS.contains(&normalized.as_str()) {
+        return true;
+    }
+
+    let lower = text.to_lowercase();
+    lower.starts_with("discounted airpods")
+        || lower.starts_with("discounted apple watch")
+        || lower.starts_with("discounted ipad")
+        || lower.starts_with("discounted iphone")
+        || lower.starts_with("discounted macbook")
+        || lower.starts_with("discounted mac mini")
+        || lower.starts_with("discounted mac studio")
+        || (lower.starts_with("macbook neo ")
+            && (lower.contains("$590") || lower.contains("$690"))
+            && lower.contains("delivery by"))
+        || (lower.starts_with("these ")
+            && lower.contains(" macbook air models are ")
+            && lower.contains(" off"))
+        || lower.starts_with("still live: ")
+}
+
+fn is_related_headline_text(text: &str) -> bool {
+    let len = text.len();
+    (24..=160).contains(&len) && !text.ends_with(['.', '!', '?'])
+}
+
+fn normalized(text: &str) -> String {
+    clean_article_text(text).to_lowercase()
+}
+
+fn is_non_article_title(title: &str) -> bool {
+    let title = clean_article_text(title);
+    let mut chars = title.chars();
+    let Some(first) = chars.next() else {
+        return true;
+    };
+
+    first.is_ascii_digit() && title.chars().take(4).any(|ch| ch == '.')
+}
+
+fn article_html_from_blocks(
+    blocks: &[(String, String)],
+    _link: &str,
+    _source_name: &str,
+) -> String {
     let mut html = String::new();
     for (tag, text) in blocks.iter().take(18) {
         html.push_str(&format!("<{}>{}</{}>", tag, encode_text(text), tag));
     }
-    html.push_str(&format!(
-        "<p><a href=\"{}\" target=\"_blank\" rel=\"noopener\">Source: {}</a></p>",
-        encode_text(link),
-        encode_text(source_name)
-    ));
     html
 }
 
@@ -1064,4 +1285,56 @@ fn word_count(text: &str) -> usize {
     text.split_whitespace()
         .filter(|part| !part.is_empty())
         .count()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn article_cleaner_removes_related_sections_and_ad_links() {
+        let blocks = vec![
+            (
+                "p".to_string(),
+                "OpenAI just released this week’s Codex desktop app update.".to_string(),
+            ),
+            ("h2".to_string(), "Latest News".to_string()),
+            (
+                "p".to_string(),
+                "95% of Canceled Annual App Subscribers Never Return, New Report Reveals"
+                    .to_string(),
+            ),
+            (
+                "p".to_string(),
+                "Official Apple Store on Amazon".to_string(),
+            ),
+        ];
+
+        let cleaned = clean_article_blocks(blocks);
+        assert_eq!(cleaned.len(), 1);
+        assert_eq!(
+            cleaned[0].1,
+            "OpenAI just released this week’s Codex desktop app update."
+        );
+    }
+
+    #[test]
+    fn article_cleaner_removes_leading_category_labels() {
+        let blocks = vec![
+            ("p".to_string(), "Apps".to_string()),
+            ("p".to_string(), "Mac".to_string()),
+            ("p".to_string(), "AI".to_string()),
+            (
+                "p".to_string(),
+                "OpenAI just released this week’s Codex desktop app update.".to_string(),
+            ),
+        ];
+
+        let cleaned = clean_article_blocks(blocks);
+        assert_eq!(cleaned.len(), 1);
+        assert_eq!(
+            cleaned[0].1,
+            "OpenAI just released this week’s Codex desktop app update."
+        );
+    }
 }

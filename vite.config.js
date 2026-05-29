@@ -5,39 +5,28 @@ import path from "path";
 export default defineConfig({
   plugins: [
     {
-      name: "macready-sync-assets",
-      buildStart() {
-        const srcPath = path.resolve(process.cwd(), "app-live-4.js");
-        const destPath = path.resolve(process.cwd(), "app-live-4.min.js");
-        if (fs.existsSync(srcPath)) {
-          fs.copyFileSync(srcPath, destPath);
-          console.log("Successfully synchronized app-live-4.js to app-live-4.min.js");
-        }
-        const cssSrc = path.resolve(process.cwd(), "styles.css");
-        const cssLive = path.resolve(process.cwd(), "styles-live.css");
-        const cssLiveMin = path.resolve(process.cwd(), "styles-live.min.css");
-        if (fs.existsSync(cssSrc)) {
-          fs.copyFileSync(cssSrc, cssLive);
-          fs.copyFileSync(cssSrc, cssLiveMin);
-          console.log("Successfully synchronized styles.css to styles-live.css and styles-live.min.css");
-        }
-      },
+      name: "macready-copy-public-scripts",
       closeBundle() {
-        const minSrcPath = path.resolve(process.cwd(), "app-live-4.min.js");
-        const minDestPath = path.resolve(process.cwd(), "dist/app-live-4.min.js");
-        if (fs.existsSync(minSrcPath)) {
-          const distDir = path.resolve(process.cwd(), "dist");
-          if (!fs.existsSync(distDir)) {
-            fs.mkdirSync(distDir, { recursive: true });
-          }
-          fs.copyFileSync(minSrcPath, minDestPath);
-          console.log("Successfully copied app-live-4.min.js to dist/app-live-4.min.js!");
+        const distDir = path.resolve(process.cwd(), "dist");
+        if (!fs.existsSync(distDir)) {
+          fs.mkdirSync(distDir, { recursive: true });
         }
-        const srcPath = path.resolve(process.cwd(), "app-live-4.js");
-        const destPath = path.resolve(process.cwd(), "dist/app-live-4.js");
-        if (fs.existsSync(srcPath)) {
-          fs.copyFileSync(srcPath, destPath);
-          console.log("Successfully copied app-live-4.js to dist/app-live-4.js!");
+
+        const files = [
+          "styles.css",
+          "news-reader.js",
+          "window-manager.js",
+          "siri-assistant.js",
+          "app.js"
+        ];
+
+        for (const file of files) {
+          const sourcePath = path.resolve(process.cwd(), file);
+          const destinationPath = path.resolve(distDir, file);
+          if (fs.existsSync(sourcePath)) {
+            fs.copyFileSync(sourcePath, destinationPath);
+            console.log(`Successfully copied ${file} to dist/${file}`);
+          }
         }
       }
     },
