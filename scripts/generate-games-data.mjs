@@ -132,7 +132,10 @@ async function main() {
   for (const appid of pinnedAppIds) byId.set(appid, byId.get(appid) || { appid });
 
   const games = [];
-  const appids = [...byId.keys()].slice(0, maxGames);
+  const appids = [
+    ...pinnedAppIds,
+    ...[...byId.keys()].filter(appid => !pinnedAppIds.includes(appid))
+  ].slice(0, maxGames);
 
   for (const appid of appids) {
     try {
