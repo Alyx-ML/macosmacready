@@ -2051,6 +2051,11 @@ let activeAtmosphericGame = null;
 let isDetailModalOpen = false;
 
 function createSeededSteamGames() {
+  const generatedGames = getGeneratedSteamGames();
+  if (generatedGames.length) {
+    return generatedGames.map(cloneGeneratedSteamGame);
+  }
+
   const games = [
     {
       id: "game-3124540",
@@ -2128,6 +2133,23 @@ function createSeededSteamGames() {
   return games;
 }
 
+function getGeneratedSteamGames() {
+  const payload = window.MACREADY_GENERATED_STEAM_GAMES;
+  return Array.isArray(payload?.games) ? payload.games : [];
+}
+
+function cloneGeneratedSteamGame(game) {
+  const cloned = {
+    ...game,
+    screenshots: Array.isArray(game.screenshots) ? [...game.screenshots] : [],
+    features: Array.isArray(game.features) ? [...game.features] : [],
+    genres: Array.isArray(game.genres) ? [...game.genres] : [],
+    systemRequirements: game.systemRequirements ? { ...game.systemRequirements } : null
+  };
+  setGameCompatibility(cloned);
+  return cloned;
+}
+
 function loadCachedSteamGames() {
   try {
     const cached = JSON.parse(localStorage.getItem(STEAM_GAMES_CACHE_KEY) || "null");
@@ -2138,6 +2160,8 @@ function loadCachedSteamGames() {
     }
 
     gamesCache = cached.games;
+    mergeGamesIntoCache(createSeededSteamGames());
+    gamesCache.forEach(applySeededSteamGameDetails);
     steamGamesLastSavedAt = Number(cached.savedAt) || 0;
     gamesLoaded = true;
   } catch (error) {
@@ -2327,6 +2351,36 @@ function getSeededCrossoverCompatibility(rawTitle) {
 
 function getSeededSteamGameDetails(appid) {
   const key = String(appid || "");
+  const generated = getGeneratedSteamGames().find(game => String(game.appid || "") === key);
+  if (generated) {
+    return {
+      short_description: generated.fullDescription || "",
+      developers: generated.developer ? [generated.developer] : [],
+      publishers: generated.publisher ? [generated.publisher] : [],
+      release_date: {
+        coming_soon: !!generated.comingSoon,
+        date: generated.releaseDate || ""
+      },
+      genres: (generated.genres || []).map(description => ({ description })),
+      platforms: {
+        mac: !!generated.hasNativeMac
+      },
+      price_overview: {
+        initial: Math.round((generated.price || 0) * 100),
+        discount_percent: generated.discount || 0
+      },
+      pc_requirements: generated.systemRequirements?.windows || null,
+      mac_requirements: generated.systemRequirements?.mac || null,
+      screenshots: generated.screenshots || [],
+      movie: {
+        url: generated.videoUrl || "",
+        poster: generated.videoPoster || ""
+      },
+      features: generated.features || [],
+      cover: generated.cover || ""
+    };
+  }
+
   const seeds = {
     "3124540": {
       short_description: "Yee-haw, Cowboys! Team up in this chaotic 1-4 player co-op shooter. Journey to the Far Far West to blast monsters, sling spells, complete missions, and collect bounties. Work as a team to get in, get paid and get out (mostly) alive.",
@@ -2387,8 +2441,11 @@ function applySeededSteamGameDetails(game) {
   game.videoUrl = data.movie?.url || game.videoUrl || "";
   game.videoPoster = data.movie?.poster || game.videoPoster || game.screenshots?.[0] || game.cover;
   game.systemRequirements = mergeSystemRequirements(game.systemRequirements, {
+    mac: data.mac_requirements,
     windows: data.pc_requirements
   });
+  game.features = data.features || game.features || [];
+  game.cover = data.cover || game.cover;
   game.price = typeof data.price_overview?.initial === "number" ? data.price_overview.initial / 100 : game.price;
   game.discount = data.price_overview?.discount_percent || game.discount || 0;
   game.hasNativeMac = !!data.platforms?.mac;
