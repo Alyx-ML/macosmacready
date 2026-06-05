@@ -24,6 +24,11 @@ export default {
     }
 
     if (url.pathname === "/api/crossover-compatibility") {
+      if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      } });
       if (request.method === "GET") return crossoverCompatibilityGet({ request, env });
       return new Response("Method Not Allowed", { status: 405 });
     }

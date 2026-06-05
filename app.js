@@ -2154,7 +2154,10 @@ function normalizeCrossoverCacheKey(title) {
 }
 
 function getCrossoverCompatibilityEndpoint(game) {
-  const url = new URL("/api/crossover-compatibility", window.location.origin);
+  const apiOrigin = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    ? window.location.origin
+    : "https://macosmacready.fpt4g789c6.workers.dev";
+  const url = new URL("/api/crossover-compatibility", apiOrigin);
   url.searchParams.set("title", game.title);
   return url.toString();
 }
@@ -2173,7 +2176,6 @@ async function fetchCrossoverCompatibility(game) {
   }
 
   const request = fetchCrossoverCompatibilityFromEndpoint(game)
-    .catch(() => getSeededCrossoverCompatibility(game.title) || fetchCrossoverCompatibilityFromPublicPages(game.title))
     .then(data => {
       saveCrossoverCompatibilityCache(game.title, data);
       return data;
