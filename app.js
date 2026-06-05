@@ -64,7 +64,9 @@ function fetchDevProxy(url) {
   const requestUrl = isLocalDev
     ? `/rss?url=${encodeURIComponent(url)}`
     : `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-  return fetch(requestUrl);
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 8000);
+  return fetch(requestUrl, { signal: controller.signal }).finally(() => window.clearTimeout(timer));
 }
 
 function fetchAppleJson(url) {
@@ -2024,7 +2026,7 @@ const db = new SQLiteBridge();
 let gamesCache = [];
 let gamesLoaded = false;
 let gamesLoading = false;
-const STEAM_GAMES_CACHE_KEY = "macready_steam_games_cache_v4";
+const STEAM_GAMES_CACHE_KEY = "macready_steam_games_cache_v3";
 const STEAM_GAMES_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const CROSSOVER_COMPAT_CACHE_KEY = "macready_crossover_compat_cache_v1";
 const CROSSOVER_COMPAT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -2048,10 +2050,92 @@ let currentCarouselIndex = 0;
 let activeAtmosphericGame = null;
 let isDetailModalOpen = false;
 
+function createSeededSteamGames() {
+  const games = [
+    {
+      id: "game-3124540",
+      appid: 3124540,
+      title: "Far Far West",
+      rating: null,
+      activePlayers: null,
+      price: 19.99,
+      discount: 0,
+      compatibility: "",
+      compatLabel: "",
+      hasNativeMac: false,
+      genres: ["Action", "Adventure", "Indie", "Early Access"],
+      cover: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/396b26f278210ddfbb9e944d8b20da2e8bd17ded/capsule_231x87.jpg?t=1780491814",
+      storeUrl: "https://store.steampowered.com/app/3124540/",
+      steamdbUrl: "https://steamdb.info/app/3124540/",
+      protonUrl: "https://www.protondb.com/app/3124540",
+      fullDescription: "",
+      screenshots: [],
+      features: [],
+      systemRequirements: null,
+      releaseDate: "Apr 28, 2026",
+      comingSoon: false
+    },
+    {
+      id: "game-3164500",
+      appid: 3164500,
+      title: "Schedule I",
+      rating: null,
+      activePlayers: null,
+      price: 19.99,
+      discount: 0,
+      compatibility: "",
+      compatLabel: "",
+      hasNativeMac: false,
+      genres: ["Action", "Indie", "Simulation", "Strategy"],
+      cover: "https://cdn.cloudflare.steamstatic.com/steam/apps/3164500/capsule_231x87.jpg",
+      storeUrl: "https://store.steampowered.com/app/3164500/",
+      steamdbUrl: "https://steamdb.info/app/3164500/",
+      protonUrl: "https://www.protondb.com/app/3164500",
+      fullDescription: "",
+      screenshots: [],
+      features: [],
+      systemRequirements: null,
+      releaseDate: "",
+      comingSoon: false
+    },
+    {
+      id: "game-730",
+      appid: 730,
+      title: "Counter-Strike 2",
+      rating: null,
+      activePlayers: null,
+      price: 0,
+      discount: 0,
+      compatibility: "",
+      compatLabel: "",
+      hasNativeMac: false,
+      genres: ["Action"],
+      cover: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/942c04efaa5bc87afb6f2a97dbf17ac614c8a84d/capsule_231x87.jpg",
+      storeUrl: "https://store.steampowered.com/app/730/",
+      steamdbUrl: "https://steamdb.info/app/730/",
+      protonUrl: "https://www.protondb.com/app/730",
+      fullDescription: "",
+      screenshots: [],
+      features: [],
+      systemRequirements: null,
+      releaseDate: "Aug 21, 2012",
+      comingSoon: false
+    }
+  ];
+
+  games.forEach(game => setGameCompatibility(game));
+  applySeededSteamGameDetails(games[0]);
+  return games;
+}
+
 function loadCachedSteamGames() {
   try {
     const cached = JSON.parse(localStorage.getItem(STEAM_GAMES_CACHE_KEY) || "null");
-    if (!cached || !Array.isArray(cached.games) || cached.games.length === 0) return;
+    if (!cached || !Array.isArray(cached.games) || cached.games.length === 0) {
+      gamesCache = createSeededSteamGames();
+      gamesLoaded = true;
+      return;
+    }
 
     gamesCache = cached.games;
     steamGamesLastSavedAt = Number(cached.savedAt) || 0;
@@ -2159,6 +2243,15 @@ async function fetchCrossoverCompatibilityFromPublicPages(rawTitle) {
   if (!title) return { found: false, reason: "missing_title" };
 
   const searchUrl = buildCodeWeaversSearchUrl(title);
+  if (!["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    return {
+      found: false,
+      reason: "no_match",
+      query: title,
+      searchUrl
+    };
+  }
+
   const searchResponse = await fetchViaProxy(searchUrl);
   if (!searchResponse.ok) {
     return {
@@ -2230,6 +2323,77 @@ function getSeededCrossoverCompatibility(rawTitle) {
   };
 
   return seeds[key] || null;
+}
+
+function getSeededSteamGameDetails(appid) {
+  const key = String(appid || "");
+  const seeds = {
+    "3124540": {
+      short_description: "Yee-haw, Cowboys! Team up in this chaotic 1-4 player co-op shooter. Journey to the Far Far West to blast monsters, sling spells, complete missions, and collect bounties. Work as a team to get in, get paid and get out (mostly) alive.",
+      developers: ["Evil Raptor"],
+      publishers: ["Fireshine Games"],
+      release_date: {
+        coming_soon: false,
+        date: "Apr 28, 2026"
+      },
+      genres: [
+        { description: "Action" },
+        { description: "Adventure" },
+        { description: "Indie" },
+        { description: "Early Access" }
+      ],
+      platforms: {
+        windows: true,
+        mac: false,
+        linux: false
+      },
+      price_overview: {
+        initial: 1999,
+        discount_percent: 0
+      },
+      pc_requirements: {
+        minimum: "<strong>Minimum:</strong><br><ul><li><strong>OS:</strong> Windows 10 (64-BIT Required)</li><li><strong>Processor:</strong> Intel Core i5-7600K or AMD Ryzen 5 1600</li><li><strong>Memory:</strong> 8 GB RAM</li><li><strong>Graphics:</strong> Nvidia GeForce GTX 1660 or AMD Radeon RX 590</li><li><strong>DirectX:</strong> Version 12</li><li><strong>Storage:</strong> 10 GB available space</li><li><strong>Additional Notes:</strong> SSD Recommended</li></ul>",
+        recommended: "<strong>Recommended:</strong><br><ul><li><strong>OS:</strong> Windows 11 (64-BIT Required)</li><li><strong>Processor:</strong> Intel Core i5-10600KF or AMD Ryzen 5 3600X</li><li><strong>Memory:</strong> 16 GB RAM</li><li><strong>Graphics:</strong> Nvidia GeForce RTX 2060 or AMD Radeon RX 5600XT</li><li><strong>DirectX:</strong> Version 12</li><li><strong>Storage:</strong> 10 GB available space</li><li><strong>Additional Notes:</strong> SSD Recommended</li></ul>"
+      },
+      screenshots: [
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/87847b9155d7cfd190852831c4792ea2c7dad8a7/ss_87847b9155d7cfd190852831c4792ea2c7dad8a7.1920x1080.jpg?t=1780491814",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/c7dab39bc4e9110f215e2a6af98a62afbaad3ec5/ss_c7dab39bc4e9110f215e2a6af98a62afbaad3ec5.1920x1080.jpg?t=1780491814",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/28b89f775c8e3dd6e423662b1f4bf285285339e5/ss_28b89f775c8e3dd6e423662b1f4bf285285339e5.1920x1080.jpg?t=1780491814",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/9b25ef6d25e7ad77a167df2e369180e8d4081763/ss_9b25ef6d25e7ad77a167df2e369180e8d4081763.1920x1080.jpg?t=1780491814",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/06beed80ffd3560c3dcb89044b1c2c12f525b66d/ss_06beed80ffd3560c3dcb89044b1c2c12f525b66d.1920x1080.jpg?t=1780491814",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/51f2ed907135f44388a233fe2a6b2ccb2db5a2b2/ss_51f2ed907135f44388a233fe2a6b2ccb2db5a2b2.1920x1080.jpg?t=1780491814"
+      ],
+      movie: {
+        url: "https://video.akamai.steamstatic.com/store_trailers/3124540/1804471861/079d9f650d8a0e9fdfcea222029fb8b9aa7c4393/1777372464/hls_264_master.m3u8?t=1777381102",
+        poster: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/257328124/bf4603a88ec1ee6265083e2edca71bc38c4f55f1/movie_600x337.jpg?t=1777381102"
+      }
+    }
+  };
+
+  return seeds[key] || null;
+}
+
+function applySeededSteamGameDetails(game) {
+  const data = getSeededSteamGameDetails(game?.appid);
+  if (!data) return false;
+
+  game.fullDescription = data.short_description || game.fullDescription;
+  game.developer = data.developers?.join(", ") || game.developer;
+  game.publisher = data.publishers?.join(", ") || game.publisher;
+  game.releaseDate = data.release_date?.date || game.releaseDate;
+  game.comingSoon = !!data.release_date?.coming_soon;
+  game.genres = data.genres?.map(g => g.description).slice(0, 4) || game.genres;
+  game.screenshots = data.screenshots || game.screenshots || [];
+  game.videoUrl = data.movie?.url || game.videoUrl || "";
+  game.videoPoster = data.movie?.poster || game.videoPoster || game.screenshots?.[0] || game.cover;
+  game.systemRequirements = mergeSystemRequirements(game.systemRequirements, {
+    windows: data.pc_requirements
+  });
+  game.price = typeof data.price_overview?.initial === "number" ? data.price_overview.initial / 100 : game.price;
+  game.discount = data.price_overview?.discount_percent || game.discount || 0;
+  game.hasNativeMac = !!data.platforms?.mac;
+  setGameCompatibility(game);
+  return true;
 }
 
 function sanitizeCrossoverTitle(value) {
@@ -3532,6 +3696,15 @@ function closeGameScreenshotViewer() {
 
 async function updateGameQuickLookStoreData(game) {
   try {
+    const hadSeededDetails = applySeededSteamGameDetails(game);
+    if (hadSeededDetails) {
+      saveSteamGamesCache();
+      const modal = document.getElementById("game-detail-modal");
+      if (modal && !modal.classList.contains("hidden") && modal.dataset.gameId === game.id) {
+        renderGameQuickLookContent(game);
+      }
+    }
+
     let steamPageHtml = "";
     let data = null;
 
@@ -3654,6 +3827,7 @@ function openGameQuickLook(gameId) {
   document.body.classList.add("reader-active");
   isDetailModalOpen = true;
   applyAtmosphericGlow(game);
+  applySeededSteamGameDetails(game);
 
   renderGameQuickLookContent(game);
   if (bodyPane) bodyPane.scrollTop = 0;
