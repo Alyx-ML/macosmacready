@@ -5,18 +5,7 @@
 // ==========================================
 
 // Real Steam AppIDs for tracked Mac-relevant games
-const TRACKED_APPIDS = [
-  { appid: 1086940, title: "Baldur's Gate 3" },
-  { appid: 1091500, title: "Cyberpunk 2077" },
-  { appid: 1245620, title: "ELDEN RING" },
-  { appid: 1145360, title: "Hades" },
-  { appid: 413150,  title: "Stardew Valley" },
-  { appid: 271590,  title: "Grand Theft Auto V" },
-  { appid: 1426210, title: "It Takes Two" },
-  { appid: 550,     title: "Left 4 Dead 2" },
-  { appid: 1172620, title: "Sea of Thieves" },
-  { appid: 1888160, title: "The Last of Us Part I" },
-];
+const TRACKED_APPIDS = [];
 
 // Cache to avoid re-fetching on filter changes
 let gamesCache = [];

@@ -45,7 +45,7 @@
   </script>
   <link rel="icon" type="image/webp" href="public/assets/imgs/finderfavicon.webp">
   <link rel="preload" as="image" href="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" imagesrcset="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp 960w, public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
-  <link rel="stylesheet" href="styles.css?v=heritage-gradients-2">
+  <link rel="stylesheet" href="styles.css?v=quicklook-carousel-1">
   <style>
     #btn-new-story[hidden] {
       display: none !important;
@@ -1438,6 +1438,71 @@
           <!-- Rendered dynamically -->
         </div>
       </div>
+    </div>
+
+    <!-- Game Card Quick Look Modal -->
+    <div id="game-detail-modal" class="hidden" aria-hidden="true">
+      <div class="game-modal-backdrop" id="game-modal-backdrop"></div>
+      <section class="game-modal-card liquid-glass" id="game-detail-card" role="dialog" aria-modal="true" aria-labelledby="game-modal-header-title">
+        <header class="game-modal-header">
+          <div class="game-window-controls" aria-label="Window controls">
+            <button class="game-traffic-light close" id="game-modal-close-btn" type="button" aria-label="Close"></button>
+            <span class="game-traffic-light minimize" aria-hidden="true"></span>
+            <span class="game-traffic-light zoom" aria-hidden="true"></span>
+          </div>
+          <div class="game-modal-header-title" id="game-modal-header-title">Game</div>
+        </header>
+
+        <div class="game-modal-body" id="game-modal-body">
+          <div class="game-detail-hero">
+            <video class="game-video" id="game-detail-video" controls muted playsinline preload="metadata"></video>
+          </div>
+
+          <div class="game-modal-content-grid">
+            <main class="game-detail-main-col">
+              <div class="game-detail-header-row">
+                <div class="game-detail-title-block">
+                  <h2 class="game-detail-title" id="game-detail-title"></h2>
+                  <p class="game-detail-dev" id="game-detail-developer"></p>
+                </div>
+                <div class="game-detail-cta">
+                  <a class="btn-liquid-glass game-detail-buy-btn" id="game-detail-buy-btn" target="_blank" rel="noopener">Get on Steam</a>
+                </div>
+              </div>
+
+              <div class="game-detail-tags" id="game-detail-tags"></div>
+
+              <section class="game-detail-section">
+                <p class="game-detail-desc" id="game-detail-desc"></p>
+              </section>
+
+              <section class="game-detail-section">
+                <h3 class="game-section-title">Screenshots</h3>
+                <div class="game-screenshots-slider-container">
+                  <div class="game-screenshots-wrapper" id="game-screenshots-wrapper"></div>
+                </div>
+              </section>
+            </main>
+
+            <aside class="game-detail-side-col">
+              <section class="side-info-card liquid-glass">
+                <h3 class="card-sec-title">System Requirements</h3>
+                <div class="compat-status-row">
+                  <strong class="compat-label" id="game-detail-compat-label"></strong>
+                </div>
+                <div class="hardware-match-card" id="hardware-match-card"></div>
+              </section>
+
+              <section class="side-info-card liquid-glass hidden" id="game-detail-review-card">
+                <h3 class="card-sec-title">Editorial Review</h3>
+                <p class="review-preview-text" id="game-detail-review-excerpt"></p>
+                <button class="btn-liquid-glass btn-full-width" id="game-detail-read-review-btn" type="button">Read Review</button>
+              </section>
+
+            </aside>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- SteamDB Compatibility Report Submission Modal Sheet -->
@@ -2928,10 +2993,10 @@
     </div>
 
   <!-- Client-side logic loader -->
-  <script defer src="news-reader.js?v=reader-module-1"></script>
+  <script defer src="news-reader.js?v=live-rss-4"></script>
   <script defer src="window-manager.js?v=window-module-1"></script>
   <script defer src="siri-assistant.js?v=siri-module-1"></script>
-  <script defer src="app.js?v=heritage-gradients-2"></script>
+  <script defer src="app.js?v=quicklook-carousel-1"></script>
 
   <!-- SVG Color Vision Deficiency Matrices -->
   <svg style="position: absolute; height: 0; width: 0; pointer-events: none;" aria-hidden="true">

@@ -284,7 +284,7 @@ async function fetchHTMLNewsSource(source) {
     avatar: source.name.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase(),
     date: formatRSSDate(item.timestamp || Date.now()),
     timestamp: item.timestamp || Date.now() - index,
-    cover: item.cover || "preset-1",
+    cover: item.cover || "",
     sourceName: source.name,
     sourceUrl: item.sourceUrl,
     bookmarked: false,
@@ -447,17 +447,13 @@ function extractRSSImageFromHTML(html) {
     .filter(Boolean)
     .map(value => value.split(",")[0].trim().split(/\s+/)[0])
     .find(url => /^https?:\/\//.test(url));
-  return imageUrl || "preset-1";
+  return imageUrl || "";
 }
 
 async function hydrateSourceArticleImages(articleList) {
-  const imageHydrationSources = ["The Mac Observer", "Six Colors", "MacStories"];
-  const articlesNeedingSourceImages = imageHydrationSources.flatMap(sourceName =>
-    articleList
-      .filter(article => article.sourceName === sourceName)
-      .filter(article => !article.cover || article.cover.startsWith("preset-"))
-      .slice(0, 8)
-  );
+  const articlesNeedingSourceImages = articleList
+    .filter(article => !article.cover || article.cover.startsWith("preset-"))
+    .slice(0, 36);
 
   if (articlesNeedingSourceImages.length === 0) return;
 
@@ -1411,7 +1407,7 @@ const CROSSOVER_CHANGELOG = [
     version: "26.1.0",
     date: "April 9, 2026",
     notes: [
-      "Workaround for Death Stranding 2 on macOS.",
+      "Workaround for a macOS game launch issue.",
       "Fix for mouse input in many Unity games.",
       "Fix for distorted Add account window in Quicken.",
       "Fix for Battle.net not installing for some users."
@@ -1424,7 +1420,7 @@ const CROSSOVER_CHANGELOG = [
       "CrossOver 26 includes Wine 11.0, with over 6,000 improvements and benefits to many popular applications.",
       "Updated core translation tech: Wine Mono 10.4.1, vkd3d 1.18.",
       "macOS: Updated D3DMetal to 3.0 and DXMT to v0.72.",
-      "macOS fixes for Helldivers 2, Kingdom Come: Deliverance II, Clair Obscur: Expedition 33, Age of Empires IV: Anniversary Edition, Warhammer 40,000: Darktide, God of War Ragnarök, Starfield, Final Fantasy VII Rebirth, Company of Heroes 3, Planet Coaster 2, CloverPit, PowerWash Simulator 2, Silent Hill f, Jurassic World Evolution 2, Assetto Corsa EVO, The Outer Worlds 2, Final Fantasy Tactics - The Ivalice Chronicles, Trails in the Sky 1st Chapter, Mafia: The Old Country, Hell is Us and Cronos: The New Dawn.",
+      "macOS fixes for a broad set of current Windows games.",
       "Includes initial user interface updates optimized for macOS Tahoe.",
       "Linux: Integrated NTsync support for kernels that support it."
     ]
@@ -1462,18 +1458,18 @@ const CROSSOVER_CHANGELOG = [
       "Updated translation engines: Wine Mono 9.4.0, vkd3d 1.14.",
       "macOS: MoltenVK updated to 1.2.10.",
       "macOS: Integrated DXMT, a Metal-based implementation of DirectX 11.",
-      "macOS: Updated D3DMetal to 2.1, adding compatibility for Street Fighter 6, Need for Speed Heat, Nioh 2, Teardown, Age of Wonders 4, Dragon's Dogma 2 and The Last of Us Part 1.",
-      "macOS: Out of the box launcher support for GOG Galaxy and Epic Games Store, and game fixes for Red Dead Redemption 2, Tekken 8, Age of Mythology: Retold, Path of Exile 2, Elite Dangerous, Monster Hunter Rise, Hero's Land, Manor Lords, Fallout 76, and Far Cry 6."
+      "macOS: Updated D3DMetal to 2.1, adding compatibility improvements for more games.",
+      "macOS: Out of the box launcher support for major game stores and broader game fixes."
     ]
   }
 ];
 
 const CROSSOVER_BLOGS = [
   {
-    title: "Finally! Diablo IV and Overwatch are playable with CrossOver 26.1 + macOS 26.5",
+    title: "CrossOver 26.1 restores compatibility for major Windows games on macOS",
     author: "Meredith Johnson",
     date: "May 18, 2026",
-    excerpt: "Good news everyone! We are very pleased to announce that Diablo IV and Overwatch are now running again on stable CrossOver 26.1 with macOS 26.5. Read more about the release details...",
+    excerpt: "Good news for Mac gaming: CrossOver 26.1 restores stable launch behavior for major Windows games on macOS 26.5. Read more about the release details...",
     link: "https://www.codeweavers.com/blog/mjohnson/2026/5/18/finally-diablo-iv-and-overwatch-are-playable-with-crossover-261-macos-265",
     image: "https://media.codeweavers.com/pub/crossover/website/htmlimages/May-2026-Blog-Post-4-New-Blog-Post-1200x630_2.png"
   },
@@ -2025,220 +2021,14 @@ class SQLiteBridge {
 }
 const db = new SQLiteBridge();
 
-let gamesCache = [
-  {
-    id: "game-1086940",
-    appid: 1086940,
-    title: "Baldur's Gate 3",
-    compatibility: "native",
-    compatLabel: "Native",
-    hasNativeMac: true,
-    genres: ["RPG", "Strategy", "Adventure"],
-    cover: "https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/1086940/",
-    steamdbUrl: "https://steamdb.info/app/1086940/",
-    protonUrl: "https://www.protondb.com/app/1086940",
-    fullDescription: "Gather your party, and return to the Forgotten Realms in a tale of fellowship and betrayal, sacrifice and survival, and the lure of absolute power.",
-    screenshots: [
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/ss_277cf5c3453b0e352ef29304c55ecba574d75db1.600x338.jpg",
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/ss_e1c876b0cb4440c94627d3b5b1c7cb7ef1ca0c5b.600x338.jpg"
-    ],
-    features: ["Single-player", "Online Co-op", "Shared/Split Screen Co-op", "Steam Achievements", "Full controller support"],
-    systemRequirements: {
-      mac: { minimum: "Minimum:\nRequires a 64-bit processor and operating system\nOS: macOS 12 or newer\nProcessor: Apple M1 or Intel Core i7\nMemory: 8 GB RAM\nGraphics: Apple M1 or AMD Radeon Pro 5500M\nStorage: 150 GB available space" }
-    },
-    releaseDate: "3 Aug 2023",
-    price: 59.99,
-    discount: 0,
-    rating: 96
-  },
-  {
-    id: "game-1091500",
-    appid: 1091500,
-    title: "Cyberpunk 2077",
-    compatibility: "perfect",
-    compatLabel: "Perfect",
-    hasNativeMac: false,
-    genres: ["Action", "RPG"],
-    cover: "https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/1091500/",
-    steamdbUrl: "https://steamdb.info/app/1091500/",
-    protonUrl: "https://www.protondb.com/app/1091500",
-    fullDescription: "Cyberpunk 2077 is an open-world, action-adventure RPG set in the megalopolis of Night City, where you play as a cyberpunk mercenary wrapped in a do-or-die fight for survival.",
-    screenshots: [
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/ss_60a6df3eb6b696f8c7b80a0c64ebadcbdbd47b59.600x338.jpg",
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/ss_dd09c733f11075d9e51c8a67c52a0a2df37894a7.600x338.jpg"
-    ],
-    features: ["Single-player", "Steam Achievements", "Full controller support", "Steam Cloud"],
-    systemRequirements: {
-      windows: { minimum: "Minimum:\nRequires a 64-bit processor and operating system\nOS: Windows 10\nProcessor: Intel Core i7-6700 or AMD Ryzen 5 1600\nMemory: 12 GB RAM\nGraphics: NVIDIA GeForce GTX 1060 6GB or AMD Radeon RX 580\nStorage: 70 GB available space" }
-    },
-    releaseDate: "10 Dec 2020",
-    price: 59.99,
-    discount: 50,
-    rating: 83
-  },
-  {
-    id: "game-1145360",
-    appid: 1145360,
-    title: "Hades",
-    compatibility: "native",
-    compatLabel: "Native",
-    hasNativeMac: true,
-    genres: ["Action", "RPG", "Indie"],
-    cover: "https://cdn.cloudflare.steamstatic.com/steam/apps/1145360/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/1145360/",
-    steamdbUrl: "https://steamdb.info/app/1145360/",
-    protonUrl: "https://www.protondb.com/app/1145360",
-    fullDescription: "Defy the god of the dead as you hack and slash out of the Underworld in this rogue-like dungeon crawler from the creators of Bastion and Transistor.",
-    screenshots: [
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/1145360/ss_49544ef4a654cd9c0c16928e146eb823ef08c2a9.600x338.jpg",
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/1145360/ss_a43e498c8c7cf0cc651ebadcd9d54e0eb37894a7.600x338.jpg"
-    ],
-    features: ["Single-player", "Steam Achievements", "Full controller support", "Steam Cloud"],
-    systemRequirements: {
-      mac: { minimum: "Minimum:\nOS: macOS 10.13.6+\nProcessor: Dual Core 2.4GHz\nMemory: 4 GB RAM\nGraphics: Intel HD 5000 or higher\nStorage: 15 GB available space" }
-    },
-    releaseDate: "17 Sep 2020",
-    price: 24.99,
-    discount: 0,
-    rating: 98
-  },
-  {
-    id: "game-413150",
-    appid: 413150,
-    title: "Stardew Valley",
-    compatibility: "native",
-    compatLabel: "Native",
-    hasNativeMac: true,
-    genres: ["Simulation", "RPG", "Indie"],
-    cover: "https://cdn.cloudflare.steamstatic.com/steam/apps/413150/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/413150/",
-    steamdbUrl: "https://steamdb.info/app/413150/",
-    protonUrl: "https://www.protondb.com/app/413150",
-    fullDescription: "You've inherited your grandfather's old farm plot in Stardew Valley. Armed with hand-me-down tools and a few coins, you set out to begin your new life.",
-    screenshots: [
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/413150/ss_3e3d9c3b0e352ef29304c55ecba574d75db1.600x338.jpg",
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/413150/ss_dd09c733f11075d9e51c8a67c52a0a2df37894a7.600x338.jpg"
-    ],
-    features: ["Single-player", "Multiplayer", "Co-op", "Steam Achievements", "Full controller support"],
-    systemRequirements: {
-      mac: { minimum: "Minimum:\nOS: Mac OS X 10.10+\nProcessor: 2.0 GHz\nMemory: 2 GB RAM\nGraphics: 256 mb video memory\nStorage: 500 MB available space" }
-    },
-    releaseDate: "26 Feb 2016",
-    price: 14.99,
-    discount: 0,
-    rating: 98
-  },
-  {
-    id: "game-1245620",
-    appid: 1245620,
-    title: "ELDEN RING",
-    compatibility: "perfect",
-    compatLabel: "Perfect",
-    hasNativeMac: false,
-    genres: ["RPG", "Action"],
-    cover: "https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/1245620/",
-    steamdbUrl: "https://steamdb.info/app/1245620/",
-    protonUrl: "https://www.protondb.com/app/1245620",
-    fullDescription: "THE NEW FANTASY ACTION RPG. Rise, Tarnished, and be guided by grace to brandish the power of the Elden Ring and become an Elden Lord in the Lands Between.",
-    screenshots: [
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/ss_277cf5c3453b0e352ef29304c55ecba574d75db1.600x338.jpg",
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/ss_e1c876b0cb4440c94627d3b5b1c7cb7ef1ca0c5b.600x338.jpg"
-    ],
-    features: ["Single-player", "Online Co-op", "Steam Achievements", "Full controller support"],
-    systemRequirements: {
-      windows: { minimum: "Minimum:\nRequires a 64-bit processor and operating system\nOS: Windows 10\nProcessor: Intel Core i5-8400 or AMD Ryzen 3 3300X\nMemory: 12 GB RAM\nGraphics: NVIDIA GeForce GTX 1060 3GB or AMD Radeon RX 580\nStorage: 60 GB available space" }
-    },
-    releaseDate: "25 Feb 2022",
-    price: 59.99,
-    discount: 0,
-    rating: 92
-  },
-  {
-    id: "game-1850570",
-    appid: 1850570,
-    title: "Death Stranding Director's Cut",
-    compatibility: "native",
-    compatLabel: "Native",
-    hasNativeMac: true,
-    genres: ["Action", "Adventure"],
-    cover: "https://cdn.cloudflare.steamstatic.com/steam/apps/1850570/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/1850570/",
-    steamdbUrl: "https://steamdb.info/app/1850570/",
-    protonUrl: "https://www.protondb.com/app/1850570",
-    fullDescription: "From legendary game creator Hideo Kojima comes a genre-defying experience, now expanded in this definitive DIRECTOR’S CUT.",
-    screenshots: [
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/1850570/ss_3e3d9c3b0e352ef29304c55ecba574d75db1.600x338.jpg",
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/1850570/ss_dd09c733f11075d9e51c8a67c52a0a2df37894a7.600x338.jpg"
-    ],
-    features: ["Single-player", "Steam Achievements", "Full controller support", "Steam Cloud"],
-    systemRequirements: {
-      mac: { minimum: "Minimum:\nOS: macOS Ventura 13.3 or newer\nProcessor: Apple M1 chip or newer\nMemory: 8 GB RAM\nStorage: 80 GB available space" }
-    },
-    releaseDate: "30 Mar 2022",
-    price: 39.99,
-    discount: 0,
-    rating: 93
-  },
-  {
-    id: "game-2050650",
-    appid: 2050650,
-    title: "Resident Evil 4",
-    compatibility: "native",
-    compatLabel: "Native",
-    hasNativeMac: true,
-    genres: ["Action", "Adventure"],
-    cover: "https://cdn.cloudflare.steamstatic.com/steam/apps/2050650/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/2050650/",
-    steamdbUrl: "https://steamdb.info/app/2050650/",
-    protonUrl: "https://www.protondb.com/app/2050650",
-    fullDescription: "Survival is only the beginning. Six years have passed since the biological disaster in Raccoon City. Leon S. Kennedy tracks the president's kidnapped daughter to a secluded European village.",
-    screenshots: [
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/2050650/ss_277cf5c3453b0e352ef29304c55ecba574d75db1.600x338.jpg",
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/2050650/ss_e1c876b0cb4440c94627d3b5b1c7cb7ef1ca0c5b.600x338.jpg"
-    ],
-    features: ["Single-player", "Steam Achievements", "Full controller support", "Steam Cloud"],
-    systemRequirements: {
-      mac: { minimum: "Minimum:\nOS: macOS Sonoma 14.0 or newer\nProcessor: Apple M1 chip or newer\nMemory: 8 GB RAM\nStorage: 70 GB available space" }
-    },
-    releaseDate: "24 Mar 2023",
-    price: 39.99,
-    discount: 25,
-    rating: 97
-  },
-  {
-    id: "game-1868140",
-    appid: 1868140,
-    title: "Dave the Diver",
-    compatibility: "native",
-    compatLabel: "Native",
-    hasNativeMac: true,
-    genres: ["Adventure", "Simulation", "Indie"],
-    cover: "https://cdn.cloudflare.steamstatic.com/steam/apps/1868140/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/1868140/",
-    steamdbUrl: "https://steamdb.info/app/1868140/",
-    protonUrl: "https://www.protondb.com/app/1868140",
-    fullDescription: "DAVE THE DIVER is a casual, singleplayer adventure RPG featuring deep-sea exploration and fishing during the day and sushi restaurant management at night.",
-    screenshots: [
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/1868140/ss_3e3d9c3b0e352ef29304c55ecba574d75db1.600x338.jpg",
-      "https://cdn.cloudflare.steamstatic.com/steam/apps/1868140/ss_dd09c733f11075d9e51c8a67c52a0a2df37894a7.600x338.jpg"
-    ],
-    features: ["Single-player", "Steam Achievements", "Full controller support", "Steam Cloud"],
-    systemRequirements: {
-      mac: { minimum: "Minimum:\nOS: OS X 10.13.6 or newer\nProcessor: Intel Core i3 Dual Core\nMemory: 8 GB RAM\nGraphics: Intel HD Graphics 4000\nStorage: 10 GB available space" }
-    },
-    releaseDate: "28 Jun 2023",
-    price: 19.99,
-    discount: 0,
-    rating: 97
-  }
-];
+let gamesCache = [];
 let gamesLoaded = false;
 let gamesLoading = false;
-const STEAM_GAMES_CACHE_KEY = "macready_steam_games_cache_v2";
+const STEAM_GAMES_CACHE_KEY = "macready_steam_games_cache_v3";
 const STEAM_GAMES_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const CROSSOVER_COMPAT_CACHE_KEY = "macready_crossover_compat_cache_v1";
+const CROSSOVER_COMPAT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const crossoverCompatibilityRequests = new Map();
 let steamGamesLastSavedAt = 0;
 let steamGamesRefreshStarted = false;
 let currentGameFilter = "trending";
@@ -2281,6 +2071,81 @@ function saveSteamGamesCache() {
   } catch (error) {
     console.warn("Steam games cache could not be saved.", error);
   }
+}
+
+function getCrossoverCompatibilityCache() {
+  try {
+    const cache = JSON.parse(localStorage.getItem(CROSSOVER_COMPAT_CACHE_KEY) || "{}");
+    return cache && typeof cache === "object" ? cache : {};
+  } catch (error) {
+    console.warn("CrossOver compatibility cache could not be read.", error);
+    return {};
+  }
+}
+
+function getCachedCrossoverCompatibility(title) {
+  const key = normalizeCrossoverCacheKey(title);
+  if (!key) return null;
+  const cache = getCrossoverCompatibilityCache();
+  const entry = cache[key];
+  if (!entry || Date.now() - Number(entry.savedAt || 0) > CROSSOVER_COMPAT_CACHE_TTL_MS) return null;
+  return entry.data || null;
+}
+
+function saveCrossoverCompatibilityCache(title, data) {
+  const key = normalizeCrossoverCacheKey(title);
+  if (!key) return;
+
+  try {
+    const cache = getCrossoverCompatibilityCache();
+    cache[key] = {
+      savedAt: Date.now(),
+      data
+    };
+    localStorage.setItem(CROSSOVER_COMPAT_CACHE_KEY, JSON.stringify(cache));
+  } catch (error) {
+    console.warn("CrossOver compatibility cache could not be saved.", error);
+  }
+}
+
+function normalizeCrossoverCacheKey(title) {
+  return String(title || "")
+    .toLowerCase()
+    .replace(/[™®©]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function getCrossoverCompatibilityEndpoint(game) {
+  const url = new URL("/api/crossover-compatibility", window.location.origin);
+  url.searchParams.set("title", game.title);
+  return url.toString();
+}
+
+async function fetchCrossoverCompatibility(game) {
+  const cached = getCachedCrossoverCompatibility(game.title);
+  if (cached) return cached;
+
+  const requestKey = normalizeCrossoverCacheKey(game.title);
+  if (crossoverCompatibilityRequests.has(requestKey)) {
+    return crossoverCompatibilityRequests.get(requestKey);
+  }
+
+  const request = fetch(getCrossoverCompatibilityEndpoint(game))
+    .then(async response => {
+      const data = await response.json();
+      if (!response.ok && data?.reason !== "no_match") {
+        throw new Error(data?.message || "CodeWeavers lookup failed");
+      }
+      saveCrossoverCompatibilityCache(game.title, data);
+      return data;
+    })
+    .finally(() => {
+      crossoverCompatibilityRequests.delete(requestKey);
+    });
+
+  crossoverCompatibilityRequests.set(requestKey, request);
+  return request;
 }
 
 function refreshSteamGamesIfNeeded() {
@@ -2328,60 +2193,20 @@ function applyAtmosphericGlow(game) {
     return;
   }
   
-  const title = (game.title || "").toLowerCase();
   let colors = null;
   
-  if (title.includes("cyberpunk")) {
+  if (game.compatibility === "native") {
     colors = [
-      "rgba(0, 240, 255, 0.65)", // Cyberpunk Hot Cyan
-      "rgba(255, 0, 127, 0.55)",  // Cyberpunk Vibrant Magenta/Pink
-      "rgba(123, 31, 162, 0.4)"   // Deep Dark Violet
-    ];
-  } else if (title.includes("stardew") || title.includes("diver")) {
-    colors = [
-      "rgba(16, 185, 129, 0.6)",  // Stardew/Diver Emerald Green
-      "rgba(245, 158, 11, 0.5)",   // Warm Amber Gold
-      "rgba(34, 197, 94, 0.45)"   // Lush Meadow Green
-    ];
-  } else if (title.includes("baldur") || title.includes("elden") || title.includes("witcher")) {
-    colors = [
-      "rgba(67, 56, 202, 0.65)",  // BG3/Elden Royal Indigo
-      "rgba(217, 119, 6, 0.55)",  // Burning Dragon Amber
-      "rgba(99, 102, 241, 0.4)"   // Celestial Blue
-    ];
-  } else if (title.includes("hades")) {
-    colors = [
-      "rgba(239, 68, 68, 0.65)",  // Hades Blood Crimson
-      "rgba(124, 58, 237, 0.55)", // Underworld Shadow Violet
-      "rgba(245, 158, 11, 0.45)"  // Underworld Fire Amber
-    ];
-  } else if (title.includes("resident")) {
-    colors = [
-      "rgba(127, 29, 29, 0.7)",   // RE4 Dark Blood Red
-      "rgba(30, 41, 59, 0.6)",    // Shadow Dark Slate
-      "rgba(20, 30, 25, 0.55)"    // Decayed Muddy Green
-    ];
-  } else if (title.includes("death stranding") || title.includes("stranding")) {
-    colors = [
-      "rgba(112, 128, 144, 0.6)", // Void Fog Grey
-      "rgba(234, 179, 8, 0.5)",   // Chiral Golden Dust
-      "rgba(30, 30, 48, 0.45)"    // Deep Obsidian Indigo
+      "rgba(52, 199, 89, 0.6)",
+      "rgba(0, 122, 255, 0.5)",
+      "rgba(175, 82, 222, 0.4)"
     ];
   } else {
-    // Elegant dynamic generator for other games based on compatibility
-    if (game.compatibility === "native") {
-      colors = [
-        "rgba(52, 199, 89, 0.6)",   // Native Green
-        "rgba(0, 122, 255, 0.5)",   // Cobalt Blue
-        "rgba(175, 82, 222, 0.4)"   // Royal Purple
-      ];
-    } else {
-      colors = [
-        "rgba(0, 122, 255, 0.6)",   // Cobalt Blue
-        "rgba(175, 82, 222, 0.5)",   // Royal Purple
-        "rgba(255, 45, 85, 0.4)"    // Deep Pink
-      ];
-    }
+    colors = [
+      "rgba(0, 122, 255, 0.6)",
+      "rgba(175, 82, 222, 0.5)",
+      "rgba(255, 45, 85, 0.4)"
+    ];
   }
   
   if (colors) {
@@ -2418,6 +2243,48 @@ function parseSteamDate(dateStr) {
   }
   
   return new Date(0);
+}
+
+function isUnreleasedGame(game) {
+  if (!game) return false;
+  if (game.comingSoon === true) return true;
+
+  const rawDate = String(game.releaseDate || "").trim();
+  if (!rawDate) return false;
+
+  const lowerDate = rawDate.toLowerCase();
+  if (/\b(coming soon|to be announced|tba|tbd)\b/.test(lowerDate)) return true;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const yearOnly = rawDate.match(/^(19\d{2}|20\d{2})$/);
+  if (yearOnly) {
+    return parseInt(yearOnly[1], 10) >= now.getFullYear();
+  }
+
+  const monthYear = rawDate.match(/^[A-Za-z]+\s+(19\d{2}|20\d{2})$/);
+  if (monthYear) {
+    const parsedMonth = parseSteamDate(rawDate);
+    return parsedMonth.getFullYear() > now.getFullYear()
+      || (parsedMonth.getFullYear() === now.getFullYear() && parsedMonth.getMonth() >= now.getMonth());
+  }
+
+  const parsedDate = parseSteamDate(rawDate);
+  return parsedDate > today;
+}
+
+function setGameCompatibility(game) {
+  if (!game) return;
+
+  if (isUnreleasedGame(game)) {
+    game.compatibility = "unreleased";
+    game.compatLabel = "Unreleased";
+    return;
+  }
+
+  game.compatibility = game.hasNativeMac ? "native" : "playable";
+  game.compatLabel = game.hasNativeMac ? "Native" : "Playable";
 }
 
 // --- Distribute default genres for initial search results based on keywords ---
@@ -2508,12 +2375,7 @@ function parseSteamSearchResults(htmlText) {
       // Release date
       const releaseDateEl = row.querySelector(".search_released");
       const releaseDate = releaseDateEl ? releaseDateEl.textContent.trim() : "";
-      const cover = getSteamSearchCover(row);
-      if (!cover) return;
-
-      // Compatibility
-      let compatibility = hasMac ? "native" : "playable";
-      let compatLabel = hasMac ? "Native" : "Playable";
+      const cover = getSteamSearchCover(row) || buildGeneratedGameCover(title);
 
       const gameObj = {
         id: "game-" + appid,
@@ -2523,8 +2385,8 @@ function parseSteamSearchResults(htmlText) {
         activePlayers: null,
         price: priceOriginal,
         discount: discount,
-        compatibility: compatibility,
-        compatLabel: compatLabel,
+        compatibility: "",
+        compatLabel: "",
         hasNativeMac: hasMac,
         genres: [],
         cover,
@@ -2535,9 +2397,11 @@ function parseSteamSearchResults(htmlText) {
         screenshots: [],
         features: [],
         systemRequirements: null,
-        releaseDate: releaseDate
+        releaseDate: releaseDate,
+        comingSoon: false
       };
 
+      setGameCompatibility(gameObj);
       assignDefaultGenres(gameObj);
       games.push(gameObj);
     });
@@ -2549,9 +2413,86 @@ function parseSteamSearchResults(htmlText) {
 
 function getSteamSearchCover(row) {
   const image = row.querySelector(".search_capsule img, img");
-  const rawSrc = image?.getAttribute("src") || image?.getAttribute("data-src") || "";
+  const rawSrc = image?.getAttribute("data-src") || image?.getAttribute("src") || "";
+  return normalizeSteamImageUrl(rawSrc);
+}
+
+function normalizeSteamImageUrl(rawSrc) {
   if (!rawSrc) return "";
   return rawSrc.startsWith("//") ? `https:${rawSrc}` : rawSrc;
+}
+
+function buildGeneratedGameCover(title) {
+  const safeTitle = escapeHtml(String(title || "Game"));
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="616" height="353" viewBox="0 0 616 353">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#123b5c"/>
+          <stop offset="0.55" stop-color="#1d274d"/>
+          <stop offset="1" stop-color="#341735"/>
+        </linearGradient>
+      </defs>
+      <rect width="616" height="353" fill="url(#bg)"/>
+      <rect x="24" y="24" width="568" height="305" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="48" y="188" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="800">${safeTitle}</text>
+    </svg>
+  `;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function getSteamMovieSource(movie) {
+  if (!movie) return { url: "", poster: "" };
+
+  const collectUrls = value => {
+    if (!value) return [];
+    if (typeof value === "string") return [normalizeSteamImageUrl(value)];
+    if (Array.isArray(value)) return value.flatMap(collectUrls);
+    if (typeof value === "object") return Object.values(value).flatMap(collectUrls);
+    return [];
+  };
+
+  const candidates = [
+    ...collectUrls(movie.webm),
+    ...collectUrls(movie.mp4),
+    ...collectUrls(movie.highlight_movie_webm),
+    ...collectUrls(movie.highlight_movie_mp4)
+  ].filter(url => /\.(webm|mp4)(\?|$)/i.test(url));
+
+  return {
+    url: normalizeSteamImageUrl(candidates[0] || ""),
+    poster: normalizeSteamImageUrl(movie.thumbnail || movie.poster || "")
+  };
+}
+
+function getFirstPlayableSteamVideo(html) {
+  if (!html) return { url: "", poster: "" };
+  const node = document.createElement("div");
+  node.innerHTML = String(html);
+  const source = node.querySelector('video source[src$=".webm"], video source[src*=".webm?"], video source[src$=".mp4"], video source[src*=".mp4?"]');
+  const video = source?.closest("video") || node.querySelector("video");
+  if (source) {
+    return {
+      url: normalizeSteamImageUrl(source.getAttribute("src") || ""),
+      poster: normalizeSteamImageUrl(video?.getAttribute("poster") || "")
+    };
+  }
+
+  const propsNode = node.querySelector("[data-props]");
+  if (!propsNode) return { url: "", poster: "" };
+
+  try {
+    const props = JSON.parse(propsNode.getAttribute("data-props") || "{}");
+    const trailer = (props.trailers || []).find(item => item.hlsManifest || item.poster);
+    const probe = document.createElement("video");
+    const canUseHls = !!probe.canPlayType("application/vnd.apple.mpegurl");
+    return {
+      url: canUseHls ? normalizeSteamImageUrl(trailer?.hlsManifest || "") : "",
+      poster: normalizeSteamImageUrl(trailer?.poster || "")
+    };
+  } catch {
+    return { url: "", poster: "" };
+  }
 }
 
 // --- Merge games into cache (deduplicates by appid) ---
@@ -2732,9 +2673,9 @@ async function openSteamGameDetail(gameId) {
           game.screenshots = data.screenshots.map(s => s.path_full).slice(0, 5);
         }
         if (data.movies) {
-          const movie = data.movies.find(m => m.webm?.max || m.webm?.["480"] || m.mp4?.max || m.mp4?.["480"]);
-          game.videoUrl = movie?.webm?.max || movie?.webm?.["480"] || movie?.mp4?.max || movie?.mp4?.["480"] || "";
-          game.videoPoster = movie?.thumbnail || "";
+          const movie = data.movies.map(getSteamMovieSource).find(source => source.url);
+          game.videoUrl = movie?.url || "";
+          game.videoPoster = movie?.poster || "";
         }
         if (!game.videoUrl) {
           const inlineVideo = extractSteamInlineVideo(data.about_the_game || data.detailed_description || "");
@@ -2749,6 +2690,7 @@ async function openSteamGameDetail(gameId) {
         }
         if (data.release_date) {
           game.releaseDate = data.release_date.date;
+          game.comingSoon = !!data.release_date.coming_soon;
         }
         if (data.genres) {
           game.genres = data.genres.map(g => g.description).slice(0, 4);
@@ -2756,21 +2698,32 @@ async function openSteamGameDetail(gameId) {
         if (data.categories) {
           game.features = data.categories.map(c => c.description).slice(0, 10);
         }
-        game.systemRequirements = {
-          mac: data.mac_requirements || null,
-          windows: data.pc_requirements || null
-        };
+        game.systemRequirements = mergeSystemRequirements(game.systemRequirements, {
+          mac: data.mac_requirements,
+          windows: data.pc_requirements
+        });
         if (data.price_overview) {
           game.price = data.price_overview.initial / 100;
           game.discount = data.price_overview.discount_percent || 0;
         }
         if (data.platforms) {
           game.hasNativeMac = !!data.platforms.mac;
-          game.compatibility = game.hasNativeMac ? "native" : "playable";
-          game.compatLabel = game.hasNativeMac ? "Native" : "Playable";
+          setGameCompatibility(game);
+        }
+
+        if (!hasAnySystemRequirements(game.systemRequirements)) {
+          const pageRes = await fetchViaProxy(`https://store.steampowered.com/app/${game.appid}/`);
+          if (pageRes.ok) {
+            const pageHtml = await pageRes.text();
+            const pageRequirements = extractSteamPageSystemRequirements(pageHtml);
+            if (pageRequirements) {
+              game.systemRequirements = mergeSystemRequirements(game.systemRequirements, pageRequirements);
+            }
+          }
         }
         
         // Re-render modal in-place with real-time assets
+        saveSteamGamesCache();
         renderGameDetailContent(game, body);
       }
     }
@@ -2792,6 +2745,583 @@ function closeSteamGameDetail() {
   }
 }
 
+function getGameQuickLookSubtitle(game) {
+  const parts = [];
+  if (game.developer) parts.push(game.developer);
+  if (game.publisher) parts.push(`Published by ${game.publisher}`);
+  if (parts.length > 0) return parts.join(" | ");
+  if (game.releaseDate) return `Released ${game.releaseDate}`;
+  return (game.genres || []).slice(0, 2).join(" | ");
+}
+
+function extractRequirementValue(text, label) {
+  const match = text.match(new RegExp(`${label}:\\s*([^\\n]+)`, "i"));
+  return match ? match[1].trim() : "";
+}
+
+function renderCrossoverStars(stars) {
+  const count = Math.max(0, Math.min(5, Number(stars) || 0));
+  return `${"★".repeat(count)}${"☆".repeat(5 - count)}`;
+}
+
+function buildCrossoverCompatibilityCardHtml(game) {
+  return `
+    <div id="game-detail-crossover-card" class="quick-look-crossover-card" data-appid="${escapeHtml(String(game.appid || ""))}">
+      ${renderCrossoverCompatibilityCardContent(game)}
+    </div>
+  `;
+}
+
+function getQuickLookReports(game) {
+  return db.query("SELECT * FROM reports WHERE appid = ?", [game.appid]);
+}
+
+function getQuickLookReportRatingClass(rating) {
+  const normalized = String(rating || "").toLowerCase();
+  if (normalized === "native") return "native";
+  if (normalized === "excellent") return "perfect";
+  if (normalized === "playable") return "playable";
+  if (normalized === "limited") return "silver";
+  return "unsupported";
+}
+
+function formatQuickLookReportDate(value) {
+  if (!value) return "";
+  return new Date(value).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric"
+  });
+}
+
+function renderQuickLookReportPreview(report) {
+  if (!report) {
+    return `<p class="quick-look-crossover-muted">No user reports yet.</p>`;
+  }
+
+  const versionText = report.crossoverVersion ? ` ${escapeHtml(report.crossoverVersion)}` : "";
+  const issuesHtml = report.issues
+    ? `<span><strong>Issues:</strong> ${escapeHtml(report.issues)}</span>`
+    : "";
+
+  return `
+    <div class="quick-look-report-preview">
+      <div class="quick-look-report-preview-head">
+        <span class="proton-badge-large ${getQuickLookReportRatingClass(report.rating)}">${escapeHtml(report.rating)}</span>
+        <strong>${escapeHtml(report.macModel)} • ${escapeHtml(report.chip)}</strong>
+      </div>
+      <span><strong>System:</strong> ${escapeHtml(report.ram)} RAM • ${escapeHtml(report.macosVersion)}</span>
+      <span><strong>Launch:</strong> ${escapeHtml(report.launchMethod)}${versionText}</span>
+      <span><strong>Performance:</strong> ${escapeHtml(report.fpsNotes)}</span>
+      ${issuesHtml}
+    </div>
+  `;
+}
+
+function buildQuickLookUserReportsHtml(game) {
+  const reports = getQuickLookReports(game);
+  const firstReport = reports[0] || null;
+  const profile = db.query("SELECT * FROM hardware_profile")[0] || {};
+  const selectedLaunchMethod = game.hasNativeMac ? "Native" : "CrossOver";
+  const selectedRating = game.hasNativeMac ? "Native" : "Playable";
+  const selectedModel = profile.macModel || "MacBook Pro";
+  const selectedChip = profile.chip || "M1";
+
+  return `
+    <div class="quick-look-user-reports">
+      <div class="quick-look-user-reports-head">
+        <span>User game reports</span>
+      </div>
+
+      <div class="quick-look-report-menu-grid">
+        <select class="quick-look-report-input quick-look-report-rating" aria-label="Rating tier">
+          ${["Native", "Excellent", "Playable", "Limited", "Broken"].map(value => `
+            <option value="${value}" ${value === selectedRating ? "selected" : ""}>${value}</option>
+          `).join("")}
+        </select>
+        <select class="quick-look-report-input quick-look-report-launch" aria-label="Launch method">
+          ${["Native", "Rosetta 2", "CrossOver", "Wine", "GPTK", "Cloud", "Unknown"].map(value => `
+            <option value="${value}" ${value === selectedLaunchMethod ? "selected" : ""}>${value}</option>
+          `).join("")}
+        </select>
+        <select class="quick-look-report-input quick-look-report-model" aria-label="Mac model">
+          ${["MacBook Pro", "MacBook Air", "MacBook Neo", "Mac Studio", "Mac mini", "Mac Pro", "iMac"].map(value => `
+            <option value="${value}" ${value === selectedModel ? "selected" : ""}>${value}</option>
+          `).join("")}
+        </select>
+        <select class="quick-look-report-input quick-look-report-chip" aria-label="Apple silicon chip">
+          ${["M1", "M1 Pro", "M1 Max", "M1 Ultra", "M2", "M2 Pro", "M2 Max", "M2 Ultra", "M3", "M3 Pro", "M3 Max", "M4", "M4 Pro", "M4 Max", "M5", "M5 Pro", "M5 Max"].map(value => `
+            <option value="${value}" ${value === selectedChip ? "selected" : ""}>${value}</option>
+          `).join("")}
+        </select>
+      </div>
+
+      <div class="quick-look-report-preview-slot">
+        ${renderQuickLookReportPreview(firstReport)}
+      </div>
+      <div class="quick-look-report-actions">
+        <button type="button" class="quick-look-add-report-btn" data-game-id="${escapeHtml(String(game.id))}">Submit report</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderCrossoverCompatibilityCardContent(game) {
+  const data = game.crossoverCompatibility;
+
+  if (game.crossoverCompatibilityState === "error") {
+    return `
+      <div class="quick-look-crossover-title">CrossOver playability</div>
+      <p class="quick-look-crossover-muted">CodeWeavers lookup unavailable.</p>
+      ${buildQuickLookUserReportsHtml(game)}
+    `;
+  }
+
+  if (data?.found) {
+    const rating = data.macRating || {};
+    const versionText = rating.lastTestedVersion ? `CrossOver ${escapeHtml(rating.lastTestedVersion)}` : "CrossOver";
+    const reportText = Number.isFinite(rating.reportCount) && rating.reportCount > 0
+      ? ` • ${rating.reportCount} report${rating.reportCount === 1 ? "" : "s"}`
+      : "";
+
+    return `
+      <div class="quick-look-crossover-title">CrossOver playability</div>
+      <div class="quick-look-crossover-rating">
+        <span class="quick-look-crossover-stars" aria-label="${escapeHtml(String(rating.stars || 0))} of 5 stars">${renderCrossoverStars(rating.stars)}</span>
+        <strong>${escapeHtml(rating.label || "Not Rated")}</strong>
+      </div>
+      <p>${versionText}${reportText}</p>
+      <a href="${escapeHtml(data.pageUrl)}" target="_blank" rel="noopener">Open CodeWeavers report</a>
+      ${buildQuickLookUserReportsHtml(game)}
+    `;
+  }
+
+  if (data && data.found === false) {
+    return `
+      <div class="quick-look-crossover-title">CrossOver playability</div>
+      <p class="quick-look-crossover-muted">No CodeWeavers listing found for this title.</p>
+      ${data.searchUrl ? `<a href="${escapeHtml(data.searchUrl)}" target="_blank" rel="noopener">Search CodeWeavers</a>` : ""}
+      ${buildQuickLookUserReportsHtml(game)}
+    `;
+  }
+
+  return `
+    <div class="quick-look-crossover-title">CrossOver playability</div>
+    <p class="quick-look-crossover-muted">Checking CodeWeavers...</p>
+    ${buildQuickLookUserReportsHtml(game)}
+  `;
+}
+
+function updateCrossoverCompatibilityCard(game) {
+  const card = document.getElementById("game-detail-crossover-card");
+  if (!card || String(card.dataset.appid || "") !== String(game.appid || "")) return;
+  card.innerHTML = renderCrossoverCompatibilityCardContent(game);
+  bindQuickLookUserReports(game);
+}
+
+function bindQuickLookUserReports(game) {
+  const card = document.getElementById("game-detail-crossover-card");
+  if (!card || String(card.dataset.appid || "") !== String(game.appid || "")) return;
+
+  const addBtn = card.querySelector(".quick-look-add-report-btn");
+  const ratingSelect = card.querySelector(".quick-look-report-rating");
+  const launchSelect = card.querySelector(".quick-look-report-launch");
+  const modelSelect = card.querySelector(".quick-look-report-model");
+  const chipSelect = card.querySelector(".quick-look-report-chip");
+
+  if (addBtn) {
+    addBtn.onclick = () => {
+      openReportSubmission(game.id);
+      const reportRating = document.getElementById("report-rating");
+      const reportLaunch = document.getElementById("report-launch-method");
+      const reportModel = document.getElementById("report-mac-model");
+      const reportChip = document.getElementById("report-chip");
+      const crossoverVerContainer = document.getElementById("report-crossover-ver-container");
+      const crossoverVerInput = document.getElementById("report-crossover-ver");
+
+      if (reportRating && ratingSelect) reportRating.value = ratingSelect.value;
+      if (reportLaunch && launchSelect) reportLaunch.value = launchSelect.value;
+      if (reportModel && modelSelect) reportModel.value = modelSelect.value;
+      if (reportChip && chipSelect) reportChip.value = chipSelect.value;
+      if (crossoverVerContainer && crossoverVerInput && reportLaunch) {
+        const usesCrossOver = reportLaunch.value === "CrossOver";
+        crossoverVerContainer.style.display = usesCrossOver ? "flex" : "none";
+        crossoverVerInput.required = usesCrossOver;
+      }
+    };
+  }
+}
+
+async function loadGameCrossoverCompatibility(game) {
+  if (!game?.title) return;
+
+  const cached = getCachedCrossoverCompatibility(game.title);
+  if (cached) {
+    game.crossoverCompatibility = cached;
+    game.crossoverCompatibilityState = "loaded";
+    updateCrossoverCompatibilityCard(game);
+    return;
+  }
+
+  if (game.crossoverCompatibilityState === "loading") {
+    updateCrossoverCompatibilityCard(game);
+    return;
+  }
+
+  game.crossoverCompatibilityState = "loading";
+  updateCrossoverCompatibilityCard(game);
+
+  try {
+    game.crossoverCompatibility = await fetchCrossoverCompatibility(game);
+    game.crossoverCompatibilityState = "loaded";
+  } catch (error) {
+    console.warn("CodeWeavers compatibility lookup failed.", error);
+    game.crossoverCompatibility = null;
+    game.crossoverCompatibilityState = "error";
+  }
+
+  updateCrossoverCompatibilityCard(game);
+}
+
+function buildQuickLookRequirementHtml(game) {
+  const requirements = game.systemRequirements?.mac || game.systemRequirements?.windows;
+  const text = cleanSteamHtml(requirements?.minimum || requirements?.recommended || "");
+  const rows = [
+    ["OS", extractRequirementValue(text, "OS")],
+    ["Processor", extractRequirementValue(text, "Processor")],
+    ["Graphics", extractRequirementValue(text, "Graphics")],
+    ["Memory", extractRequirementValue(text, "Memory")]
+  ].filter(([, value]) => value);
+
+  return `
+    ${rows.length > 0 ? `
+      <div class="quick-look-spec-list">
+        ${rows.map(([label, value]) => `<span><strong>${label}:</strong> ${escapeHtml(value)}</span>`).join("")}
+      </div>
+    ` : ""}
+    ${buildCrossoverCompatibilityCardHtml(game)}
+  `;
+}
+
+function renderGameQuickLookContent(game) {
+  const headerTitle = document.getElementById("game-modal-header-title");
+  const title = document.getElementById("game-detail-title");
+  const developer = document.getElementById("game-detail-developer");
+  const description = document.getElementById("game-detail-desc");
+  const buyBtn = document.getElementById("game-detail-buy-btn");
+
+  if (headerTitle) headerTitle.textContent = game.title;
+  if (title) title.textContent = game.title;
+  if (developer) developer.textContent = getGameQuickLookSubtitle(game);
+  if (description) description.textContent = game.fullDescription || "";
+  if (buyBtn) buyBtn.href = game.storeUrl;
+
+  const tagsContainer = document.getElementById("game-detail-tags");
+  if (tagsContainer) {
+    tagsContainer.innerHTML = (game.genres || [])
+      .slice(0, 4)
+      .map(genre => `<span class="tag-pill">${escapeHtml(String(genre))}</span>`)
+      .join("");
+  }
+
+  const compatDot = document.getElementById("game-detail-compat-dot");
+  const compatLabel = document.getElementById("game-detail-compat-label");
+  if (compatDot && compatLabel) {
+    compatDot.className = "compat-indicator-dot";
+    compatDot.classList.add(game.compatibility);
+    compatLabel.textContent = game.compatLabel;
+  }
+
+  const specsContainer = document.getElementById("hardware-match-card");
+  if (specsContainer) specsContainer.innerHTML = buildQuickLookRequirementHtml(game);
+  bindQuickLookUserReports(game);
+  loadGameCrossoverCompatibility(game);
+
+  const activePlayers = document.getElementById("game-detail-active-players");
+  const peakPlayers = document.getElementById("game-detail-peak-players");
+  const rating = document.getElementById("game-detail-rating");
+  const ratingBar = document.getElementById("game-detail-rating-bar");
+  if (activePlayers) activePlayers.textContent = game.activePlayers !== null && game.activePlayers !== undefined ? `${Number(game.activePlayers).toLocaleString()} CCU` : "Offline";
+  if (peakPlayers) peakPlayers.textContent = game.peakPlayers !== null && game.peakPlayers !== undefined ? Number(game.peakPlayers).toLocaleString() : "N/A";
+  if (rating) rating.textContent = game.rating !== null && game.rating !== undefined ? `${game.rating}% Positive` : "No rating data";
+  if (ratingBar) ratingBar.style.width = game.rating !== null && game.rating !== undefined ? `${game.rating}%` : "0%";
+
+  const steamLink = document.getElementById("game-side-link-steam");
+  const protonLink = document.getElementById("game-side-link-proton");
+  const steamdbLink = document.getElementById("game-side-link-steamdb");
+  if (steamLink) steamLink.href = game.storeUrl;
+  if (protonLink) protonLink.href = game.protonUrl;
+  if (steamdbLink) steamdbLink.href = game.steamdbUrl;
+
+  const video = document.getElementById("game-detail-video");
+  if (video) {
+    const poster = game.videoPoster || game.cover || buildGeneratedGameCover(game.title);
+    video.poster = poster;
+    video.style.backgroundImage = poster ? `url("${String(poster).replace(/"/g, "%22")}")` : "";
+    if (game.videoUrl) {
+      video.controls = true;
+      video.classList.remove("awaiting-video");
+      video.style.backgroundImage = "";
+      if (video.getAttribute("src") !== game.videoUrl) {
+        video.src = game.videoUrl;
+        video.load();
+      }
+    } else {
+      video.controls = false;
+      video.classList.add("awaiting-video");
+      if (video.hasAttribute("src")) {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      }
+    }
+  }
+
+  const screenshotsWrapper = document.getElementById("game-screenshots-wrapper");
+  if (screenshotsWrapper) {
+    screenshotsWrapper.innerHTML = (game.screenshots || [])
+      .slice(0, 8)
+      .map((src, index) => `
+        <article class="game-screenshot-card" data-src="${escapeHtml(String(src))}">
+          <img src="${escapeHtml(String(src))}" alt="${escapeHtml(game.title)} screenshot ${index + 1}" loading="lazy" decoding="async">
+        </article>
+      `)
+      .join("");
+    enableGameScreenshotCarousel(screenshotsWrapper);
+  }
+
+  const reviewCard = document.getElementById("game-detail-review-card");
+  const reviewExcerpt = document.getElementById("game-detail-review-excerpt");
+  if (reviewCard && reviewExcerpt) {
+    if (game.reviewExcerpt) {
+      reviewExcerpt.textContent = `"${game.reviewExcerpt}"`;
+      reviewCard.classList.remove("hidden");
+    } else {
+      reviewCard.classList.add("hidden");
+    }
+  }
+}
+
+function enableGameScreenshotCarousel(wrapper) {
+  let isDown = false;
+  let startX = 0;
+  let scrollLeft = 0;
+  let didDrag = false;
+  let pressedCard = null;
+
+  wrapper.onpointerdown = event => {
+    if (event.button !== 0) return;
+    isDown = true;
+    didDrag = false;
+    pressedCard = event.target.closest(".game-screenshot-card");
+    startX = event.clientX;
+    scrollLeft = wrapper.scrollLeft;
+    wrapper.classList.add("dragging");
+    wrapper.setPointerCapture(event.pointerId);
+  };
+
+  wrapper.onpointermove = event => {
+    if (!isDown) return;
+    const delta = event.clientX - startX;
+    if (Math.abs(delta) > 8) didDrag = true;
+    wrapper.scrollLeft = scrollLeft - delta;
+  };
+
+  const endDrag = (event, shouldOpen) => {
+    if (!isDown) return;
+    isDown = false;
+    wrapper.classList.remove("dragging");
+    if (wrapper.hasPointerCapture(event.pointerId)) {
+      wrapper.releasePointerCapture(event.pointerId);
+    }
+
+    if (shouldOpen && !didDrag && pressedCard) {
+      const image = pressedCard.querySelector("img");
+      const src = pressedCard.dataset.src || image?.src || "";
+      if (src) openGameScreenshotViewer(src, image?.alt || "");
+    }
+
+    pressedCard = null;
+    didDrag = false;
+  };
+
+  wrapper.onpointerup = event => endDrag(event, true);
+  wrapper.onpointercancel = event => endDrag(event, false);
+  wrapper.onpointerleave = event => endDrag(event, false);
+}
+
+function openGameScreenshotViewer(src, alt = "") {
+  closeGameScreenshotViewer();
+
+  const viewer = document.createElement("div");
+  viewer.id = "game-screenshot-viewer";
+  viewer.className = "game-screenshot-viewer";
+  viewer.innerHTML = `
+    <button class="game-screenshot-viewer-close" type="button" aria-label="Close screenshot">&times;</button>
+    <img src="${escapeHtml(String(src))}" alt="${escapeHtml(String(alt))}">
+  `;
+
+  viewer.addEventListener("click", event => {
+    if (event.target === viewer || event.target.closest(".game-screenshot-viewer-close")) {
+      closeGameScreenshotViewer();
+    }
+  });
+
+  document.body.appendChild(viewer);
+}
+
+function closeGameScreenshotViewer() {
+  const viewer = document.getElementById("game-screenshot-viewer");
+  if (viewer) viewer.remove();
+}
+
+async function updateGameQuickLookStoreData(game) {
+  try {
+    const url = `https://store.steampowered.com/api/appdetails?appids=${game.appid}&l=english&cc=US`;
+    const res = await fetchViaProxy(url);
+    if (!res.ok) return;
+
+    let parsed;
+    try {
+      const json = await res.json();
+      const raw = typeof json === "string" ? json : (json.contents || JSON.stringify(json));
+      parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    } catch {
+      const text = await res.text();
+      parsed = JSON.parse(text);
+    }
+
+    const data = parsed?.[game.appid]?.data;
+    if (!data) return;
+
+    if (data.screenshots) {
+      game.screenshots = data.screenshots.map(s => s.path_full).slice(0, 8);
+    }
+    if (data.movies) {
+      const movie = data.movies.map(getSteamMovieSource).find(source => source.url);
+      if (movie) {
+        game.videoUrl = movie.url;
+        game.videoPoster = movie.poster || game.cover;
+      }
+    }
+    if (!game.videoUrl) {
+      const inlineVideo = getFirstPlayableSteamVideo(data.about_the_game || data.detailed_description || "");
+      if (inlineVideo.url) {
+        game.videoUrl = inlineVideo.url;
+        game.videoPoster = inlineVideo.poster || game.videoPoster || game.cover;
+      } else if (inlineVideo.poster) {
+        game.videoPoster = inlineVideo.poster;
+      }
+    }
+    let steamPageHtml = "";
+    if (!game.videoUrl || !hasAnySystemRequirements(game.systemRequirements)) {
+      const pageRes = await fetchViaProxy(`https://store.steampowered.com/app/${game.appid}/`);
+      if (pageRes.ok) steamPageHtml = await pageRes.text();
+    }
+    if (!game.videoUrl && steamPageHtml) {
+      const pageVideo = getFirstPlayableSteamVideo(steamPageHtml);
+      if (pageVideo.url) {
+        game.videoUrl = pageVideo.url;
+        game.videoPoster = pageVideo.poster || game.videoPoster || game.cover;
+      } else if (pageVideo.poster) {
+        game.videoPoster = pageVideo.poster;
+      }
+    }
+    if (data.short_description || data.detailed_description) {
+      game.fullDescription = data.short_description || cleanSteamHtml(data.detailed_description).slice(0, 500);
+    }
+    if (data.developers) {
+      game.developer = data.developers.join(", ");
+    }
+    if (data.publishers) {
+      game.publisher = data.publishers.join(", ");
+    }
+    if (data.release_date) {
+      game.releaseDate = data.release_date.date;
+      game.comingSoon = !!data.release_date.coming_soon;
+    }
+    if (data.genres) {
+      game.genres = data.genres.map(g => g.description).slice(0, 4);
+    }
+    if (data.mac_requirements || data.pc_requirements) {
+      game.systemRequirements = mergeSystemRequirements(game.systemRequirements, {
+        mac: data.mac_requirements,
+        windows: data.pc_requirements
+      });
+    }
+    if (!hasAnySystemRequirements(game.systemRequirements) && steamPageHtml) {
+      const pageRequirements = extractSteamPageSystemRequirements(steamPageHtml);
+      if (pageRequirements) {
+        game.systemRequirements = mergeSystemRequirements(game.systemRequirements, pageRequirements);
+      }
+    }
+    if (data.price_overview) {
+      game.price = data.price_overview.initial / 100;
+      game.discount = data.price_overview.discount_percent || 0;
+    }
+    if (data.platforms) {
+      game.hasNativeMac = !!data.platforms.mac;
+      setGameCompatibility(game);
+    }
+
+    saveSteamGamesCache();
+    const modal = document.getElementById("game-detail-modal");
+    if (modal && !modal.classList.contains("hidden") && modal.dataset.gameId === game.id) {
+      renderGameQuickLookContent(game);
+    }
+  } catch (err) {
+    console.warn("Failed to load Quick Look storefront data", err);
+  }
+}
+
+function openGameQuickLook(gameId) {
+  const game = gamesCache.find(g => g.id === gameId);
+  if (!game) return;
+
+  const modal = document.getElementById("game-detail-modal");
+  const bodyPane = document.getElementById("game-modal-body");
+  if (!modal) return;
+
+  modal.dataset.gameId = game.id;
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("reader-active");
+  isDetailModalOpen = true;
+  applyAtmosphericGlow(game);
+
+  renderGameQuickLookContent(game);
+  if (bodyPane) bodyPane.scrollTop = 0;
+  updateGameQuickLookStoreData(game);
+}
+
+function closeGameQuickLook() {
+  const modal = document.getElementById("game-detail-modal");
+  if (!modal || modal.classList.contains("hidden")) return;
+  closeGameScreenshotViewer();
+
+  const video = document.getElementById("game-detail-video");
+  if (video) {
+    video.pause();
+    video.controls = false;
+    video.classList.remove("awaiting-video");
+    video.style.backgroundImage = "";
+    video.removeAttribute("src");
+    video.removeAttribute("poster");
+    video.load();
+  }
+
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+  delete modal.dataset.gameId;
+  document.body.classList.remove("reader-active");
+
+  isDetailModalOpen = false;
+  if (currentApp === "games") {
+    applyAtmosphericGlow(activeAtmosphericGame);
+  } else {
+    applyAtmosphericGlow(null);
+  }
+}
+
 function cleanSteamHtml(html) {
   if (!html) return "";
   const normalized = String(html)
@@ -2804,6 +3334,67 @@ function cleanSteamHtml(html) {
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
+}
+
+function hasUsefulRequirementText(text) {
+  const cleaned = cleanSteamHtml(text);
+  return cleaned.length > 0 && !/^(?:\.{3}|…|minimum:?\s*|recommended:?\s*)$/i.test(cleaned);
+}
+
+function normalizeSteamRequirementBlock(requirements) {
+  if (!requirements) return null;
+
+  if (typeof requirements === "string") {
+    return hasUsefulRequirementText(requirements) ? { minimum: requirements, recommended: "" } : null;
+  }
+
+  const minimum = hasUsefulRequirementText(requirements.minimum) ? requirements.minimum : "";
+  const recommended = hasUsefulRequirementText(requirements.recommended) ? requirements.recommended : "";
+  return minimum || recommended ? { minimum, recommended } : null;
+}
+
+function mergeSystemRequirements(currentRequirements, nextRequirements) {
+  const currentMac = normalizeSteamRequirementBlock(currentRequirements?.mac);
+  const currentWindows = normalizeSteamRequirementBlock(currentRequirements?.windows);
+  const nextMac = normalizeSteamRequirementBlock(nextRequirements?.mac);
+  const nextWindows = normalizeSteamRequirementBlock(nextRequirements?.windows);
+
+  return {
+    mac: nextMac || currentMac || null,
+    windows: nextWindows || currentWindows || null
+  };
+}
+
+function hasAnySystemRequirements(systemRequirements) {
+  return !!(normalizeSteamRequirementBlock(systemRequirements?.mac) || normalizeSteamRequirementBlock(systemRequirements?.windows));
+}
+
+function extractSteamPageSystemRequirements(html) {
+  if (!html) return null;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(String(html), "text/html");
+  const systemRows = doc.querySelectorAll(".game_area_sys_req, .game_area_sys_req_full, [data-oslist]");
+  const extracted = { mac: null, windows: null };
+
+  systemRows.forEach(row => {
+    const labelText = `${row.getAttribute("data-oslist") || ""} ${row.textContent || ""}`.toLowerCase();
+    const minimumNode = row.querySelector(".game_area_sys_req_leftCol, .game_area_sys_req_left_col, .sysreq_contents");
+    const recommendedNode = row.querySelector(".game_area_sys_req_rightCol, .game_area_sys_req_right_col");
+    const block = normalizeSteamRequirementBlock({
+      minimum: minimumNode ? minimumNode.innerHTML : row.innerHTML,
+      recommended: recommendedNode ? recommendedNode.innerHTML : ""
+    });
+
+    if (!block) return;
+    if (labelText.includes("macos") || labelText.includes("mac os") || labelText.includes("apple")) {
+      extracted.mac = extracted.mac || block;
+    } else if (labelText.includes("windows") || !extracted.windows) {
+      extracted.windows = extracted.windows || block;
+    }
+  });
+
+  return hasAnySystemRequirements(extracted) ? extracted : null;
 }
 
 function extractSteamInlineVideo(html) {
@@ -3013,7 +3604,7 @@ function renderGameDetailContent(game, body) {
 
   body.innerHTML = `
     <div class="appstore-main-row" style="padding-bottom: 18px;">
-      <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg" onerror="this.onerror=null; this.src='${game.cover}';" alt="${game.title}" style="width: 140px; height: 65px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); object-fit: cover;">
+      <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg" alt="${game.title}" style="width: 140px; height: 65px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); object-fit: cover;">
       <div class="appstore-detail-meta" style="margin-left: 10px;">
         <h3 class="appstore-detail-title" style="font-family: var(--font-title); font-size: 24px; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">${game.title}</h3>
         <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
@@ -3119,14 +3710,13 @@ function renderGamesCarousel() {
   if (!wrapper) return;
   
   // Filter games that have a cover image
-  const gamesWithCovers = gamesCache.filter(g => g.cover);
-  if (gamesWithCovers.length === 0) {
+  if (gamesCache.length === 0) {
     wrapper.innerHTML = "";
     return;
   }
   
   // Sort by release date descending
-  const sorted = [...gamesWithCovers].sort((a, b) => {
+  const sorted = [...gamesCache].sort((a, b) => {
     const dateA = parseSteamDate(a.releaseDate);
     const dateB = parseSteamDate(b.releaseDate);
     return dateB - dateA;
@@ -3144,17 +3734,17 @@ function renderGamesCarousel() {
   
   recentGames.forEach((game, idx) => {
     const isActive = idx === 0 ? "active" : "";
+    const unreleased = isUnreleasedGame(game);
+    const releaseLabel = unreleased ? "Releases" : "Released";
     
-    const libraryHero = `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/library_hero.jpg`;
-    const capsuleLarge = `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/capsule_616x353.jpg`;
-    const headerImg = `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`;
+    const libraryHero = game.cover;
     
     slidesHtml += `
-      <div class="carousel-slide ${isActive}" data-index="${idx}" style="background-image: url('${libraryHero}'), url('${capsuleLarge}'), url('${headerImg}'), url('${game.cover}');">
+      <div class="carousel-slide ${isActive}" data-index="${idx}" style="background-image: url('${libraryHero}');">
         <div class="carousel-slide-overlay"></div>
         <div class="carousel-slide-content">
           <h2 class="carousel-slide-title">${escapeHtml(game.title)}</h2>
-          <p class="carousel-slide-date">Released: ${game.releaseDate || "Recently"}</p>
+          <p class="carousel-slide-date">${releaseLabel}: ${game.releaseDate || "TBA"}</p>
           <div class="carousel-slide-action">
             <span class="proton-badge-large ${game.compatibility}">${game.compatLabel}</span>
             <button class="btn-liquid-glass carousel-explore-btn" data-id="${game.id}">Explore Game</button>
@@ -3255,7 +3845,7 @@ function renderGamesCarousel() {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const gameId = btn.getAttribute("data-id");
-      openSteamGameDetail(gameId);
+      openGameQuickLook(gameId);
     });
   });
   
@@ -3354,7 +3944,10 @@ function renderGamesView() {
   const toRender = allFiltered.slice(0, visibleGamesCount);
 
   let html = "";
-  toRender.filter(game => game.cover).forEach(game => {
+  toRender.forEach(game => {
+    const cardImage = game.cover || buildGeneratedGameCover(game.title);
+    const safeCardImage = escapeHtml(String(cardImage));
+    const safeTitle = escapeHtml(String(game.title));
     let priceHtml = "";
     if (game.price !== null && game.price !== undefined) {
       if (game.discount > 0) {
@@ -3390,7 +3983,7 @@ function renderGamesView() {
     html += `
       <div class="game-card" data-id="${game.id}">
         <div class="game-card-cover" style="position: relative;">
-          <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg" onerror="this.onerror=null; this.src='${game.cover}';" alt="${game.title}" loading="lazy">
+          <img src="${safeCardImage}" alt="${safeTitle}" loading="lazy">
           <span class="compat-badge ${game.compatibility}">${game.compatLabel}</span>
           ${testedBadgeHtml}
         </div>
@@ -3406,7 +3999,7 @@ function renderGamesView() {
 
   grid.innerHTML = html;
 
-  // Bind dynamic card click listeners to open the SteamDB Game Detail Modal
+  // Bind dynamic card click listeners to open the game-card Quick Look.
   grid.querySelectorAll(".game-card").forEach(card => {
     const gameId = card.getAttribute("data-id");
     const game = gamesCache.find(g => g.id === gameId);
@@ -3425,7 +4018,7 @@ function renderGamesView() {
 
     card.addEventListener("click", (e) => {
       if (e.target.classList.contains("game-link-btn")) return;
-      openSteamGameDetail(gameId);
+      openGameQuickLook(gameId);
     });
   });
 
@@ -3488,28 +4081,35 @@ async function searchSteamGames(query) {
       }
       
       gameSearchResults = (data.items || [])
-        .filter(item => item.tiny_image)
-        .map(item => ({
-          id: "game-" + item.id,
-          appid: item.id,
-          title: item.name,
-          rating: item.metascore ? parseInt(item.metascore) : null,
-          activePlayers: null,
-          price: item.price ? (item.price.final / 100) : 0,
-          discount: 0,
-          compatibility: item.platforms && item.platforms.mac ? "native" : "playable",
-          compatLabel: item.platforms && item.platforms.mac ? "Native" : "Playable",
-          hasNativeMac: item.platforms && item.platforms.mac,
-          genres: [],
-          cover: item.tiny_image,
-          storeUrl: `https://store.steampowered.com/app/${item.id}/`,
-          steamdbUrl: `https://steamdb.info/app/${item.id}/`,
-          protonUrl: `https://www.protondb.com/app/${item.id}`,
-          fullDescription: "",
-          screenshots: [],
-          features: [],
-          systemRequirements: null
-        }));
+        .map(item => {
+          const cover = normalizeSteamImageUrl(item.tiny_image) || buildGeneratedGameCover(item.name);
+          const gameObj = {
+            id: "game-" + item.id,
+            appid: item.id,
+            title: item.name,
+            rating: item.metascore ? parseInt(item.metascore) : null,
+            activePlayers: null,
+            price: item.price ? (item.price.final / 100) : 0,
+            discount: 0,
+            compatibility: "",
+            compatLabel: "",
+            hasNativeMac: !!(item.platforms && item.platforms.mac),
+            genres: [],
+            cover,
+            storeUrl: `https://store.steampowered.com/app/${item.id}/`,
+            steamdbUrl: `https://steamdb.info/app/${item.id}/`,
+            protonUrl: `https://www.protondb.com/app/${item.id}`,
+            fullDescription: "",
+            screenshots: [],
+            features: [],
+            systemRequirements: null,
+            releaseDate: item.release_date,
+            comingSoon: item.coming_soon === true
+          };
+
+          setGameCompatibility(gameObj);
+          return gameObj;
+        });
 
       mergeGamesIntoCache(gameSearchResults);
     }
@@ -5586,6 +6186,22 @@ function bindEvents() {
     });
   }
 
+  const gameDetailClose = document.getElementById("game-modal-close-btn");
+  if (gameDetailClose) {
+    gameDetailClose.addEventListener("click", closeGameQuickLook);
+  }
+  const gameDetailBackdrop = document.getElementById("game-modal-backdrop");
+  if (gameDetailBackdrop) {
+    gameDetailBackdrop.addEventListener("click", closeGameQuickLook);
+  }
+  const gameDetailModal = document.getElementById("game-detail-modal");
+  if (gameDetailModal) {
+    gameDetailModal.addEventListener("click", (e) => {
+      if (!e.target.closest(".game-modal-card")) {
+        closeGameQuickLook();
+      }
+    });
+  }
   // --- O. Custom Article Builder Creator Form Sheets ---
   const newStoryBtnToolbar = document.getElementById("btn-new-story");
   if (newStoryBtnToolbar) newStoryBtnToolbar.addEventListener("click", openStoryEditor);
@@ -5726,11 +6342,13 @@ function bindEvents() {
   document.addEventListener("keydown", (e) => {
     // Escape dismisses overlays
     if (e.key === "Escape") {
+      closeGameScreenshotViewer();
       closeReader();
       closeStoryEditor();
       closeQuickLook();
       const modal = document.getElementById("app-store-details-modal");
       if (modal) modal.classList.add("hidden");
+      closeGameQuickLook();
       closeSteamGameDetail();
     }
 
@@ -5960,7 +6578,7 @@ function bindEvents() {
       runSpotlightCommand(item.value);
     } else if (item.type === "steam-game") {
       switchApp("games");
-      openSteamGameDetail(item.value);
+      openGameQuickLook(item.value);
     } else if (item.type === "store-app") {
       switchApp("app-store");
       openAppStoreDetail(item.value);

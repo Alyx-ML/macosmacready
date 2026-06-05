@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import fs from "fs";
 import path from "path";
+import { lookupCrossoverCompatibility } from "./functions/api/crossover-compatibility.js";
 
 export default defineConfig({
   plugins: [
@@ -110,6 +111,40 @@ export default defineConfig({
               res.end(err instanceof Error ? err.message : "Error saving file");
             }
           });
+        });
+
+        server.middlewares.use("/api/crossover-compatibility", async (req, res) => {
+          if (req.method !== "GET") {
+            res.statusCode = 405;
+            res.end("Method Not Allowed");
+            return;
+          }
+
+          const requestUrl = new URL(req.url || "", "http://localhost");
+          const title = (requestUrl.searchParams.get("title") || "").trim();
+
+          if (!title) {
+            res.statusCode = 400;
+            res.setHeader("content-type", "application/json; charset=utf-8");
+            res.end(JSON.stringify({ found: false, reason: "missing_title" }));
+            return;
+          }
+
+          try {
+            const result = await lookupCrossoverCompatibility(title);
+            res.statusCode = 200;
+            res.setHeader("content-type", "application/json; charset=utf-8");
+            res.setHeader("cache-control", result.found ? "public, max-age=21600" : "public, max-age=3600");
+            res.end(JSON.stringify(result));
+          } catch (error) {
+            res.statusCode = 502;
+            res.setHeader("content-type", "application/json; charset=utf-8");
+            res.end(JSON.stringify({
+              found: false,
+              reason: "lookup_failed",
+              message: error instanceof Error ? error.message : "CodeWeavers lookup failed"
+            }));
+          }
         });
       }
     }

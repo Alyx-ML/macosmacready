@@ -1,5 +1,6 @@
 import { onRequestGet as siriGet, onRequestPost as siriPost } from "./functions/api/siri.js";
 import { onRequestOptions as transcribeOptions, onRequestPost as transcribePost } from "./functions/api/transcribe.js";
+import { onRequestGet as crossoverCompatibilityGet } from "./functions/api/crossover-compatibility.js";
 
 export default {
   async fetch(request, env) {
@@ -19,6 +20,11 @@ export default {
     if (url.pathname === "/api/transcribe") {
       if (request.method === "OPTIONS") return transcribeOptions({ request });
       if (request.method === "POST") return transcribePost({ request, env });
+      return new Response("Method Not Allowed", { status: 405 });
+    }
+
+    if (url.pathname === "/api/crossover-compatibility") {
+      if (request.method === "GET") return crossoverCompatibilityGet({ request, env });
       return new Response("Method Not Allowed", { status: 405 });
     }
 

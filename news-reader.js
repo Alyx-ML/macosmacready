@@ -52,25 +52,94 @@ function renderNewsSourceControls() {
   });
 }
 
+function getLiveRSSNodeText(item, names) {
+  for (const name of names) {
+    const match = [...item.children].find(child => child.localName === name);
+    const value = match?.textContent?.trim();
+    if (value) return value;
+  }
+  return "";
+}
+
+function getLiveRSSItemLink(item) {
+  const directLink = getLiveRSSNodeText(item, ["link"]);
+  if (directLink) return directLink;
+
+  const alternateLink = [...item.querySelectorAll("link")]
+    .find(link => !link.getAttribute("rel") || link.getAttribute("rel") === "alternate");
+  return alternateLink?.getAttribute("href") || "";
+}
+
+function parseLiveRSSSource(source, xmlText) {
+  const documentXml = new DOMParser().parseFromString(xmlText || "", "text/xml");
+  if (documentXml.querySelector("parsererror")) return [];
+
+  const nodes = [...documentXml.querySelectorAll("item, entry")];
+  return nodes
+    .map((item, index) => {
+      const title = cleanArticleText(getLiveRSSNodeText(item, ["title"]));
+      const sourceUrl = getLiveRSSItemLink(item);
+      const rawDescription = getLiveRSSNodeText(item, ["description", "summary"]);
+      const content = getLiveRSSNodeText(item, ["encoded", "content"]) || rawDescription;
+      const pubDate = getLiveRSSNodeText(item, ["pubDate", "published", "updated"]);
+      const timestamp = Date.parse(pubDate);
+
+      if (!title || !sourceUrl || Number.isNaN(timestamp)) return null;
+      if (!shouldIncludeRSSArticle(source, title, rawDescription, content)) return null;
+
+      return {
+        id: `${source.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${timestamp}-${index}`,
+        title,
+        subtitle: buildRSSSubtitle(rawDescription || content),
+        category: source.category,
+        author: source.name,
+        avatar: source.name.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase(),
+        date: formatRSSDate(timestamp),
+        timestamp,
+        cover: extractRSSImage(item, content || rawDescription),
+        sourceName: source.name,
+        sourceUrl,
+        bookmarked: false,
+        queued: queuedArticleUrls.has(sourceUrl),
+        custom: false,
+        content: `<p>${escapeHTML(buildRSSSubtitle(content || rawDescription || title))}</p>`
+      };
+    })
+    .filter(Boolean);
+}
+
 async function loadNewsFromRSS() {
   articles = [];
   renderFeed();
 
   try {
-    const response = await fetch(`${GENERATED_NEWS_URL}?v=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) throw new Error(`News data request failed: ${response.status}`);
+    const activeSources = NEWS_RSS_SOURCES.filter(source => enabledNewsSources.has(source.name));
+    const settled = await Promise.allSettled(activeSources.map(async source => {
+      if (source.format === "html") return fetchHTMLNewsSource(source);
 
-    const data = await response.json();
-    articles = (data.articles || [])
-      .filter(article => enabledNewsSources.has(article.sourceName))
+      const response = await fetchDevProxy(source.url);
+      if (!response.ok) throw new Error(`RSS request failed for ${source.name}: ${response.status}`);
+      return parseLiveRSSSource(source, await response.text());
+    }));
+
+    articles = settled
+      .flatMap(result => result.status === "fulfilled" ? result.value : [])
+      .filter(article => shouldRenderArticle(article))
+      .filter((article, index, list) => list.findIndex(match => match.sourceUrl === article.sourceUrl) === index)
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+      .slice(0, 120)
       .map(article => ({
         ...article,
         bookmarked: false,
         queued: queuedArticleUrls.has(article.sourceUrl),
         custom: false
       }));
+
+    await hydrateSourceArticleImages(articles);
+    articles = articles.filter(article => article.cover && !article.cover.startsWith("preset-"));
+    articles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   } catch (error) {
-    console.error("Generated news data failed to load", error);
+    console.error("Live news data failed to load", error);
     articles = [];
   }
 
@@ -103,6 +172,8 @@ function renderFeed() {
     // 2. Category Filter
     if (currentCategory !== "all") {
       filtered = filtered.filter(a => a.category === currentCategory);
+    } else if (currentLibrary === "today") {
+      filtered = filtered.filter(a => a.category !== "design");
     }
 
   }
@@ -139,16 +210,10 @@ function renderFeed() {
     const isFeatured = shouldFeature && index === 0;
     const cardClass = isFeatured ? "news-card featured" : "news-card";
     // Setup cover image styling
-    let coverHtml = "";
-    if (article.cover && article.cover.startsWith("preset-")) {
-      const grad = PRESET_GRADIENTS[article.cover] || PRESET_GRADIENTS["preset-1"];
-      coverHtml = `<div class="card-cover" style="background: ${grad}"></div>`;
-    } else {
-      const coverUrl = optimizeArticleImageUrl(article.cover, isFeatured);
-      const imagePriority = isFeatured ? `fetchpriority="high"` : `loading="lazy"`;
-      const imageSource = index >= INITIAL_VISIBLE_ARTICLE_COUNT ? `data-src="${coverUrl}"` : `src="${coverUrl}"`;
-      coverHtml = `<div class="card-cover"><img ${imageSource} alt="${article.title}" ${imagePriority} decoding="async" onerror="this.closest('.card-cover').classList.add('missing-cover'); this.remove();"></div>`;
-    }
+    const coverUrl = optimizeArticleImageUrl(article.cover, isFeatured);
+    const imagePriority = isFeatured ? `fetchpriority="high"` : `loading="lazy"`;
+    const imageSource = index >= INITIAL_VISIBLE_ARTICLE_COUNT ? `data-src="${coverUrl}"` : `src="${coverUrl}"`;
+    const coverHtml = `<div class="card-cover"><img ${imageSource} alt="${escapeHTML(article.title)}" ${imagePriority} decoding="async" onerror="this.closest('.news-card').remove();"></div>`;
 
     html += `
       <article class="${cardClass}" data-id="${article.id}">
@@ -358,14 +423,20 @@ async function openArticle(id) {
   const coverImg = document.getElementById("reader-cover-img");
   const heroBlock = document.querySelector(".reader-hero");
   
-  if (article.cover.startsWith("preset-")) {
+  if (article.cover && article.cover.startsWith("preset-")) {
     if (coverImg) coverImg.classList.add("hidden");
     const preset = PRESET_INFO[article.cover] || PRESET_INFO["preset-1"];
     if (heroBlock) heroBlock.style.background = preset.bg;
-  } else {
+  } else if (article.cover) {
     if (coverImg) {
       coverImg.classList.remove("hidden");
       coverImg.src = article.cover;
+    }
+    if (heroBlock) heroBlock.style.background = "#121217";
+  } else {
+    if (coverImg) {
+      coverImg.classList.add("hidden");
+      coverImg.removeAttribute("src");
     }
     if (heroBlock) heroBlock.style.background = "#121217";
   }
