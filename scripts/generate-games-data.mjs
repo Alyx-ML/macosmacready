@@ -1,12 +1,18 @@
 import { mkdir, writeFile } from "node:fs/promises";
+import { lookupCrossoverCompatibility } from "../functions/api/crossover-compatibility.js";
 
 const searchUrls = [
-  "https://store.steampowered.com/search/results/?query&start=0&count=80&dynamic_data=&sort_by=_ASC&force_infinite=1&filter=topsellers&category1=998&ndl=1",
-  "https://store.steampowered.com/search/results/?query&start=0&count=80&dynamic_data=&sort_by=Released_DESC&force_infinite=1&filter=popularnew&category1=998&ndl=1",
-  "https://store.steampowered.com/search/results/?query&start=0&count=40&dynamic_data=&sort_by=_ASC&force_infinite=1&filter=popularnew&category1=998&ndl=1"
+  "https://store.steampowered.com/search/results/?query&start=0&count=100&dynamic_data=&sort_by=_ASC&force_infinite=1&filter=topsellers&category1=998&ndl=1",
+  "https://store.steampowered.com/search/results/?query&start=100&count=100&dynamic_data=&sort_by=_ASC&force_infinite=1&filter=topsellers&category1=998&ndl=1",
+  "https://store.steampowered.com/search/results/?query&start=0&count=100&dynamic_data=&sort_by=Released_DESC&force_infinite=1&filter=popularnew&category1=998&ndl=1",
+  "https://store.steampowered.com/search/results/?query&start=100&count=100&dynamic_data=&sort_by=Released_DESC&force_infinite=1&filter=popularnew&category1=998&ndl=1",
+  "https://store.steampowered.com/search/results/?query&start=0&count=100&dynamic_data=&sort_by=_ASC&force_infinite=1&filter=popularnew&category1=998&ndl=1",
+  "https://store.steampowered.com/search/results/?query&start=100&count=100&dynamic_data=&sort_by=_ASC&force_infinite=1&filter=popularnew&category1=998&ndl=1",
+  "https://store.steampowered.com/search/results/?query&start=0&count=100&dynamic_data=&sort_by=Released_DESC&force_infinite=1&filter=comingsoon&category1=998&ndl=1"
 ];
 
-const pinnedAppIds = [3124540, 3164500, 730];
+const pinnedAppIds = [3357650, 3124540, 3164500, 730];
+const maxGames = Number(process.env.MACREADY_STEAM_GAME_LIMIT || 240);
 
 function decodeHtml(value = "") {
   return String(value)
@@ -97,7 +103,8 @@ function simplify(appid, search, data) {
     developer: (data.developers || []).join(", "),
     publisher: (data.publishers || []).join(", "),
     videoUrl: pickMovie(data)?.url || "",
-    videoPoster: pickMovie(data)?.poster || ""
+    videoPoster: pickMovie(data)?.poster || "",
+    crossoverCompatibility: null
   };
 }
 
@@ -125,13 +132,25 @@ async function main() {
   for (const appid of pinnedAppIds) byId.set(appid, byId.get(appid) || { appid });
 
   const games = [];
-  const appids = [...byId.keys()].slice(0, 80);
+  const appids = [...byId.keys()].slice(0, maxGames);
 
   for (const appid of appids) {
     try {
       const json = JSON.parse(await fetchText(`https://store.steampowered.com/api/appdetails?appids=${appid}&l=english&cc=US`));
       const data = json?.[appid]?.data;
-      if (data) games.push(simplify(appid, byId.get(appid), data));
+      if (data) {
+        const game = simplify(appid, byId.get(appid), data);
+        try {
+          game.crossoverCompatibility = await lookupCrossoverCompatibility(game.title);
+        } catch {
+          game.crossoverCompatibility = {
+            found: false,
+            reason: "lookup_failed",
+            query: game.title
+          };
+        }
+        games.push(game);
+      }
     } catch (error) {
       console.warn(`Skipping ${appid}: ${error.message}`);
     }

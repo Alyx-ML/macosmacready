@@ -2052,85 +2052,7 @@ let isDetailModalOpen = false;
 
 function createSeededSteamGames() {
   const generatedGames = getGeneratedSteamGames();
-  if (generatedGames.length) {
-    return generatedGames.map(cloneGeneratedSteamGame);
-  }
-
-  const games = [
-    {
-      id: "game-3124540",
-      appid: 3124540,
-      title: "Far Far West",
-      rating: null,
-      activePlayers: null,
-      price: 19.99,
-      discount: 0,
-      compatibility: "",
-      compatLabel: "",
-      hasNativeMac: false,
-      genres: ["Action", "Adventure", "Indie", "Early Access"],
-      cover: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/396b26f278210ddfbb9e944d8b20da2e8bd17ded/capsule_231x87.jpg?t=1780491814",
-      storeUrl: "https://store.steampowered.com/app/3124540/",
-      steamdbUrl: "https://steamdb.info/app/3124540/",
-      protonUrl: "https://www.protondb.com/app/3124540",
-      fullDescription: "",
-      screenshots: [],
-      features: [],
-      systemRequirements: null,
-      releaseDate: "Apr 28, 2026",
-      comingSoon: false
-    },
-    {
-      id: "game-3164500",
-      appid: 3164500,
-      title: "Schedule I",
-      rating: null,
-      activePlayers: null,
-      price: 19.99,
-      discount: 0,
-      compatibility: "",
-      compatLabel: "",
-      hasNativeMac: false,
-      genres: ["Action", "Indie", "Simulation", "Strategy"],
-      cover: "https://cdn.cloudflare.steamstatic.com/steam/apps/3164500/capsule_231x87.jpg",
-      storeUrl: "https://store.steampowered.com/app/3164500/",
-      steamdbUrl: "https://steamdb.info/app/3164500/",
-      protonUrl: "https://www.protondb.com/app/3164500",
-      fullDescription: "",
-      screenshots: [],
-      features: [],
-      systemRequirements: null,
-      releaseDate: "",
-      comingSoon: false
-    },
-    {
-      id: "game-730",
-      appid: 730,
-      title: "Counter-Strike 2",
-      rating: null,
-      activePlayers: null,
-      price: 0,
-      discount: 0,
-      compatibility: "",
-      compatLabel: "",
-      hasNativeMac: false,
-      genres: ["Action"],
-      cover: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/942c04efaa5bc87afb6f2a97dbf17ac614c8a84d/capsule_231x87.jpg",
-      storeUrl: "https://store.steampowered.com/app/730/",
-      steamdbUrl: "https://steamdb.info/app/730/",
-      protonUrl: "https://www.protondb.com/app/730",
-      fullDescription: "",
-      screenshots: [],
-      features: [],
-      systemRequirements: null,
-      releaseDate: "Aug 21, 2012",
-      comingSoon: false
-    }
-  ];
-
-  games.forEach(game => setGameCompatibility(game));
-  applySeededSteamGameDetails(games[0]);
-  return games;
+  return generatedGames.map(cloneGeneratedSteamGame);
 }
 
 function getGeneratedSteamGames() {
@@ -2152,16 +2074,23 @@ function cloneGeneratedSteamGame(game) {
 
 function loadCachedSteamGames() {
   try {
+    const generatedGames = createSeededSteamGames();
+    if (generatedGames.length) {
+      gamesCache = generatedGames;
+      steamGamesLastSavedAt = Date.now();
+      gamesLoaded = true;
+      saveSteamGamesCache();
+      return;
+    }
+
     const cached = JSON.parse(localStorage.getItem(STEAM_GAMES_CACHE_KEY) || "null");
     if (!cached || !Array.isArray(cached.games) || cached.games.length === 0) {
-      gamesCache = createSeededSteamGames();
+      gamesCache = [];
       gamesLoaded = true;
       return;
     }
 
     gamesCache = cached.games;
-    mergeGamesIntoCache(createSeededSteamGames());
-    gamesCache.forEach(applySeededSteamGameDetails);
     steamGamesLastSavedAt = Number(cached.savedAt) || 0;
     gamesLoaded = true;
   } catch (error) {
@@ -2231,6 +2160,10 @@ function getCrossoverCompatibilityEndpoint(game) {
 }
 
 async function fetchCrossoverCompatibility(game) {
+  if (game.crossoverCompatibility) {
+    return game.crossoverCompatibility;
+  }
+
   const cached = getCachedCrossoverCompatibility(game.title);
   if (cached) return cached;
 
@@ -2325,28 +2258,8 @@ async function fetchCrossoverCompatibilityFromPublicPages(rawTitle) {
 
 function getSeededCrossoverCompatibility(rawTitle) {
   const key = normalizeCodeWeaversTitle(rawTitle);
-  const seeds = {
-    "schedule i": {
-      found: true,
-      source: "CodeWeavers Compatibility Center",
-      query: "Schedule I",
-      matchedTitle: "Schedule I",
-      pageUrl: "https://www.codeweavers.com/compatibility/crossover/schedule-i",
-      appId: "",
-      slug: "schedule-i",
-      score: 1,
-      company: "",
-      updatedAt: "",
-      macRating: {
-        stars: 5,
-        label: "Runs Great",
-        lastTestedVersion: "CrossOver 26.1.0",
-        reportCount: 8
-      }
-    }
-  };
-
-  return seeds[key] || null;
+  const generated = getGeneratedSteamGames().find(game => normalizeCodeWeaversTitle(game.title) === key);
+  return generated?.crossoverCompatibility || null;
 }
 
 function getSeededSteamGameDetails(appid) {
@@ -2381,50 +2294,7 @@ function getSeededSteamGameDetails(appid) {
     };
   }
 
-  const seeds = {
-    "3124540": {
-      short_description: "Yee-haw, Cowboys! Team up in this chaotic 1-4 player co-op shooter. Journey to the Far Far West to blast monsters, sling spells, complete missions, and collect bounties. Work as a team to get in, get paid and get out (mostly) alive.",
-      developers: ["Evil Raptor"],
-      publishers: ["Fireshine Games"],
-      release_date: {
-        coming_soon: false,
-        date: "Apr 28, 2026"
-      },
-      genres: [
-        { description: "Action" },
-        { description: "Adventure" },
-        { description: "Indie" },
-        { description: "Early Access" }
-      ],
-      platforms: {
-        windows: true,
-        mac: false,
-        linux: false
-      },
-      price_overview: {
-        initial: 1999,
-        discount_percent: 0
-      },
-      pc_requirements: {
-        minimum: "<strong>Minimum:</strong><br><ul><li><strong>OS:</strong> Windows 10 (64-BIT Required)</li><li><strong>Processor:</strong> Intel Core i5-7600K or AMD Ryzen 5 1600</li><li><strong>Memory:</strong> 8 GB RAM</li><li><strong>Graphics:</strong> Nvidia GeForce GTX 1660 or AMD Radeon RX 590</li><li><strong>DirectX:</strong> Version 12</li><li><strong>Storage:</strong> 10 GB available space</li><li><strong>Additional Notes:</strong> SSD Recommended</li></ul>",
-        recommended: "<strong>Recommended:</strong><br><ul><li><strong>OS:</strong> Windows 11 (64-BIT Required)</li><li><strong>Processor:</strong> Intel Core i5-10600KF or AMD Ryzen 5 3600X</li><li><strong>Memory:</strong> 16 GB RAM</li><li><strong>Graphics:</strong> Nvidia GeForce RTX 2060 or AMD Radeon RX 5600XT</li><li><strong>DirectX:</strong> Version 12</li><li><strong>Storage:</strong> 10 GB available space</li><li><strong>Additional Notes:</strong> SSD Recommended</li></ul>"
-      },
-      screenshots: [
-        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/87847b9155d7cfd190852831c4792ea2c7dad8a7/ss_87847b9155d7cfd190852831c4792ea2c7dad8a7.1920x1080.jpg?t=1780491814",
-        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/c7dab39bc4e9110f215e2a6af98a62afbaad3ec5/ss_c7dab39bc4e9110f215e2a6af98a62afbaad3ec5.1920x1080.jpg?t=1780491814",
-        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/28b89f775c8e3dd6e423662b1f4bf285285339e5/ss_28b89f775c8e3dd6e423662b1f4bf285285339e5.1920x1080.jpg?t=1780491814",
-        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/9b25ef6d25e7ad77a167df2e369180e8d4081763/ss_9b25ef6d25e7ad77a167df2e369180e8d4081763.1920x1080.jpg?t=1780491814",
-        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/06beed80ffd3560c3dcb89044b1c2c12f525b66d/ss_06beed80ffd3560c3dcb89044b1c2c12f525b66d.1920x1080.jpg?t=1780491814",
-        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3124540/51f2ed907135f44388a233fe2a6b2ccb2db5a2b2/ss_51f2ed907135f44388a233fe2a6b2ccb2db5a2b2.1920x1080.jpg?t=1780491814"
-      ],
-      movie: {
-        url: "https://video.akamai.steamstatic.com/store_trailers/3124540/1804471861/079d9f650d8a0e9fdfcea222029fb8b9aa7c4393/1777372464/hls_264_master.m3u8?t=1777381102",
-        poster: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/257328124/bf4603a88ec1ee6265083e2edca71bc38c4f55f1/movie_600x337.jpg?t=1777381102"
-      }
-    }
-  };
-
-  return seeds[key] || null;
+  return null;
 }
 
 function applySeededSteamGameDetails(game) {

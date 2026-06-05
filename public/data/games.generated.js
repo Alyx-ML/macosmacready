@@ -1,6 +1,64 @@
 window.MACREADY_GENERATED_STEAM_GAMES = {
-  "generatedAt": "2026-06-05T15:48:25.237Z",
+  "generatedAt": "2026-06-05T18:16:11.827Z",
   "games": [
+    {
+      "id": "game-3357650",
+      "appid": 3357650,
+      "title": "PRAGMATA",
+      "rating": null,
+      "activePlayers": null,
+      "price": 59.99,
+      "discount": 0,
+      "compatibility": "",
+      "compatLabel": "",
+      "hasNativeMac": false,
+      "genres": [
+        "Action",
+        "Adventure"
+      ],
+      "cover": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/e32e168b25ed68a0cf6264c220c07e96c2abfb56/header.jpg?t=1777351016",
+      "storeUrl": "https://store.steampowered.com/app/3357650/",
+      "steamdbUrl": "https://steamdb.info/app/3357650/",
+      "protonUrl": "https://www.protondb.com/app/3357650",
+      "fullDescription": "Pragmata is a unique, sci-fi action-adventure game from Capcom. Follow Hugh, a member of an ill-fated investigation team, and Diana, a young android, as they navigate a lunar facility taken over by rogue AI in search of a way to Earth.",
+      "screenshots": [
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/9699288b90d0aad320e998f107b59edd27e9ea61/ss_9699288b90d0aad320e998f107b59edd27e9ea61.1920x1080.jpg?t=1777351016",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/62486c0475c7bf1a14889d61a51ad24f09e5f044/ss_62486c0475c7bf1a14889d61a51ad24f09e5f044.1920x1080.jpg?t=1777351016",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/26773713a2435c8edc2eac5e7eb234324b3b002f/ss_26773713a2435c8edc2eac5e7eb234324b3b002f.1920x1080.jpg?t=1777351016",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/8913ab7128c72ddd1b407c274e9615b2f6e658a2/ss_8913ab7128c72ddd1b407c274e9615b2f6e658a2.1920x1080.jpg?t=1777351016",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/24bebf802a598b3d5d6838828cf074e4445ec939/ss_24bebf802a598b3d5d6838828cf074e4445ec939.1920x1080.jpg?t=1777351016",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/47776629e71f7769f2482259258a1aeb9babe31c/ss_47776629e71f7769f2482259258a1aeb9babe31c.1920x1080.jpg?t=1777351016",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/5b6a007e52e0b2d4a36b74736ea2fa416830bf6f/ss_5b6a007e52e0b2d4a36b74736ea2fa416830bf6f.1920x1080.jpg?t=1777351016",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/c83fa1a03cf350ae0f049579daaa117414c9c745/ss_c83fa1a03cf350ae0f049579daaa117414c9c745.1920x1080.jpg?t=1777351016"
+      ],
+      "features": [
+        "Single-player",
+        "Steam Achievements",
+        "Full controller support",
+        "Steam Trading Cards",
+        "Captions available",
+        "Steam Cloud",
+        "HDR available",
+        "Family Sharing"
+      ],
+      "systemRequirements": {
+        "mac": {
+          "minimum": "<strong>Minimum:</strong><br><ul class=\"bb_ul\"></ul>",
+          "recommended": "<strong>Recommended:</strong><br><ul class=\"bb_ul\"></ul>"
+        },
+        "windows": {
+          "minimum": "<strong>Minimum:</strong><br><ul class=\"bb_ul\"><li>Requires a 64-bit processor and operating system<br></li><li><strong>OS:</strong> Windows 11 (64 bit)<br></li><li><strong>Processor:</strong> Intel Core i5-8500 / AMD Ryzen 5 3500<br></li><li><strong>Memory:</strong> 16 GB RAM<br></li><li><strong>Graphics:</strong> NVIDIA GeForce GTX 1660 6 GB / Radeon RX 5500 XT 8 GB<br></li><li><strong>DirectX:</strong> Version 12<br></li><li><strong>Network:</strong> Broadband Internet connection<br></li><li><strong>Storage:</strong> 40 GB available space<br></li><li><strong>Additional Notes:</strong> Estimated performance when set to &quot;Performance&quot; preset: 1080p/45 fps.  Framerate might drop in graphics-intensive scenes.  SSD recommended.</li></ul>",
+          "recommended": "<strong>Recommended:</strong><br><ul class=\"bb_ul\"><li>Requires a 64-bit processor and operating system<br></li><li><strong>OS:</strong> Windows 11 (64 bit)<br></li><li><strong>Processor:</strong> Intel Core i7-8700 / AMD Ryzen 5 5500<br></li><li><strong>Memory:</strong> 16 GB RAM<br></li><li><strong>Graphics:</strong> NVIDIA GeForce RTX 2060 Super 8GB / Radeon RX 6600 8GB<br></li><li><strong>DirectX:</strong> Version 12<br></li><li><strong>Network:</strong> Broadband Internet connection<br></li><li><strong>Storage:</strong> 40 GB available space<br></li><li><strong>Additional Notes:</strong> Estimated performance when set to &quot;Balanced&quot; preset: 1080p/60 fps.  Frame rate might drop in graphics-intensive scenes. AMD Radeon RX 6700 XT 12GB or NVIDIA GeForce RTX 3060 12GB required to support ray tracing.  SSD recommended.</li></ul>"
+        }
+      },
+      "releaseDate": "Apr 16, 2026",
+      "comingSoon": false,
+      "developer": "CAPCOM Co., Ltd.",
+      "publisher": "CAPCOM Co., Ltd.",
+      "videoUrl": "https://video.akamai.steamstatic.com/store_trailers/3357650/310988647/0ea0b4ef2a912e9fe974d0c378372309885a4ab9/1777265662/hls_264_master.m3u8?t=1777271464",
+      "videoPoster": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/257327129/4c93ef8625da617e767c7da27461f8dbca8a6af0/movie_600x337.jpg?t=1777271464",
+      "crossoverCompatibility": null
+    },
     {
       "id": "game-730",
       "appid": 730,
