@@ -2131,12 +2131,9 @@ async function fetchCrossoverCompatibility(game) {
     return crossoverCompatibilityRequests.get(requestKey);
   }
 
-  const request = fetch(getCrossoverCompatibilityEndpoint(game))
-    .then(async response => {
-      const data = await response.json();
-      if (!response.ok && data?.reason !== "no_match") {
-        throw new Error(data?.message || "CodeWeavers lookup failed");
-      }
+  const request = fetchCrossoverCompatibilityFromEndpoint(game)
+    .catch(() => fetchCrossoverCompatibilityFromPublicPages(game.title))
+    .then(data => {
       saveCrossoverCompatibilityCache(game.title, data);
       return data;
     })
@@ -2146,6 +2143,220 @@ async function fetchCrossoverCompatibility(game) {
 
   crossoverCompatibilityRequests.set(requestKey, request);
   return request;
+}
+
+async function fetchCrossoverCompatibilityFromEndpoint(game) {
+  const response = await fetch(getCrossoverCompatibilityEndpoint(game));
+  const data = await response.json();
+  if (!response.ok && data?.reason !== "no_match") {
+    throw new Error(data?.message || "CodeWeavers lookup failed");
+  }
+  return data;
+}
+
+async function fetchCrossoverCompatibilityFromPublicPages(rawTitle) {
+  const title = sanitizeCrossoverTitle(rawTitle);
+  if (!title) return { found: false, reason: "missing_title" };
+
+  const searchUrl = buildCodeWeaversSearchUrl(title);
+  const searchResponse = await fetchViaProxy(searchUrl);
+  if (!searchResponse.ok) throw new Error("CodeWeavers search failed");
+
+  const results = parseCodeWeaversSearchResults(await searchResponse.text());
+  const match = chooseBestCodeWeaversMatch(title, results);
+  if (!match) {
+    return {
+      found: false,
+      reason: "no_match",
+      query: title,
+      searchUrl
+    };
+  }
+
+  const pageResponse = await fetchViaProxy(match.pageUrl);
+  if (!pageResponse.ok) throw new Error("CodeWeavers report failed");
+
+  const page = parseCodeWeaversCompatibilityPage(await pageResponse.text());
+  const stars = page.macRating.stars || match.macStars || 0;
+
+  return {
+    found: true,
+    source: "CodeWeavers Compatibility Center",
+    query: title,
+    matchedTitle: page.title || match.title,
+    pageUrl: match.pageUrl,
+    appId: page.appId || match.appId || "",
+    slug: page.slug || match.slug || "",
+    score: Number(match.score.toFixed(3)),
+    company: match.company || "",
+    updatedAt: match.updatedAt || page.updatedAt || "",
+    macRating: {
+      stars,
+      label: page.macRating.label || labelForCrossoverStars(stars),
+      lastTestedVersion: page.macRating.lastTestedVersion || "",
+      reportCount: page.macRating.reportCount
+    }
+  };
+}
+
+function sanitizeCrossoverTitle(value) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 160);
+}
+
+function buildCodeWeaversSearchUrl(title) {
+  const url = new URL("https://www.codeweavers.com/compatibility");
+  url.searchParams.set("search", "app");
+  url.searchParams.set("name", title);
+  return url.toString();
+}
+
+function parseCodeWeaversSearchResults(html) {
+  const resultsBlock = getHtmlBetween(html, '<div id="results"', "</tbody>") || "";
+  const rows = [];
+  const rowPattern = /<tr[^>]*id="key_([^"]+)"[^>]*>([\s\S]*?)<\/tr>/gi;
+  let rowMatch;
+
+  while ((rowMatch = rowPattern.exec(resultsBlock))) {
+    const rowHtml = rowMatch[2];
+    const linkMatch = rowHtml.match(/<a\s+href="(\/compatibility\/crossover\/[^"]+)">([\s\S]*?)<\/a>/i);
+    if (!linkMatch) continue;
+
+    const cells = [...rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map(match => cleanCodeWeaversText(match[1]));
+    const href = linkMatch[1];
+
+    rows.push({
+      appId: rowMatch[1],
+      title: cleanCodeWeaversText(linkMatch[2]),
+      pageUrl: new URL(href, "https://www.codeweavers.com").toString(),
+      slug: href.split("/").pop() || "",
+      company: cells[1] || "",
+      updatedAt: cells[2] || "",
+      macStars: countCodeWeaversActiveStars(rowHtml)
+    });
+  }
+
+  return rows;
+}
+
+function chooseBestCodeWeaversMatch(query, results) {
+  let best = null;
+
+  for (const result of results) {
+    const score = scoreCodeWeaversTitleMatch(query, result.title);
+    if (!best || score > best.score) {
+      best = { ...result, score };
+    }
+  }
+
+  if (!best || best.score < 0.84) return null;
+  return best;
+}
+
+function scoreCodeWeaversTitleMatch(query, candidate) {
+  const queryNorm = normalizeCodeWeaversTitle(query);
+  const candidateNorm = normalizeCodeWeaversTitle(candidate);
+  if (!queryNorm || !candidateNorm) return 0;
+  if (queryNorm === candidateNorm) return 1;
+
+  const queryTokens = importantCodeWeaversTokens(queryNorm);
+  const candidateTokens = new Set(importantCodeWeaversTokens(candidateNorm));
+  if (queryTokens.length === 0 || candidateTokens.size === 0) return 0;
+
+  const overlap = queryTokens.filter(token => candidateTokens.has(token)).length;
+  const coverage = overlap / queryTokens.length;
+  const candidateExtra = Math.max(0, candidateTokens.size - queryTokens.length);
+  const containsBonus = candidateNorm.includes(queryNorm) ? 0.14 : 0;
+  const lengthPenalty = Math.min(0.2, candidateExtra * 0.035);
+
+  return Math.max(0, coverage + containsBonus - lengthPenalty);
+}
+
+function normalizeCodeWeaversTitle(value) {
+  return decodeCodeWeaversHtml(value)
+    .toLowerCase()
+    .replace(/[™®©]/g, "")
+    .replace(/&/g, " and ")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function importantCodeWeaversTokens(value) {
+  const ignored = new Set(["a", "an", "and", "of", "the"]);
+  return value.split(" ").filter(token => token && !ignored.has(token));
+}
+
+function parseCodeWeaversCompatibilityPage(html) {
+  const title = cleanCodeWeaversText((html.match(/<h1[^>]*class="[^"]*\btxt_magenta\b[^"]*"[^>]*>([\s\S]*?)<\/h1>/i) || [])[1] || "");
+  const appId = cleanCodeWeaversText((html.match(/<span[^>]*id="var_app_id"[^>]*>([\s\S]*?)<\/span>/i) || [])[1] || "");
+  const slug = cleanCodeWeaversText((html.match(/<span[^>]*id="var_app_plnk"[^>]*>([\s\S]*?)<\/span>/i) || [])[1] || "");
+  const updatedAt = cleanCodeWeaversText((html.match(/<div class="col-7">([^<]*(?:,\s*\d{1,2}:\d{2}\s*[ap]m)?)<\/div>/i) || [])[1] || "");
+  const macSection = (html.match(/<div class="os_Mac">([\s\S]*?)<div class="os_Linux">/i) || [])[1] || "";
+  const macText = cleanCodeWeaversText(macSection);
+  const hiddenStars = Number(cleanCodeWeaversText((html.match(/<span[^>]*id="var_medal_mac"[^>]*>([\s\S]*?)<\/span>/i) || [])[1] || ""));
+  const sectionStars = countCodeWeaversActiveStars(macSection);
+  const stars = Number.isFinite(hiddenStars) && hiddenStars > 0 ? hiddenStars : sectionStars;
+  const labelMatch = macText.match(/Mac Rating\s+(.+?)\s+Last Tested:/i);
+  const lastTestedMatch = macText.match(/Last Tested:\s*([^\s(]+)/i);
+  const reportCountMatch = macText.match(/Last Tested:\s*[^\s(]+\s*\((\d+)\)/i);
+
+  return {
+    title,
+    appId,
+    slug,
+    updatedAt,
+    macRating: {
+      stars,
+      label: labelMatch ? labelMatch[1].trim() : labelForCrossoverStars(stars),
+      lastTestedVersion: lastTestedMatch ? lastTestedMatch[1].trim() : "",
+      reportCount: reportCountMatch ? Number(reportCountMatch[1]) : null
+    }
+  };
+}
+
+function labelForCrossoverStars(stars) {
+  if (stars >= 5) return "Runs Great";
+  if (stars === 4) return "Runs Well";
+  if (stars === 3) return "Limited Functionality";
+  if (stars === 2) return "Installs, Will Not Run";
+  if (stars === 1) return "Will Not Install";
+  return "Not Rated";
+}
+
+function countCodeWeaversActiveStars(html) {
+  return (String(html || "").match(/<li\b[^>]*class="[^"]*\bactive\b[^"]*"/gi) || []).length;
+}
+
+function getHtmlBetween(html, startNeedle, endNeedle) {
+  const source = String(html || "");
+  const start = source.indexOf(startNeedle);
+  if (start === -1) return "";
+  const end = source.indexOf(endNeedle, start);
+  if (end === -1) return source.slice(start);
+  return source.slice(start, end);
+}
+
+function cleanCodeWeaversText(value) {
+  return decodeCodeWeaversHtml(String(value || "")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim());
+}
+
+function decodeCodeWeaversHtml(value) {
+  return String(value || "")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code, 16)))
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
 }
 
 function refreshSteamGamesIfNeeded() {
@@ -2465,6 +2676,10 @@ function getSteamMovieSource(movie) {
   };
 }
 
+function getSteamAppHeroUrl(appid) {
+  return appid ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/library_hero.jpg` : "";
+}
+
 function getFirstPlayableSteamVideo(html) {
   if (!html) return { url: "", poster: "" };
   const node = document.createElement("div");
@@ -2475,6 +2690,33 @@ function getFirstPlayableSteamVideo(html) {
     return {
       url: normalizeSteamImageUrl(source.getAttribute("src") || ""),
       poster: normalizeSteamImageUrl(video?.getAttribute("poster") || "")
+    };
+  }
+
+  const movieNode = node.querySelector("[data-mp4-source], [data-webm-source], [data-hd-src], [data-webm-hd-source]");
+  if (movieNode) {
+    const movieUrl = [
+      movieNode.getAttribute("data-mp4-source"),
+      movieNode.getAttribute("data-webm-source"),
+      movieNode.getAttribute("data-hd-src"),
+      movieNode.getAttribute("data-webm-hd-source")
+    ].map(normalizeSteamImageUrl).find(url => /\.(webm|mp4)(\?|$)/i.test(url));
+    const poster = [
+      movieNode.getAttribute("data-poster"),
+      movieNode.getAttribute("data-screenshot"),
+      movieNode.querySelector("img")?.getAttribute("src")
+    ].map(normalizeSteamImageUrl).find(Boolean) || "";
+
+    if (movieUrl || poster) {
+      return { url: movieUrl || "", poster };
+    }
+  }
+
+  const encodedMovieMatch = String(html).match(/https?:\\?\/\\?\/[^"'<>]+?\.(?:webm|mp4)(?:\?[^"'<>]*)?/i);
+  if (encodedMovieMatch) {
+    return {
+      url: normalizeSteamImageUrl(encodedMovieMatch[0].replace(/\\\//g, "/").replace(/&amp;/g, "&")),
+      poster: ""
     };
   }
 
@@ -2493,6 +2735,33 @@ function getFirstPlayableSteamVideo(html) {
   } catch {
     return { url: "", poster: "" };
   }
+}
+
+function extractSteamPageScreenshots(html) {
+  if (!html) return [];
+
+  const node = document.createElement("div");
+  node.innerHTML = String(html);
+  const urls = [];
+
+  node.querySelectorAll("a.highlight_screenshot_link[href], a.highlight_screenshot_link[data-full]").forEach(link => {
+    urls.push(link.getAttribute("data-full") || link.getAttribute("href") || "");
+  });
+
+  node.querySelectorAll(".highlight_strip_screenshot img[src], .highlight_screenshot_link img[src]").forEach(image => {
+    const src = image.getAttribute("src") || "";
+    urls.push(src.replace(/\.116x65\./, ".600x338."));
+  });
+
+  const htmlText = String(html);
+  [...htmlText.matchAll(/https?:\\?\/\\?\/[^"'<>]+?steam[^"'<>]+?\.(?:jpg|png|webp)(?:\?[^"'<>]*)?/gi)].forEach(match => {
+    const url = match[0].replace(/\\\//g, "/").replace(/&amp;/g, "&");
+    if (/screenshots|ss_/i.test(url)) urls.push(url);
+  });
+
+  return [...new Set(urls.map(normalizeSteamImageUrl).filter(Boolean))]
+    .filter(url => /\.(jpg|png|webp)(\?|$)/i.test(url))
+    .slice(0, 8);
 }
 
 // --- Merge games into cache (deduplicates by appid) ---
@@ -3176,34 +3445,36 @@ function closeGameScreenshotViewer() {
 
 async function updateGameQuickLookStoreData(game) {
   try {
+    let steamPageHtml = "";
+    let data = null;
+
     const url = `https://store.steampowered.com/api/appdetails?appids=${game.appid}&l=english&cc=US`;
     const res = await fetchViaProxy(url);
-    if (!res.ok) return;
+    if (res.ok) {
+      let parsed;
+      try {
+        const json = await res.json();
+        const raw = typeof json === "string" ? json : (json.contents || JSON.stringify(json));
+        parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      } catch {
+        const text = await res.text();
+        parsed = JSON.parse(text);
+      }
 
-    let parsed;
-    try {
-      const json = await res.json();
-      const raw = typeof json === "string" ? json : (json.contents || JSON.stringify(json));
-      parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-    } catch {
-      const text = await res.text();
-      parsed = JSON.parse(text);
+      data = parsed?.[game.appid]?.data || null;
     }
 
-    const data = parsed?.[game.appid]?.data;
-    if (!data) return;
-
-    if (data.screenshots) {
-      game.screenshots = data.screenshots.map(s => s.path_full).slice(0, 8);
+    if (data?.screenshots) {
+      game.screenshots = data.screenshots.map(s => s.path_full).filter(Boolean).slice(0, 8);
     }
-    if (data.movies) {
+    if (data?.movies) {
       const movie = data.movies.map(getSteamMovieSource).find(source => source.url);
       if (movie) {
         game.videoUrl = movie.url;
-        game.videoPoster = movie.poster || game.cover;
+        game.videoPoster = movie.poster || game.videoPoster || game.cover;
       }
     }
-    if (!game.videoUrl) {
+    if (!game.videoUrl && data) {
       const inlineVideo = getFirstPlayableSteamVideo(data.about_the_game || data.detailed_description || "");
       if (inlineVideo.url) {
         game.videoUrl = inlineVideo.url;
@@ -3212,11 +3483,16 @@ async function updateGameQuickLookStoreData(game) {
         game.videoPoster = inlineVideo.poster;
       }
     }
-    let steamPageHtml = "";
-    if (!game.videoUrl || !hasAnySystemRequirements(game.systemRequirements)) {
+
+    const needsSteamPage = !game.videoUrl
+      || !(game.screenshots || []).length
+      || !hasAnySystemRequirements(game.systemRequirements);
+
+    if (needsSteamPage) {
       const pageRes = await fetchViaProxy(`https://store.steampowered.com/app/${game.appid}/`);
       if (pageRes.ok) steamPageHtml = await pageRes.text();
     }
+
     if (!game.videoUrl && steamPageHtml) {
       const pageVideo = getFirstPlayableSteamVideo(steamPageHtml);
       if (pageVideo.url) {
@@ -3226,23 +3502,27 @@ async function updateGameQuickLookStoreData(game) {
         game.videoPoster = pageVideo.poster;
       }
     }
-    if (data.short_description || data.detailed_description) {
+    if (!(game.screenshots || []).length && steamPageHtml) {
+      game.screenshots = extractSteamPageScreenshots(steamPageHtml);
+    }
+    game.videoPoster = game.videoPoster || (game.screenshots || [])[0] || getSteamAppHeroUrl(game.appid) || game.cover;
+    if (data?.short_description || data?.detailed_description) {
       game.fullDescription = data.short_description || cleanSteamHtml(data.detailed_description).slice(0, 500);
     }
-    if (data.developers) {
+    if (data?.developers) {
       game.developer = data.developers.join(", ");
     }
-    if (data.publishers) {
+    if (data?.publishers) {
       game.publisher = data.publishers.join(", ");
     }
-    if (data.release_date) {
+    if (data?.release_date) {
       game.releaseDate = data.release_date.date;
       game.comingSoon = !!data.release_date.coming_soon;
     }
-    if (data.genres) {
+    if (data?.genres) {
       game.genres = data.genres.map(g => g.description).slice(0, 4);
     }
-    if (data.mac_requirements || data.pc_requirements) {
+    if (data?.mac_requirements || data?.pc_requirements) {
       game.systemRequirements = mergeSystemRequirements(game.systemRequirements, {
         mac: data.mac_requirements,
         windows: data.pc_requirements
@@ -3254,11 +3534,11 @@ async function updateGameQuickLookStoreData(game) {
         game.systemRequirements = mergeSystemRequirements(game.systemRequirements, pageRequirements);
       }
     }
-    if (data.price_overview) {
+    if (data?.price_overview) {
       game.price = data.price_overview.initial / 100;
       game.discount = data.price_overview.discount_percent || 0;
     }
-    if (data.platforms) {
+    if (data?.platforms) {
       game.hasNativeMac = !!data.platforms.mac;
       setGameCompatibility(game);
     }
