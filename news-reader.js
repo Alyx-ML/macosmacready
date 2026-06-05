@@ -113,33 +113,32 @@ async function loadNewsFromRSS() {
   renderFeed();
 
   try {
-    const activeSources = NEWS_RSS_SOURCES.filter(source => enabledNewsSources.has(source.name));
-    const settled = await Promise.allSettled(activeSources.map(async source => {
-      if (source.format === "html") return fetchHTMLNewsSource(source);
+    const generatedNewsUrl = typeof GENERATED_NEWS_URL !== "undefined"
+      ? GENERATED_NEWS_URL
+      : "public/data/news.generated.json";
+    const response = await fetch(generatedNewsUrl, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Generated news request failed: ${response.status}`);
 
-      const response = await fetchDevProxy(source.url);
-      if (!response.ok) throw new Error(`RSS request failed for ${source.name}: ${response.status}`);
-      return parseLiveRSSSource(source, await response.text());
-    }));
+    const payload = await response.json();
+    const generatedArticles = Array.isArray(payload.articles) ? payload.articles : [];
 
-    articles = settled
-      .flatMap(result => result.status === "fulfilled" ? result.value : [])
+    articles = generatedArticles
+      .map(article => ({
+        ...article,
+        title: cleanArticleText(article.title || ""),
+        subtitle: article.subtitle || buildRSSSubtitle(article.content || ""),
+        sourceUrl: article.sourceUrl || "",
+        bookmarked: false,
+        queued: queuedArticleUrls.has(article.sourceUrl || ""),
+        custom: false
+      }))
+      .filter(article => article.title && article.sourceUrl)
       .filter(article => shouldRenderArticle(article))
       .filter((article, index, list) => list.findIndex(match => match.sourceUrl === article.sourceUrl) === index)
       .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-      .slice(0, 120)
-      .map(article => ({
-        ...article,
-        bookmarked: false,
-        queued: queuedArticleUrls.has(article.sourceUrl),
-        custom: false
-      }));
-
-    await hydrateSourceArticleImages(articles);
-    articles = articles.filter(article => article.cover && !article.cover.startsWith("preset-"));
-    articles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      .slice(0, 120);
   } catch (error) {
-    console.error("Live news data failed to load", error);
+    console.error("Generated news data failed to load", error);
     articles = [];
   }
 
