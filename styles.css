@@ -1701,6 +1701,21 @@ body.light-mode .btn-read-more-glass:hover {
   }
 }
 
+/* Keep backdrop out of #desktop flex flow on all viewports (prevents app-window jump). */
+#widget-center-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 7955;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  background: transparent;
+}
+
+#widget-center-backdrop.show {
+  pointer-events: auto;
+}
+
 #widget-center {
   position: absolute;
   right: 12px;

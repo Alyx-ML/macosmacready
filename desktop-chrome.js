@@ -39,12 +39,23 @@ function initControlCenter() {
     }
   };
 
+  const isMobileWidgetLayout = () => window.matchMedia("(max-width: 1024px)").matches;
+
   const setWidgetCenterOpenState = (open) => {
-    document.body.classList.toggle("widget-center-open", open);
+    const useMobileChrome = isMobileWidgetLayout();
+    document.body.classList.toggle("widget-center-open", open && useMobileChrome);
     if (!widgetBackdrop) return;
-    widgetBackdrop.classList.toggle("hidden", !open);
-    widgetBackdrop.classList.toggle("show", open);
-    widgetBackdrop.setAttribute("aria-hidden", open ? "false" : "true");
+
+    if (!open || !useMobileChrome) {
+      widgetBackdrop.classList.add("hidden");
+      widgetBackdrop.classList.remove("show");
+      widgetBackdrop.setAttribute("aria-hidden", "true");
+      return;
+    }
+
+    widgetBackdrop.classList.remove("hidden");
+    widgetBackdrop.classList.add("show");
+    widgetBackdrop.setAttribute("aria-hidden", "false");
   };
 
   const finishWidgetCenterClose = () => {
