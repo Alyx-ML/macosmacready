@@ -63,7 +63,9 @@ const RSS_CATEGORY_LABELS = {
   ai: "Apple Intelligence",
   deals: "Deals"
 };
-const GENERATED_NEWS_URL = "/data/news.generated.json";
+const GENERATED_NEWS_URL = typeof window.macreadyDataUrl === "function"
+  ? window.macreadyDataUrl("news.generated.json")
+  : "/data/news.generated.json";
 const GENERATED_NEWS_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 const BOOKMARKED_ARTICLE_URLS_KEY = "tahoe_bookmarked_urls";
 const CUSTOM_ARTICLES_KEY = "tahoe_custom_articles";

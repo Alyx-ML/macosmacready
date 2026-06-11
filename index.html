@@ -42,6 +42,21 @@
         `url('${initialSteamHero}')`
       );
     }
+
+    // GitHub Pages serves the repo root (/macosmacready/) while Vite/Workers serve public/ at /data/.
+    window.macreadyBasePath = function macreadyBasePath() {
+      if (window.location.hostname.endsWith("github.io")
+          && window.location.pathname.startsWith("/macosmacready")) {
+        return "/macosmacready/";
+      }
+      return "/";
+    };
+
+    window.macreadyDataUrl = function macreadyDataUrl(filename) {
+      const base = window.macreadyBasePath();
+      const dataRoot = base === "/macosmacready/" ? "public/data/" : "data/";
+      return `${base}${dataRoot}${filename}`;
+    };
   </script>
   <link rel="icon" type="image/webp" href="public/assets/imgs/finderfavicon.webp">
   <link rel="preload" as="image" href="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" imagesrcset="public/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp 960w, public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
@@ -3041,8 +3056,15 @@
   <script defer src="news-reader.js?v=golden-gate-12"></script>
   <script defer src="window-manager.js?v=window-module-1"></script>
   <script defer src="siri-assistant.js?v=siri-module-1"></script>
-  <script defer src="/data/games.generated.js?v=games-data-2"></script>
-  <script defer src="app.js?v=cc-fade-out-1"></script>
+  <script>
+    (function () {
+      const script = document.createElement("script");
+      script.defer = true;
+      script.src = window.macreadyDataUrl("games.generated.js") + "?v=games-data-2";
+      document.head.appendChild(script);
+    })();
+  </script>
+  <script defer src="app.js?v=ghpages-data-1"></script>
 
   <!-- SVG Color Vision Deficiency Matrices -->
   <svg style="position: absolute; height: 0; width: 0; pointer-events: none;" aria-hidden="true">

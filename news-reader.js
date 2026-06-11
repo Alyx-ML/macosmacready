@@ -193,7 +193,9 @@ async function loadNewsFromRSS() {
   try {
     const generatedNewsUrl = typeof GENERATED_NEWS_URL !== "undefined"
       ? GENERATED_NEWS_URL
-      : "/data/news.generated.json";
+      : (typeof window.macreadyDataUrl === "function"
+        ? window.macreadyDataUrl("news.generated.json")
+        : "/data/news.generated.json");
     const response = await fetch(generatedNewsUrl);
     if (!response.ok) throw new Error(`Generated news request failed: ${response.status}`);
 
