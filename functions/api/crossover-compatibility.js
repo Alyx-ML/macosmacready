@@ -1,3 +1,5 @@
+import { corsHeaders } from "./request-guard.js";
+
 const CODEWEAVERS_ORIGIN = "https://www.codeweavers.com";
 const LOOKUP_HEADERS = {
   "accept": "text/html,application/xhtml+xml",
@@ -9,22 +11,24 @@ export async function onRequestGet({ request }) {
   const title = (url.searchParams.get("title") || "").trim();
 
   if (!title) {
-    return jsonResponse({ found: false, reason: "missing_title" }, 400);
+    return jsonResponse({ found: false, reason: "missing_title" }, 400, {}, request);
   }
 
   try {
     const result = await lookupCrossoverCompatibility(title);
     return jsonResponse(result, 200, {
       "Cache-Control": result.found ? "public, max-age=21600" : "public, max-age=3600"
-    });
+    }, request);
   } catch (error) {
     return jsonResponse({
       found: false,
       reason: "lookup_failed",
       message: error instanceof Error ? error.message : "CodeWeavers lookup failed"
-    }, 502);
+    }, 502, {}, request);
   }
 }
+
+export { scoreTitleMatch, chooseBestMatch, parseSearchResults };
 
 export async function lookupCrossoverCompatibility(rawTitle, fetchImpl = fetch) {
   const title = sanitizeTitle(rawTitle);
@@ -235,14 +239,12 @@ function decodeHtml(value) {
     .replace(/&gt;/g, ">");
 }
 
-function jsonResponse(payload, status = 200, extraHeaders = {}) {
+function jsonResponse(payload, status = 200, extraHeaders = {}, request) {
   return new Response(JSON.stringify(payload), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      ...corsHeaders(request, "GET, OPTIONS"),
       ...extraHeaders
     }
   });

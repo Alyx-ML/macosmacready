@@ -32,10 +32,7 @@ function initSiriAssistant() {
   if (!siriHud) return;
 
   // A. Persistent Preference Settings System
-  // Force visible on page load so it is guaranteed to appear for you after the update,
-  // but it remains fully hidable/disableable in the active session via System Settings!
-  localStorage.setItem("macready_siri_enabled", "true");
-  const siriEnabledPref = "true";
+  const siriEnabledPref = localStorage.getItem("macready_siri_enabled") ?? "true";
   if (siriToggle) {
     if (siriEnabledPref === "true") {
       siriToggle.style.display = "";
@@ -528,8 +525,8 @@ function startVoiceVolumeMonitor() {
   }, 100);
 }
 
-const SIRI_API_ENDPOINT = "https://macosmacready.fpt4g789c6.workers.dev/api/siri";
-const SIRI_TRANSCRIBE_ENDPOINT = "https://macosmacready.fpt4g789c6.workers.dev/api/transcribe";
+const SIRI_API_ENDPOINT = "/api/siri";
+const SIRI_TRANSCRIBE_ENDPOINT = "/api/transcribe";
 
 async function requestCloudflareSiri(query) {
   const response = await fetch(SIRI_API_ENDPOINT, {

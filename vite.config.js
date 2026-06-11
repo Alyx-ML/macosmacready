@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import fs from "fs";
 import path from "path";
 import { lookupCrossoverCompatibility } from "./functions/api/crossover-compatibility.js";
+import { isAllowedFeedUrl } from "./functions/api/rss-proxy.js";
 
 export default defineConfig({
   plugins: [
@@ -39,9 +40,9 @@ export default defineConfig({
           const requestUrl = new URL(req.url || "", "http://localhost");
           const feedUrl = requestUrl.searchParams.get("url");
 
-          if (!feedUrl) {
+          if (!feedUrl || !isAllowedFeedUrl(feedUrl)) {
             res.statusCode = 400;
-            res.end("Missing RSS URL");
+            res.end("Missing or disallowed RSS URL");
             return;
           }
 
@@ -70,10 +71,50 @@ export default defineConfig({
         });
 
         // Real-disk File Saving endpoint
+        server.middlewares.use("/api/rss", async (req, res) => {
+          if (req.method !== "GET") {
+            res.statusCode = 405;
+            res.end("Method Not Allowed");
+            return;
+          }
+
+          const requestUrl = new URL(req.url || "", "http://localhost");
+          const feedUrl = (requestUrl.searchParams.get("url") || "").trim();
+          if (!feedUrl || !isAllowedFeedUrl(feedUrl)) {
+            res.statusCode = 400;
+            res.end("Missing or disallowed RSS URL");
+            return;
+          }
+
+          try {
+            const response = await fetch(feedUrl, {
+              headers: { "user-agent": "MacReady RSS Reader" }
+            });
+            if (!response.ok) {
+              res.statusCode = response.status;
+              res.end(`RSS request failed: ${response.status}`);
+              return;
+            }
+            res.setHeader("content-type", response.headers.get("content-type") || "text/plain; charset=utf-8");
+            res.end(await response.text());
+          } catch (error) {
+            res.statusCode = 502;
+            res.end(error instanceof Error ? error.message : "RSS request failed");
+          }
+        });
+
         server.middlewares.use("/api/save-file", async (req, res) => {
           if (req.method !== "POST") {
             res.statusCode = 405;
             res.end("Method Not Allowed");
+            return;
+          }
+
+          const remote = req.socket?.remoteAddress || "";
+          const isLocalRequest = remote === "127.0.0.1" || remote === "::1" || remote === "::ffff:127.0.0.1";
+          if (!isLocalRequest) {
+            res.statusCode = 403;
+            res.end("Access Denied: localhost only.");
             return;
           }
 

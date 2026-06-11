@@ -26,11 +26,12 @@ function renderNewsSourceControls() {
   const menu = document.getElementById("news-source-menu");
   if (!menu) return;
 
-  menu.innerHTML = NEWS_RSS_SOURCES.map(source => `
-    <li class="sidebar-item source-control-item" data-source-name="${source.name}">
+  const sources = typeof newsSourceManifest !== "undefined" ? newsSourceManifest : NEWS_RSS_SOURCES;
+  menu.innerHTML = sources.map(source => `
+    <li class="sidebar-item source-control-item" data-source-name="${escapeHTML(source.name)}">
       <label class="source-control-label">
         <input type="checkbox" ${enabledNewsSources.has(source.name) ? "checked" : ""}>
-        <span>${source.name}</span>
+        <span>${escapeHTML(source.name)}</span>
       </label>
     </li>
   `).join("");
@@ -87,11 +88,12 @@ function parseLiveRSSSource(source, xmlText) {
       if (!title || !sourceUrl || Number.isNaN(timestamp)) return null;
       if (!shouldIncludeRSSArticle(source, title, rawDescription, content)) return null;
 
+      const subtitle = buildRSSSubtitle(rawDescription || content);
       return {
         id: `${source.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${timestamp}-${index}`,
         title,
-        subtitle: buildRSSSubtitle(rawDescription || content),
-        category: source.category,
+        subtitle,
+        category: resolveArticleCategory({ title, subtitle }, source.category),
         author: source.name,
         avatar: source.name.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase(),
         date: formatRSSDate(timestamp),
@@ -108,38 +110,130 @@ function parseLiveRSSSource(source, xmlText) {
     .filter(Boolean);
 }
 
-async function loadNewsFromRSS() {
-  articles = [];
-  renderFeed();
+function isGeneratedNewsStale(generatedAt) {
+  const maxAge = typeof GENERATED_NEWS_MAX_AGE_MS === "number" ? GENERATED_NEWS_MAX_AGE_MS : 6 * 60 * 60 * 1000;
+  const timestamp = Date.parse(generatedAt || "");
+  if (Number.isNaN(timestamp)) return true;
+  return Date.now() - timestamp > maxAge;
+}
 
-  try {
-    const generatedNewsUrl = typeof GENERATED_NEWS_URL !== "undefined"
-      ? GENERATED_NEWS_URL
-      : "public/data/news.generated.json";
-    const response = await fetch(generatedNewsUrl, { cache: "no-store" });
-    if (!response.ok) throw new Error(`Generated news request failed: ${response.status}`);
-
-    const payload = await response.json();
-    const generatedArticles = Array.isArray(payload.articles) ? payload.articles : [];
-
-    articles = generatedArticles
-      .map(article => ({
+function normalizeLoadedArticles(articleList, { custom = false } = {}) {
+  return articleList
+    .map(article => {
+      const normalized = {
         ...article,
         title: cleanArticleText(article.title || ""),
         subtitle: article.subtitle || buildRSSSubtitle(article.content || ""),
         sourceUrl: article.sourceUrl || "",
-        bookmarked: false,
+        bookmarked: bookmarkedArticleUrls.has(article.sourceUrl || ""),
         queued: queuedArticleUrls.has(article.sourceUrl || ""),
-        custom: false
-      }))
-      .filter(article => article.title && article.sourceUrl)
-      .filter(article => shouldRenderArticle(article))
-      .filter((article, index, list) => list.findIndex(match => match.sourceUrl === article.sourceUrl) === index)
-      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-      .slice(0, 120);
+        custom
+      };
+      return {
+        ...normalized,
+        category: resolveArticleCategory(normalized, article.category)
+      };
+    })
+    .filter(article => article.title && article.sourceUrl)
+    .filter(article => shouldRenderArticle(article))
+    .filter((article, index, list) => list.findIndex(match => match.sourceUrl === article.sourceUrl) === index)
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+    .slice(0, 120);
+}
+
+function mergeCustomArticlesIntoFeed(customArticles) {
+  customArticles.forEach(customArticle => {
+    if (!customArticle?.title) return;
+    const duplicate = articles.some(article => article.id === customArticle.id);
+    if (!duplicate) {
+      articles.unshift({
+        ...customArticle,
+        bookmarked: bookmarkedArticleUrls.has(customArticle.sourceUrl || "") || Boolean(customArticle.bookmarked),
+        queued: queuedArticleUrls.has(customArticle.sourceUrl || ""),
+        custom: true
+      });
+    }
+  });
+}
+
+async function fetchLiveNewsArticles() {
+  const sources = (typeof newsSourceManifest !== "undefined" ? newsSourceManifest : NEWS_RSS_SOURCES)
+    .filter(source => enabledNewsSources.has(source.name));
+
+  const results = await Promise.allSettled(
+    sources.map(async source => {
+      if (source.format === "html") {
+        return fetchHTMLNewsSource(source);
+      }
+
+      const response = await fetchDevProxy(source.url);
+      if (!response.ok) throw new Error(`RSS request failed for ${source.name}: ${response.status}`);
+      return parseLiveRSSSource(source, await response.text());
+    })
+  );
+
+  const fetched = results
+    .filter(result => result.status === "fulfilled")
+    .flatMap(result => result.value);
+
+  const failed = results.filter(result => result.status === "rejected").length;
+  if (failed > 0) {
+    console.warn(`Live RSS refresh skipped ${failed} source(s).`);
+  }
+
+  return normalizeLoadedArticles(fetched);
+}
+
+async function loadNewsFromRSS() {
+  articles = [];
+  renderFeed();
+
+  const customArticles = typeof loadCustomArticles === "function" ? loadCustomArticles() : [];
+
+  try {
+    const generatedNewsUrl = typeof GENERATED_NEWS_URL !== "undefined"
+      ? GENERATED_NEWS_URL
+      : "/data/news.generated.json";
+    const response = await fetch(generatedNewsUrl);
+    if (!response.ok) throw new Error(`Generated news request failed: ${response.status}`);
+
+    const payload = await response.json();
+    const generatedArticles = Array.isArray(payload.articles) ? payload.articles : [];
+    if (Array.isArray(payload.sources) && payload.sources.length) {
+      newsSourceManifest = payload.sources;
+    }
+
+    const generatedIsStale = isGeneratedNewsStale(payload.generatedAt);
+    if (generatedIsStale) {
+      console.info("Generated news cache is stale; refreshing from live RSS feeds.");
+      try {
+        const liveArticles = await fetchLiveNewsArticles();
+        if (liveArticles.length > 0) {
+          articles = liveArticles;
+          await hydrateSourceArticleImages(articles);
+          mergeCustomArticlesIntoFeed(customArticles);
+          updateCounts();
+          renderFeed();
+          return;
+        }
+      } catch (liveError) {
+        console.warn("Live RSS refresh failed; falling back to cached generated news.", liveError);
+      }
+    }
+
+    articles = normalizeLoadedArticles(generatedArticles);
+    mergeCustomArticlesIntoFeed(customArticles);
   } catch (error) {
     console.error("Generated news data failed to load", error);
-    articles = [];
+    try {
+      const liveArticles = await fetchLiveNewsArticles();
+      articles = liveArticles;
+      await hydrateSourceArticleImages(articles);
+      mergeCustomArticlesIntoFeed(customArticles);
+    } catch (liveError) {
+      console.error("Live RSS fallback failed", liveError);
+      articles = [];
+    }
   }
 
   updateCounts();
@@ -214,18 +308,24 @@ function renderFeed() {
     const imageSource = index >= INITIAL_VISIBLE_ARTICLE_COUNT ? `data-src="${coverUrl}"` : `src="${coverUrl}"`;
     const coverHtml = `<div class="card-cover"><img ${imageSource} alt="${escapeHTML(article.title)}" ${imagePriority} decoding="async" onerror="this.closest('.news-card').remove();"></div>`;
 
+    const safeTitle = escapeHTML(article.title);
+    const safeSubtitle = escapeHTML(article.subtitle);
+    const safeSourceUrl = escapeHTML(article.sourceUrl);
+    const safeSourceName = escapeHTML(article.sourceName);
+    const safeDate = escapeHTML(article.date);
+
     html += `
-      <article class="${cardClass}" data-id="${article.id}">
+      <article class="${cardClass}" data-id="${escapeHTML(article.id)}">
         ${coverHtml}
 
         <div class="card-body">
-          <h3 class="card-title font-title">${article.title}</h3>
-          <p class="card-excerpt">${article.subtitle}</p>
+          <h3 class="card-title font-title">${safeTitle}</h3>
+          <p class="card-excerpt">${safeSubtitle}</p>
           <div class="card-meta">
-            <a class="card-source" href="${article.sourceUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${article.sourceName}</a>
-            <span class="card-date">${article.date}</span>
+            <a class="card-source" href="${safeSourceUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${safeSourceName}</a>
+            <span class="card-date">${safeDate}</span>
           </div>
-          <a href="${article.sourceUrl}" target="_blank" rel="noopener" class="btn-read-more-glass" onclick="event.stopPropagation()">
+          <a href="${safeSourceUrl}" target="_blank" rel="noopener" class="btn-read-more-glass" onclick="event.stopPropagation()">
             <span>Read More</span>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.75; vertical-align: middle;"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
           </a>
@@ -238,13 +338,16 @@ function renderFeed() {
   initNewsImageLoading();
 
   // Append or manage the soft glass liquid lazy load blur panel
+  const feedViewport = grid.parentNode.parentNode;
   let blurPanel = document.getElementById("feed-lazy-load-blur");
   if (filtered.length > visibleArticlesCount) {
     if (!blurPanel) {
       blurPanel = document.createElement("div");
       blurPanel.id = "feed-lazy-load-blur";
       blurPanel.className = "feed-lazy-load-blur";
-      grid.parentNode.parentNode.appendChild(blurPanel);
+    }
+    if (blurPanel.parentNode !== feedViewport) {
+      feedViewport.appendChild(blurPanel);
     }
     blurPanel.innerHTML = ``;
     blurPanel.classList.remove("fade-out");
@@ -294,6 +397,13 @@ function toggleBookmark(id) {
   const article = articles.find(a => a.id === id);
   if (article) {
     article.bookmarked = !article.bookmarked;
+    if (article.sourceUrl) {
+      if (article.bookmarked) {
+        bookmarkedArticleUrls.add(article.sourceUrl);
+      } else {
+        bookmarkedArticleUrls.delete(article.sourceUrl);
+      }
+    }
     saveToStorage();
     updateCounts();
     renderFeed();
@@ -338,15 +448,15 @@ function renderBookmarksWidget() {
   }
 
   container.innerHTML = bookmarkedArticles.map(article => `
-    <div class="reading-item" data-id="${article.id}">
+    <div class="reading-item" data-id="${escapeHTML(article.id)}">
       <div class="reading-item-left">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" class="reading-item-icon">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
         </svg>
-        <span class="reading-item-title" title="${article.title}">${article.title}</span>
+        <span class="reading-item-title" title="${escapeHTML(article.title)}">${escapeHTML(article.title)}</span>
       </div>
-      <button class="reading-item-remove" data-id="${article.id}" title="Remove Bookmark">
+      <button class="reading-item-remove" data-id="${escapeHTML(article.id)}" title="Remove Bookmark">
         <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -376,21 +486,153 @@ function renderBookmarksWidget() {
 // --- 6. Quick Look Article Reader View Actions ---
 let currentFontSizeClass = "font-size-medium";
 
+const READER_BOILERPLATE_HEADING = /^(related|most popular|more from|recommended|you may also like|read next|tags|share this|comments)$/i;
+
+function normalizeReaderPlainText(text) {
+  return (text || "").replace(/\s+/g, " ").trim();
+}
+
+function stripLeadingSourcePrefix(text, article) {
+  const source = article?.sourceName || article?.author || "";
+  const normalized = normalizeReaderPlainText(text);
+  if (!source) return normalized;
+
+  const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return normalized.replace(new RegExp(`^${escaped}\\s+`, "i"), "").trim();
+}
+
+function textsAreNearDuplicate(a, b) {
+  const left = normalizeReaderPlainText(a).toLowerCase();
+  const right = normalizeReaderPlainText(b).toLowerCase();
+  if (!left || !right) return false;
+  if (left === right) return true;
+
+  const shorter = left.length <= right.length ? left : right;
+  const longer = left.length > right.length ? left : right;
+  return longer.startsWith(shorter) && shorter.length >= 72;
+}
+
+function isReaderMetadataParagraph(text) {
+  const value = normalizeReaderPlainText(text);
+  if (!value) return true;
+  if (/^\d+\s*(min(ute)?s?\s+read|minute read)/i.test(value)) return true;
+  if (/^(mon|tue|wed|thu|fri|sat|sun)\b/i.test(value) && /\d{4}/.test(value)) return true;
+  if (/^(posted|published|updated)\s+(on|at)\b/i.test(value)) return true;
+  if (/^by\s+.+\b\d{4}\b/i.test(value) && value.length < 140) return true;
+  if (/^image:\s*/i.test(value)) return true;
+  if (value.length < 28 && /^(share|comments|related|read more)$/i.test(value)) return true;
+  return false;
+}
+
+function resolveReaderSubtitle(article) {
+  let subtitle = stripLeadingSourcePrefix(article.subtitle || "", article);
+  if (!subtitle) return "";
+
+  if (textsAreNearDuplicate(subtitle, article.title || "")) return "";
+
+  const excerpt = typeof buildArticleExcerpt === "function"
+    ? buildArticleExcerpt(article.content || "", 320)
+    : subtitle;
+  if (textsAreNearDuplicate(subtitle, excerpt)) return "";
+
+  return subtitle;
+}
+
+function sanitizeReaderContent(html, article = {}) {
+  if (!html || typeof html !== "string") return "<p></p>";
+
+  const parse = typeof parseRSSHTML === "function"
+    ? parseRSSHTML
+    : (markup) => new DOMParser().parseFromString(markup, "text/html");
+  const doc = parse(html);
+  const body = doc.body;
+
+  body.querySelectorAll("script, style, noscript, iframe, object, embed, form, svg").forEach(node => node.remove());
+
+  if (!article.custom) {
+    body.querySelectorAll("h1").forEach(heading => {
+      if (textsAreNearDuplicate(heading.textContent, article.title || "")) {
+        heading.remove();
+      }
+    });
+
+    body.querySelectorAll("h2, h3, h4").forEach(heading => {
+      const label = normalizeReaderPlainText(heading.textContent);
+      if (!READER_BOILERPLATE_HEADING.test(label)) return;
+
+      let sibling = heading.nextElementSibling;
+      heading.remove();
+      while (sibling && !/^H[1-4]$/.test(sibling.tagName)) {
+        const next = sibling.nextElementSibling;
+        sibling.remove();
+        sibling = next;
+      }
+    });
+
+    while (body.firstElementChild) {
+      const node = body.firstElementChild;
+      const plain = stripLeadingSourcePrefix(node.textContent || "", article);
+      if (node.matches("p, div, span, li") && isReaderMetadataParagraph(plain)) {
+        node.remove();
+        continue;
+      }
+      break;
+    }
+  }
+
+  body.querySelectorAll("*").forEach(node => {
+    [...node.attributes].forEach(attr => {
+      if (node.tagName === "A" && (attr.name === "href" || attr.name === "title")) return;
+      if (node.tagName === "IMG" && ["src", "alt", "width", "height", "loading", "decoding"].includes(attr.name)) return;
+      node.removeAttribute(attr.name);
+    });
+  });
+
+  body.querySelectorAll("a[href]").forEach(link => {
+    link.setAttribute("rel", "noopener noreferrer");
+    link.setAttribute("target", "_blank");
+  });
+
+  body.querySelectorAll("img").forEach(img => {
+    img.setAttribute("loading", "lazy");
+    img.setAttribute("decoding", "async");
+    const src = img.getAttribute("src") || "";
+    const width = Number.parseInt(img.getAttribute("width") || "0", 10);
+    const height = Number.parseInt(img.getAttribute("height") || "0", 10);
+    if (/pixel|tracking|1x1|spacer/i.test(src) || (width > 0 && width <= 2) || (height > 0 && height <= 2)) {
+      img.remove();
+    }
+  });
+
+  const cleaned = body.innerHTML.trim();
+  if (cleaned) return cleaned;
+
+  const fallback = typeof buildArticleExcerpt === "function"
+    ? buildArticleExcerpt(html, 500)
+    : (typeof stripHTML === "function" ? stripHTML(html) : "");
+  return `<p>${escapeHTML(fallback || article.title || "")}</p>`;
+}
+
 async function openArticle(id) {
   const article = articles.find(a => a.id === id);
   if (!article) return;
 
   selectedArticleId = id;
   const overlay = document.getElementById("reader-overlay");
+  const readerSubtitle = resolveReaderSubtitle(article);
   
   // Fill text details
   document.getElementById("reader-toolbar-title").textContent = article.title;
   document.getElementById("reader-title").textContent = article.title;
-  document.getElementById("reader-subtitle").textContent = article.subtitle;
+  const subtitleEl = document.getElementById("reader-subtitle");
+  if (subtitleEl) {
+    subtitleEl.textContent = readerSubtitle;
+    subtitleEl.style.display = readerSubtitle ? "block" : "none";
+  }
   document.getElementById("reader-author").textContent = article.author;
   document.getElementById("reader-date").textContent = article.date;
   document.getElementById("reader-avatar").textContent = article.avatar;
-  document.getElementById("reader-text").innerHTML = article.content;
+  document.getElementById("reader-text").innerHTML = sanitizeReaderContent(article.content, article);
   const originalLink = document.getElementById("reader-open-original");
   if (originalLink) originalLink.href = article.sourceUrl;
   const heroReadMore = document.getElementById("reader-hero-read-more");
@@ -407,15 +649,14 @@ async function openArticle(id) {
   const readTime = Math.ceil(words / 200) || 1;
   const metaLine = document.getElementById("reader-editorial-meta");
   if (metaLine) {
-    metaLine.innerHTML = `By <span style="font-weight: 700;">${article.author}</span> &bull; ${article.date} &bull; ⏱️ ${readTime} min read`;
+    metaLine.innerHTML = `By <span style="font-weight: 700;">${escapeHTML(article.author)}</span> &bull; ${escapeHTML(article.date)} &bull; ⏱️ ${readTime} min read`;
   }
 
   // Apply reading theme class
   setReaderTheme(currentReaderTheme);
 
   // Reset scroll-linked opacity styles on load
-  const subtitleEl = document.getElementById("reader-subtitle");
-  if (subtitleEl) subtitleEl.style.opacity = "1";
+  if (subtitleEl) subtitleEl.style.opacity = readerSubtitle ? "1" : "0";
   if (metaLine) metaLine.style.opacity = "0.65";
 
   // Cover image settings

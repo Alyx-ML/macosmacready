@@ -51,11 +51,18 @@ struct NewsData {
     articles: Vec<Article>,
 }
 
+const APPLE_ECOSYSTEM_SOURCES: &[&str] = &["iClarified"];
+
 struct Filters {
     mac_news: Regex,
     strong_mac: Regex,
+    apple_ecosystem: Regex,
     ios_only: Regex,
     deal: Regex,
+    sales_deal: Regex,
+    idiomatic_deal: Regex,
+    commercial_price: Regex,
+    deal_word: Regex,
     mac_deal: Regex,
     games: Regex,
     reviews: Regex,
@@ -148,6 +155,9 @@ fn main() -> Result<()> {
     }
 
     hydrate_article_pages(&client, &filters, &mut fetched);
+    for article in fetched.iter_mut() {
+        article.category = resolve_article_category(&filters, article);
+    }
     fetched.retain(|article| should_render_article(&filters, article));
 
     let articles = balance_articles(fetched);
@@ -187,12 +197,25 @@ impl Filters {
             strong_mac: Regex::new(
                 r"(?i)\b(macOS|Mac\b|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]\b|Finder|Time Machine|Xcode|Gatekeeper|FileVault|Launch Services|MDM|Jamf|SwiftUI|AppKit|Terminal|Security Update)\b",
             )?,
+            apple_ecosystem: Regex::new(
+                r"(?i)\b(Apple|WWDC|iOS|iPhone|iPad|macOS|Mac\b|AirPods|watchOS|visionOS|Siri|App Store|iCloud|Xcode|Apple TV|Apple Watch)\b",
+            )?,
             ios_only: Regex::new(
                 r"(?i)\b(iOS|iPhone|iPad|iPadOS|watchOS|Apple Watch|AirPods|visionOS|Vision Pro)\b",
             )?,
             deal: Regex::new(
                 r"(?i)\b(deal|deals|sale|discount|coupon|save \$|save up to|% off|today only|lowest price|record-low|price drop|clearance|promo|promotion|bundle|lifetime license|sponsored|advertorial|stacksocial|walmart|best buy|amazon|b&h)\b",
             )?,
+            sales_deal: Regex::new(
+                r"(?i)\b(sale|on sale|discount|discounted|coupon|save \$|save up to|% off|today only|lowest price|record-low|record low|all-time low|price drop|price cut|clearance|promo|promotion|bundle|lifetime license|sponsored|advertorial|stacksocial|walmart|best buy|amazon|b&h|marked down)\b",
+            )?,
+            idiomatic_deal: Regex::new(
+                r"(?i)\b(?:biggest|main|real|whole|entire|true)\s+deal\s+(?:about|with|here|is|was|isn't|is not|breaker)|(?:the|this|that|a)\s+deal\s+(?:about|with|here|is|was|isn't|is not|breaker)|not\s+(?:the|a)\s+deal\b|\bdeal\s+breaker\b",
+            )?,
+            commercial_price: Regex::new(
+                r"(?i)(?:[$£€]\s?\d[\d,]*(?:\.\d{2})?|\d{1,3}%\s?off|save\s?(?:up to\s?)?[$£€]?\s?\d[\d,]*|[$£€]?\s?\d[\d,]*\s?off|all-time low|record low|lowest price)",
+            )?,
+            deal_word: Regex::new(r"(?i)\bdeals?\b")?,
             mac_deal: Regex::new(
                 r"(?i)\b(MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Studio Display|Apple display|Apple silicon)\b",
             )?,
@@ -303,6 +326,12 @@ fn news_sources() -> Vec<Source> {
         Source {
             name: "The Mac Observer",
             url: "https://www.macobserver.com/feed/",
+            category: "technology",
+            format: None,
+        },
+        Source {
+            name: "iClarified",
+            url: "https://www.iclarified.com/rss/news.xml",
             category: "technology",
             format: None,
         },
@@ -435,6 +464,17 @@ fn fetch_rss_source(client: &Client, filters: &Filters, source: &Source) -> Resu
         let pub_date = child_text(item, &["pubDate", "published", "updated"]);
 
         if title.is_empty() || link.is_empty() {
+            continue;
+        }
+
+        let subtitle_preview = build_article_excerpt(
+            &raw_description.clone().or_else(|| content.clone()),
+            260,
+        );
+        let content_preview = content.clone().unwrap_or_default();
+        if is_audio_podcast_item(item)
+            || is_podcast_feed_entry(&title, &subtitle_preview, &content_preview, &link)
+        {
             continue;
         }
 
@@ -607,8 +647,20 @@ fn should_include_article(
         return false;
     }
 
+    let subtitle_preview = build_article_excerpt(
+        &raw_description.clone().or_else(|| content.clone()),
+        260,
+    );
+    let content_preview = strip_html_option(content);
+    if is_podcast_feed_entry(title, &subtitle_preview, &content_preview, "") {
+        return false;
+    }
+
     let headline_text = format!("{} {}", title, strip_html_option(raw_description));
-    if source.category != "design" && source.category != "deals" && is_ios_led_title(filters, title)
+    if source.category != "design"
+        && source.category != "deals"
+        && !is_apple_ecosystem_source(source)
+        && is_ios_led_title(filters, title)
     {
         return false;
     }
@@ -620,7 +672,12 @@ fn should_include_article(
         strip_html_option(content)
     );
 
-    if !filters.category_matches(source.category, &combined_text) {
+    let category_ok = if is_apple_ecosystem_source(source) && source.category == "technology" {
+        filters.apple_ecosystem.is_match(&combined_text)
+    } else {
+        filters.category_matches(source.category, &combined_text)
+    };
+    if !category_ok {
         return false;
     }
 
@@ -636,15 +693,61 @@ fn should_include_article(
         return true;
     }
 
-    if !filters.strong_mac.is_match(&headline_text) {
+    let has_mac_context = if is_apple_ecosystem_source(source) {
+        filters.apple_ecosystem.is_match(&combined_text)
+    } else {
+        filters.strong_mac.is_match(&headline_text)
+    };
+    if !has_mac_context {
         return false;
     }
 
-    if filters.deal.is_match(&headline_text) && !filters.mac_deal.is_match(&headline_text) {
+    let deal_headline = if is_apple_ecosystem_source(source) {
+        title.to_string()
+    } else {
+        headline_text.clone()
+    };
+    if filters.deal.is_match(&deal_headline) && !filters.mac_deal.is_match(&deal_headline) {
         return false;
+    }
+
+    if is_apple_ecosystem_source(source) {
+        return true;
     }
 
     !is_ios_led_title(filters, title)
+}
+
+fn has_commercial_deal_signal(filters: &Filters, title: &str, headline: &str) -> bool {
+    if filters.sales_deal.is_match(headline) || filters.commercial_price.is_match(headline) {
+        return true;
+    }
+
+    let title_has_deal_word = filters.deal_word.is_match(title);
+    title_has_deal_word && !filters.idiomatic_deal.is_match(headline)
+}
+
+fn is_mac_deal_article(filters: &Filters, article: &Article) -> bool {
+    let headline = format!("{} {}", article.title, article.subtitle);
+    if !has_commercial_deal_signal(filters, &article.title, &headline) {
+        return false;
+    }
+    if filters.mobile_product.is_match(&article.title)
+        && !filters.mac_deal_product.is_match(&article.title)
+    {
+        return false;
+    }
+    filters.macbook_deals.is_match(&headline) || filters.mac_deal.is_match(&headline)
+}
+
+fn resolve_article_category(filters: &Filters, article: &Article) -> String {
+    if article.category == "design" || article.category == "deals" {
+        return article.category.clone();
+    }
+    if is_mac_deal_article(filters, article) {
+        return "deals".to_string();
+    }
+    article.category.clone()
 }
 
 fn should_render_article(filters: &Filters, article: &Article) -> bool {
@@ -652,9 +755,22 @@ fn should_render_article(filters: &Filters, article: &Article) -> bool {
         return false;
     }
 
+    if is_podcast_feed_entry(
+        &article.title,
+        &article.subtitle,
+        &article.content,
+        &article.source_url,
+    ) {
+        return false;
+    }
+
     if article.category != "design" && article.category != "deals" {
         let headline = format!("{} {}", article.title, article.subtitle);
-        if filters.ios_only.is_match(&headline) && !filters.strong_mac.is_match(&headline) {
+        let is_apple_ecosystem_article = APPLE_ECOSYSTEM_SOURCES.contains(&article.source_name.as_str());
+        if !is_apple_ecosystem_article
+            && filters.ios_only.is_match(&headline)
+            && !filters.strong_mac.is_match(&headline)
+        {
             return false;
         }
     }
@@ -1091,6 +1207,57 @@ fn is_non_article_title(title: &str) -> bool {
     first.is_ascii_digit() && title.chars().take(4).any(|ch| ch == '.')
 }
 
+fn is_podcast_feed_entry(title: &str, subtitle: &str, content: &str, link: &str) -> bool {
+    let title_lower = clean_article_text(title).to_lowercase();
+    let subtitle_lower = clean_article_text(subtitle).to_lowercase();
+    let content_lower = strip_html_option(&Some(content.to_string())).to_lowercase();
+    let link_lower = link.to_lowercase();
+    let combined = format!("{title_lower} {subtitle_lower} {content_lower}");
+
+    if title_lower.contains("podcast rewind") {
+        return true;
+    }
+    if title_lower.contains("macstories weekly") {
+        return true;
+    }
+    if link_lower.contains("/podcast-rewind")
+        || link_lower.contains("/podcast/episode")
+        || link_lower.contains("/feed/podcast")
+    {
+        return true;
+    }
+    if subtitle_lower.starts_with("enjoy the latest episodes from")
+        || content_lower.starts_with("enjoy the latest episodes from")
+    {
+        return true;
+    }
+    if combined.contains("recap of") && combined.contains("articles and podcasts") {
+        return true;
+    }
+    if title_lower.starts_with("podcast:")
+        || title_lower.starts_with("listen now:")
+        || title_lower.starts_with("watch:")
+    {
+        return true;
+    }
+
+    false
+}
+
+fn is_audio_podcast_item(item: roxmltree::Node) -> bool {
+    item.descendants()
+        .filter(|node| node.is_element() && node.tag_name().name() == "enclosure")
+        .any(|node| {
+            let media_type = node.attribute("type").unwrap_or("").to_lowercase();
+            let url = node.attribute("url").unwrap_or("").to_lowercase();
+            media_type.starts_with("audio/")
+                || url.ends_with(".mp3")
+                || url.ends_with(".m4a")
+                || url.ends_with(".aac")
+                || url.ends_with(".ogg")
+        })
+}
+
 fn article_html_from_blocks(
     blocks: &[(String, String)],
     _link: &str,
@@ -1241,6 +1408,10 @@ fn source_avatar(source_name: &str) -> String {
         .to_uppercase()
 }
 
+fn is_apple_ecosystem_source(source: &Source) -> bool {
+    APPLE_ECOSYSTEM_SOURCES.contains(&source.name)
+}
+
 fn is_ios_led_title(filters: &Filters, title: &str) -> bool {
     filters.ios_only.is_match(title) && !filters.strong_mac.is_match(title)
 }
@@ -1316,6 +1487,239 @@ mod tests {
             cleaned[0].1,
             "OpenAI just released this week’s Codex desktop app update."
         );
+    }
+
+    #[test]
+    fn podcast_feed_entry_detects_macstories_rewind_roundups() {
+        assert!(is_podcast_feed_entry(
+            "Podcast Rewind: Automation Wishes, RG Rotate Impressions",
+            "Enjoy the latest episodes from MacStories’ family of podcasts: AppStories",
+            "<p>Enjoy the latest episodes from MacStories’ family of podcasts:</p>",
+            "https://www.macstories.net/news/podcast-rewind-automation-wishes/"
+        ));
+        assert!(is_podcast_feed_entry(
+            "MacStories Weekly: Issue 515",
+            "recap of MacStories' articles and podcasts",
+            "<p>This week, in addition to the usual links</p>",
+            "https://www.macstories.net/weekly/issue-515/"
+        ));
+        assert!(!is_podcast_feed_entry(
+            "Jason Snell Launches Designed in California Podcast Kickstarter",
+            "Today I’m incredibly excited to announce that Myke Hurley and I are launching a Kickstarter for a new podcast",
+            "<p>Today I’m incredibly excited to announce that Myke Hurley and I are launching a Kickstarter for a new podcast</p>",
+            "https://sixcolors.com/post/2026/05/designed-in-california/"
+        ));
+    }
+
+    #[test]
+    fn should_render_article_rejects_ios_led_headlines_without_mac_context() {
+        let filters = Filters::new().expect("filters");
+        let article = Article {
+            id: "ios-only".to_string(),
+            title: "New iPhone features arrive this fall".to_string(),
+            subtitle: "Apple updates mobile software".to_string(),
+            category: "technology".to_string(),
+            author: "Test".to_string(),
+            avatar: "T".to_string(),
+            date: "Jun 1".to_string(),
+            timestamp: 1,
+            cover: "https://example.com/cover.jpg".to_string(),
+            source_name: "Test Source".to_string(),
+            source_url: "https://example.com/story".to_string(),
+            bookmarked: false,
+            queued: false,
+            custom: false,
+            content: "<p>Story</p>".to_string(),
+        };
+
+        assert!(!should_render_article(&filters, &article));
+    }
+
+    #[test]
+    fn should_render_article_keeps_mac_headlines() {
+        let filters = Filters::new().expect("filters");
+        let article = Article {
+            id: "mac-story".to_string(),
+            title: "macOS Tahoe beta adds new Finder features".to_string(),
+            subtitle: "Mac update details".to_string(),
+            category: "technology".to_string(),
+            author: "Test".to_string(),
+            avatar: "T".to_string(),
+            date: "Jun 1".to_string(),
+            timestamp: 1,
+            cover: "https://example.com/cover.jpg".to_string(),
+            source_name: "Test Source".to_string(),
+            source_url: "https://example.com/mac-story".to_string(),
+            bookmarked: false,
+            queued: false,
+            custom: false,
+            content: "<p>Story</p>".to_string(),
+        };
+
+        assert!(should_render_article(&filters, &article));
+    }
+
+    #[test]
+    fn resolve_article_category_promotes_mac_deal_headlines() {
+        let filters = Filters::new().expect("filters");
+        let article = Article {
+            id: "mac-deal".to_string(),
+            title: "Apple's 2026 M5 MacBook Air plunges to record-low $899".to_string(),
+            subtitle: "Save $200 at Amazon".to_string(),
+            category: "technology".to_string(),
+            author: "AppleInsider Mac".to_string(),
+            avatar: "AM".to_string(),
+            date: "Jun 10".to_string(),
+            timestamp: 1,
+            cover: String::new(),
+            source_name: "AppleInsider Mac".to_string(),
+            source_url: "https://appleinsider.com/articles/26/05/26/deal".to_string(),
+            bookmarked: false,
+            queued: false,
+            custom: false,
+            content: "<p>Deal</p>".to_string(),
+        };
+
+        assert_eq!(resolve_article_category(&filters, &article), "deals");
+    }
+
+    #[test]
+    fn resolve_article_category_rejects_idiomatic_deal_phrasing() {
+        let filters = Filters::new().expect("filters");
+        let article = Article {
+            id: "idiomatic-deal".to_string(),
+            title: "I’m using macOS Golden Gate’s Siri on the MacBook Neo. Ask us anything"
+                .to_string(),
+            subtitle: "The biggest deal about macOS 27 Golden Gate isn’t the design tweaks"
+                .to_string(),
+            category: "technology".to_string(),
+            author: "Macworld".to_string(),
+            avatar: "MW".to_string(),
+            date: "Jun 10".to_string(),
+            timestamp: 1,
+            cover: String::new(),
+            source_name: "Macworld".to_string(),
+            source_url: "https://www.macworld.com/article/siri-macbook-neo".to_string(),
+            bookmarked: false,
+            queued: false,
+            custom: false,
+            content: "<p>Story</p>".to_string(),
+        };
+
+        assert_eq!(resolve_article_category(&filters, &article), "technology");
+    }
+
+    #[test]
+    #[ignore = "live network fetch"]
+    fn fetch_iclarified_live_pipeline() {
+        let client = Client::builder()
+            .user_agent("MacReady RSS Builder Test")
+            .timeout(Duration::from_secs(25))
+            .build()
+            .expect("client");
+        let filters = Filters::new().expect("filters");
+        let source = news_sources()
+            .into_iter()
+            .find(|source| source.name == "iClarified")
+            .expect("source");
+
+        let xml = fetch_text(&client, source.url).expect("xml");
+        let doc = roxmltree::Document::parse(&xml).expect("parse");
+        let mut included = 0usize;
+        let mut item_count = 0usize;
+        for item in doc
+            .descendants()
+            .filter(|node| node.is_element() && matches!(node.tag_name().name(), "item" | "entry"))
+        {
+            item_count += 1;
+            let title = clean_article_text(&child_text(item, &["title"]).unwrap_or_default());
+            let raw_description = child_text(item, &["description", "summary"]);
+            let content = child_text(item, &["encoded", "content"]).or_else(|| raw_description.clone());
+            if should_include_article(&filters, &source, &title, &raw_description, &content) {
+                included += 1;
+            }
+        }
+        eprintln!("iClarified feed items={item_count}, included={included}");
+
+        let mut articles = fetch_rss_source(&client, &filters, &source).expect("fetch");
+        assert!(!articles.is_empty(), "fetch_rss_source returned no articles");
+
+        for article in articles.iter_mut() {
+            article.category = resolve_article_category(&filters, article);
+        }
+        let fetched_count = articles.len();
+        articles.retain(|article| should_render_article(&filters, article));
+        let after_render = articles.len();
+        let balanced = balance_articles(articles);
+
+        eprintln!(
+            "iClarified pipeline: fetched={fetched_count}, after_render={after_render}, balanced={}",
+            balanced.len()
+        );
+        assert!(
+            !balanced.is_empty(),
+            "expected at least one balanced iClarified article"
+        );
+    }
+
+    #[test]
+    fn should_include_iclarified_apple_news() {
+        let filters = Filters::new().expect("filters");
+        let source = Source {
+            name: "iClarified",
+            url: "https://www.iclarified.com/rss/news.xml",
+            category: "technology",
+            format: None,
+        };
+
+        assert!(should_include_article(
+            &filters,
+            &source,
+            "Apple Fires Back at Epic in Supreme Court App Store Appeal",
+            &Some(
+                "Apple is continuing its push for U.S. Supreme Court review of the App Store contempt ruling."
+                    .to_string(),
+            ),
+            &None,
+        ));
+        assert!(should_include_article(
+            &filters,
+            &source,
+            "macOS 27 Golden Gate Supported Devices: Full List of Compatible Macs",
+            &Some("Apple has confirmed the full list of Mac models compatible with macOS 27 Golden Gate.".to_string()),
+            &None,
+        ));
+        assert!(!should_include_article(
+            &filters,
+            &source,
+            "AirPods Pro 3 Drop to New All-Time Low of $179 ($70 Off) [Deal]",
+            &Some("Apple's AirPods Pro 3 have dropped to an all-time low price of just $179.".to_string()),
+            &None,
+        ));
+    }
+
+    #[test]
+    fn resolve_article_category_keeps_regular_mac_news() {
+        let filters = Filters::new().expect("filters");
+        let article = Article {
+            id: "mac-news".to_string(),
+            title: "macOS Tahoe beta adds new Finder features".to_string(),
+            subtitle: "Mac update details".to_string(),
+            category: "technology".to_string(),
+            author: "Test".to_string(),
+            avatar: "T".to_string(),
+            date: "Jun 1".to_string(),
+            timestamp: 1,
+            cover: String::new(),
+            source_name: "Test Source".to_string(),
+            source_url: "https://example.com/mac-story".to_string(),
+            bookmarked: false,
+            queued: false,
+            custom: false,
+            content: "<p>Story</p>".to_string(),
+        };
+
+        assert_eq!(resolve_article_category(&filters, &article), "technology");
     }
 
     #[test]

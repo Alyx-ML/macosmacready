@@ -1,2 +1,5 @@
 /*
   Permissions-Policy: microphone=(self), on-device-speech-recognition=(self)
+
+/data/*
+  Cache-Control: public, max-age=3600

@@ -14,6 +14,7 @@ const NEWS_RSS_SOURCES = [
   { name: "Michael Tsai", url: "https://mjtsai.com/blog/feed/", category: "technology" },
   { name: "Macworld", url: "https://www.macworld.com/feed", category: "technology" },
   { name: "The Mac Observer", url: "https://www.macobserver.com/feed/", category: "technology" },
+  { name: "iClarified", url: "https://www.iclarified.com/rss/news.xml", category: "technology" },
   { name: "Daring Fireball", url: "https://daringfireball.net/feeds/main", category: "technology" },
   { name: "512 Pixels", url: "https://512pixels.net/feed.xml", category: "technology" },
   { name: "Scripting OS X", url: "https://scriptingosx.com/feed/", category: "technology" },
@@ -31,10 +32,15 @@ const NEWS_RSS_SOURCES = [
   { name: "9to5Toys Mac Deals", url: "https://9to5toys.com/guides/mac/feed/", category: "deals" },
   { name: "9to5Toys Apple Deals", url: "https://9to5toys.com/guides/apple/feed/", category: "deals" }
 ];
+const APPLE_ECOSYSTEM_SOURCES = new Set(["iClarified"]);
+const APPLE_ECOSYSTEM_TERMS = /\b(Apple|WWDC|iOS|iPhone|iPad|macOS|Mac\b|AirPods|watchOS|visionOS|Siri|App Store|iCloud|Xcode|Apple TV|Apple Watch)\b/i;
 const MAC_NEWS_TERMS = /\b(macOS|Mac\b|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]\b|WWDC|Safari|Finder|Time Machine|Xcode|Gatekeeper|FileVault|Launch Services|MDM|Jamf|SwiftUI|AppKit|Terminal|malware|Security Update)\b/i;
 const STRONG_MAC_CONTEXT_TERMS = /\b(macOS|Mac\b|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]\b|Finder|Time Machine|Xcode|Gatekeeper|FileVault|Launch Services|MDM|Jamf|SwiftUI|AppKit|Terminal|Security Update)\b/i;
 const IOS_ONLY_TERMS = /\b(iOS|iPhone|iPad|iPadOS|watchOS|Apple Watch|AirPods|visionOS|Vision Pro)\b/i;
 const DEAL_TERMS = /\b(deal|deals|sale|discount|coupon|save \$|save up to|% off|today only|lowest price|record-low|price drop|clearance|promo|promotion|bundle|lifetime license|sponsored|advertorial|stacksocial|walmart|best buy|amazon|b&h)\b/i;
+const SALES_DEAL_TERMS = /\b(sale|on sale|discount|discounted|coupon|save \$|save up to|% off|today only|lowest price|record-low|record low|all-time low|price drop|price cut|clearance|promo|promotion|bundle|lifetime license|sponsored|advertorial|stacksocial|walmart|best buy|amazon|b&h|marked down)\b/i;
+const IDIOMATIC_DEAL_TERMS = /\b(?:biggest|main|real|whole|entire|true)\s+deal\s+(?:about|with|here|is|was|isn't|is not|breaker)|(?:the|this|that|a)\s+deal\s+(?:about|with|here|is|was|isn't|is not|breaker)|not\s+(?:the|a)\s+deal\b|\bdeal\s+breaker\b/i;
+const COMMERCIAL_PRICE_TERMS = /(?:[$£€]\s?\d[\d,]*(?:\.\d{2})?|\d{1,3}%\s?off|save\s?(?:up to\s?)?[$£€]?\s?\d[\d,]*|[$£€]?\s?\d[\d,]*\s?off|all-time low|record low|lowest price)/i;
 const MAC_DEAL_TERMS = /\b(MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Studio Display|Apple display|Apple silicon)\b/i;
 const MACBOOK_DEAL_TERMS = /\b(MacBook|MacBook Air|MacBook Pro|USB-C|Thunderbolt|MagSafe|dock|hub|charger|adapter|monitor|display|SSD|external drive|keyboard|mouse|trackpad|sleeve|case|stand|backpack|accessor(?:y|ies)|AppleCare|M[1-9]\b)\b/i;
 const MAC_DEAL_PRODUCT_TERMS = /\b(MacBook|MacBook Air|MacBook Pro|Mac mini|Mac Studio|Mac Pro|iMac|Studio Display|Mac\b)\b/i;
@@ -57,13 +63,20 @@ const RSS_CATEGORY_LABELS = {
   ai: "Apple Intelligence",
   deals: "Deals"
 };
-const GENERATED_NEWS_URL = "public/data/news.generated.json";
+const GENERATED_NEWS_URL = "/data/news.generated.json";
+const GENERATED_NEWS_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+const BOOKMARKED_ARTICLE_URLS_KEY = "tahoe_bookmarked_urls";
+const CUSTOM_ARTICLES_KEY = "tahoe_custom_articles";
+let newsSourceManifest = NEWS_RSS_SOURCES;
+let bookmarkedArticleUrls = new Set(
+  JSON.parse(localStorage.getItem(BOOKMARKED_ARTICLE_URLS_KEY) || "[]")
+);
 
 function fetchDevProxy(url) {
   const isLocalDev = ["localhost", "127.0.0.1"].includes(window.location.hostname);
   const requestUrl = isLocalDev
     ? `/rss?url=${encodeURIComponent(url)}`
-    : `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    : `/api/rss?url=${encodeURIComponent(url)}`;
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), 8000);
   return fetch(requestUrl, { signal: controller.signal }).finally(() => window.clearTimeout(timer));
@@ -126,6 +139,9 @@ const PRESET_INFO = {
 };
 
 // --- 2. State Management & Navigation ---
+const MACREADY_PASSWORD_KEY = "macready_password";
+const MIN_ACCOUNT_PASSWORD_LENGTH = 4;
+
 let currentUsername = localStorage.getItem("macready_username") || "Guest";
 if (currentUsername === "MacReady") {
   currentUsername = "Guest";
@@ -246,6 +262,19 @@ function saveToStorage() {
   localStorage.setItem("tahoe_installed_app_info", JSON.stringify(installedAppInfo));
   localStorage.setItem("tahoe_enabled_news_sources", JSON.stringify(Array.from(enabledNewsSources)));
   localStorage.setItem("tahoe_reading_queue", JSON.stringify(Array.from(queuedArticleUrls)));
+  localStorage.setItem(BOOKMARKED_ARTICLE_URLS_KEY, JSON.stringify(Array.from(bookmarkedArticleUrls)));
+  const customArticles = articles.filter(article => article.custom);
+  localStorage.setItem(CUSTOM_ARTICLES_KEY, JSON.stringify(customArticles));
+}
+
+function loadCustomArticles() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(CUSTOM_ARTICLES_KEY) || "[]");
+    return Array.isArray(stored) ? stored : [];
+  } catch (error) {
+    console.warn("Custom articles could not be read.", error);
+    return [];
+  }
 }
 
 
@@ -319,15 +348,43 @@ function getRSSItemLink(item) {
   return alternateLink?.getAttribute("href") || "";
 }
 
+function isPodcastFeedEntry(title, subtitle = "", content = "", link = "") {
+  const titleLower = cleanArticleText(title).toLowerCase();
+  const subtitleLower = cleanArticleText(subtitle).toLowerCase();
+  const contentLower = stripHTML(content || "").toLowerCase();
+  const linkLower = String(link || "").toLowerCase();
+  const combined = `${titleLower} ${subtitleLower} ${contentLower}`;
+
+  if (titleLower.includes("podcast rewind")) return true;
+  if (titleLower.includes("macstories weekly")) return true;
+  if (linkLower.includes("/podcast-rewind") || linkLower.includes("/podcast/episode") || linkLower.includes("/feed/podcast")) {
+    return true;
+  }
+  if (subtitleLower.startsWith("enjoy the latest episodes from") || contentLower.startsWith("enjoy the latest episodes from")) {
+    return true;
+  }
+  if (combined.includes("recap of") && combined.includes("articles and podcasts")) return true;
+  if (titleLower.startsWith("podcast:") || titleLower.startsWith("listen now:") || titleLower.startsWith("watch:")) {
+    return true;
+  }
+
+  return false;
+}
+
 function shouldIncludeRSSArticle(source, title, rawDescription, content) {
   if (!title) return false;
+  if (isPodcastFeedEntry(title, stripHTML(rawDescription || ""), stripHTML(content || ""))) return false;
 
   const headlineText = `${title} ${stripHTML(rawDescription || "")}`;
-  if (source.category !== "design" && source.category !== "deals" && isIOSLedTitle(title)) return false;
+  if (source.category !== "design" && source.category !== "deals" && !isAppleEcosystemSource && isIOSLedTitle(title)) return false;
 
   const combinedText = `${title} ${rawDescription || ""} ${stripHTML(content || "")}`;
+  const isAppleEcosystemSource = APPLE_ECOSYSTEM_SOURCES.has(source.name);
   const categoryTerms = RSS_CATEGORY_TERMS[source.category] || MAC_NEWS_TERMS;
-  if (!categoryTerms.test(combinedText)) return false;
+  const categoryOk = isAppleEcosystemSource && source.category === "technology"
+    ? APPLE_ECOSYSTEM_TERMS.test(combinedText)
+    : categoryTerms.test(combinedText);
+  if (!categoryOk) return false;
 
   if (source.category === "deals") {
     if (MOBILE_PRODUCT_TERMS.test(title) && !MAC_DEAL_PRODUCT_TERMS.test(title)) return false;
@@ -336,13 +393,16 @@ function shouldIncludeRSSArticle(source, title, rawDescription, content) {
 
   if (source.category !== "technology") return true;
 
-  const hasMacContext = STRONG_MAC_CONTEXT_TERMS.test(headlineText);
+  const hasMacContext = isAppleEcosystemSource
+    ? APPLE_ECOSYSTEM_TERMS.test(combinedText)
+    : STRONG_MAC_CONTEXT_TERMS.test(headlineText);
   if (!hasMacContext) return false;
 
-  const isDeal = DEAL_TERMS.test(headlineText);
-  if (isDeal && !MAC_DEAL_TERMS.test(headlineText)) return false;
+  const dealHeadline = isAppleEcosystemSource ? title : headlineText;
+  const isDeal = DEAL_TERMS.test(dealHeadline);
+  if (isDeal && !MAC_DEAL_TERMS.test(dealHeadline)) return false;
 
-  if (isIOSLedTitle(title)) return false;
+  if (!isAppleEcosystemSource && isIOSLedTitle(title)) return false;
 
   return true;
 }
@@ -365,6 +425,14 @@ function isIOSFocusedNewsText(title, subtitle = "") {
 }
 
 function shouldRenderArticle(article) {
+  if (isPodcastFeedEntry(
+    article.title,
+    article.subtitle,
+    article.content,
+    article.sourceUrl
+  )) {
+    return false;
+  }
   if (isMobileAppleArticle(article)) return false;
   if (article.category === "technology" && isIOSLedTitle(article.title)) return false;
 
@@ -374,6 +442,27 @@ function shouldRenderArticle(article) {
   }
 
   return true;
+}
+
+function hasCommercialDealSignal(title, headlineText) {
+  if (SALES_DEAL_TERMS.test(headlineText) || COMMERCIAL_PRICE_TERMS.test(headlineText)) return true;
+  if (/\b(deals?)\b/i.test(title) && !IDIOMATIC_DEAL_TERMS.test(headlineText)) return true;
+  return false;
+}
+
+function isMacDealArticle(article) {
+  if (!article) return false;
+  const title = article.title || "";
+  const headlineText = `${title} ${article.subtitle || ""}`;
+  if (!hasCommercialDealSignal(title, headlineText)) return false;
+  if (MOBILE_PRODUCT_TERMS.test(title) && !MAC_DEAL_PRODUCT_TERMS.test(title)) return false;
+  return MACBOOK_DEAL_TERMS.test(headlineText) || MAC_DEAL_TERMS.test(headlineText);
+}
+
+function resolveArticleCategory(article, sourceCategory) {
+  const baseCategory = sourceCategory || article?.category || "technology";
+  if (baseCategory === "design" || baseCategory === "deals") return baseCategory;
+  return isMacDealArticle(article) ? "deals" : baseCategory;
 }
 
 function extractDealSignals(article) {
@@ -768,6 +857,79 @@ function setAccentColor(color) {
   }
 }
 
+const SEGMENT_SLOT_PX = 28;
+const SEGMENT_PAD_PX = 2;
+const SEGMENT_THUMB_PX = 28;
+const SEGMENT_STRETCH_PX = 52;
+const SEGMENT_MORPH_MS = 460;
+const SEGMENT_MORPH_EASE = "cubic-bezier(1, 0, 0.4, 1)";
+
+function syncViewSegmentControl(mode) {
+  const control = document.getElementById("view-segment-control");
+  if (!control) return;
+
+  const thumb = control.querySelector(".segment-thumb");
+  if (!thumb) return;
+
+  const previous = control.dataset.activeView;
+  const toIndex = mode === "grid" ? 0 : 1;
+  const fromIndex = previous === "list" ? 1 : 0;
+  const changed = previous !== undefined && previous !== mode;
+
+  if (previous) {
+    control.dataset.previous = previous;
+  }
+
+  control.dataset.activeView = mode;
+
+  const reduceMotion = document.body.classList.contains("reduce-motion");
+  if (!changed || reduceMotion) {
+    thumb.getAnimations().forEach((animation) => animation.cancel());
+    thumb.style.left = "";
+    thumb.style.width = "";
+    thumb.style.transition = "";
+    control.classList.remove("is-morphing");
+    control.style.setProperty("--active-index", String(toIndex));
+    return;
+  }
+
+  thumb.getAnimations().forEach((animation) => animation.cancel());
+  control.classList.add("is-morphing");
+  control.style.setProperty("--active-index", String(fromIndex));
+
+  const fromLeft = SEGMENT_PAD_PX + fromIndex * SEGMENT_SLOT_PX;
+  const toLeft = SEGMENT_PAD_PX + toIndex * SEGMENT_SLOT_PX;
+  const stretchLeft = (fromLeft + toLeft + SEGMENT_THUMB_PX - SEGMENT_STRETCH_PX) / 2;
+
+  thumb.style.transition = "none";
+  thumb.style.left = `${fromLeft}px`;
+  thumb.style.width = `${SEGMENT_THUMB_PX}px`;
+
+  requestAnimationFrame(() => {
+    const morph = thumb.animate(
+      [
+        { left: `${fromLeft}px`, width: `${SEGMENT_THUMB_PX}px` },
+        { left: `${stretchLeft}px`, width: `${SEGMENT_STRETCH_PX}px`, offset: 0.32 },
+        { left: `${stretchLeft}px`, width: `${SEGMENT_STRETCH_PX}px`, offset: 0.68 },
+        { left: `${toLeft}px`, width: `${SEGMENT_THUMB_PX}px` }
+      ],
+      {
+        duration: SEGMENT_MORPH_MS,
+        easing: SEGMENT_MORPH_EASE,
+        fill: "forwards"
+      }
+    );
+
+    morph.onfinish = () => {
+      control.classList.remove("is-morphing");
+      thumb.style.transition = "";
+      thumb.style.left = "";
+      thumb.style.width = "";
+      control.style.setProperty("--active-index", String(toIndex));
+    };
+  });
+}
+
 // Set View Grid/List Mode
 function setViewMode(mode) {
   currentView = mode;
@@ -788,6 +950,8 @@ function setViewMode(mode) {
       if (gridContainer) gridContainer.classList.add("list-view");
     }
   }
+
+  syncViewSegmentControl(mode);
 
   // Update widget control panel status label
   const layoutStatus = document.getElementById("layout-status");
@@ -1222,6 +1386,10 @@ function switchApp(appName, pushHistory = true) {
     renderFinderView();
   }
 
+  if (["news", "reviews", "finder"].includes(appName)) {
+    syncViewSegmentControl(currentView);
+  }
+
   if (appName !== "games") {
     applyAtmosphericGlow(null);
   }
@@ -1293,8 +1461,8 @@ function pushNotification(title, message, options = {}) {
   alertItem.innerHTML = `
     <span class="alert-dot active"></span>
     <div>
-      <p class="text-xs font-semibold">${title}</p>
-      <p class="text-xxs opacity-70">${message}</p>
+      <p class="text-xs font-semibold">${escapeHTML(title)}</p>
+      <p class="text-xxs opacity-70">${escapeHTML(message)}</p>
     </div>
   `;
 
@@ -1406,10 +1574,18 @@ function closeStoryEditor() {
 // ==========================================
 const CROSSOVER_CHANGELOG = [
   {
+    version: "26.2.0",
+    date: "June 9, 2026",
+    notes: [
+      "Fix for Helldivers 2 not launching after game update.",
+      "Added additional warnings for 32-bit bottles."
+    ]
+  },
+  {
     version: "26.1.0",
     date: "April 9, 2026",
     notes: [
-      "Workaround for a macOS game launch issue.",
+      "Workaround for Death Stranding 2 on macOS.",
       "Fix for mouse input in many Unity games.",
       "Fix for distorted Add account window in Quicken.",
       "Fix for Battle.net not installing for some users."
@@ -1468,10 +1644,10 @@ const CROSSOVER_CHANGELOG = [
 
 const CROSSOVER_BLOGS = [
   {
-    title: "CrossOver 26.1 restores compatibility for major Windows games on macOS",
+    title: "Finally! Diablo IV and Overwatch are playable with CrossOver 26.1 + macOS 26.5",
     author: "Meredith Johnson",
     date: "May 18, 2026",
-    excerpt: "Good news for Mac gaming: CrossOver 26.1 restores stable launch behavior for major Windows games on macOS 26.5. Read more about the release details...",
+    excerpt: "Good news everyone! Diablo IV and Overwatch are now running again on stable CrossOver 26.1 with macOS 26.5. Read more about the release details...",
     link: "https://www.codeweavers.com/blog/mjohnson/2026/5/18/finally-diablo-iv-and-overwatch-are-playable-with-crossover-261-macos-265",
     image: "https://media.codeweavers.com/pub/crossover/website/htmlimages/May-2026-Blog-Post-4-New-Blog-Post-1200x630_2.png"
   },
@@ -1512,35 +1688,26 @@ function renderCrossoverData(changelogs, blogs) {
 
   // Render changelogs
   let changelogHtml = "";
-  changelogs.forEach(item => {
+  changelogs.forEach((item, index) => {
     const notesList = item.notes.map(note => `<li>${note}</li>`).join("");
-    
+    const isExpanded = index < 2;
+
     changelogHtml += `
-      <div class="crossover-changelog-card">
+      <div class="crossover-changelog-card${isExpanded ? " expanded" : ""}">
         <div class="changelog-header">
           <div class="changelog-title">CrossOver ${item.version}</div>
           <div class="changelog-right" style="display: flex; align-items: center; gap: 8px;">
             <div class="changelog-date">${item.date}</div>
-            <span class="changelog-chevron" style="transform: rotate(0deg); transition: transform 0.2s;">▼</span>
+            <span class="changelog-chevron" style="transform: rotate(${isExpanded ? "180deg" : "0deg"}); transition: transform 0.2s;">▼</span>
           </div>
         </div>
-        <div class="changelog-body" style="display: none;">
+        <div class="changelog-body" style="display: ${isExpanded ? "block" : "none"};">
           <ul>${notesList}</ul>
         </div>
       </div>
     `;
   });
   changelogContainer.innerHTML = changelogHtml;
-
-  // Auto-expand first item
-  const firstCard = changelogContainer.querySelector(".crossover-changelog-card");
-  if (firstCard) {
-    const body = firstCard.querySelector(".changelog-body");
-    const chevron = firstCard.querySelector(".changelog-chevron");
-    firstCard.classList.add("expanded");
-    if (body) body.style.display = "block";
-    if (chevron) chevron.style.transform = "rotate(180deg)";
-  }
 
   // Bind accordion click events
   changelogContainer.querySelectorAll(".changelog-header").forEach(header => {
@@ -1565,26 +1732,50 @@ function renderCrossoverData(changelogs, blogs) {
   // Render blogs
   let blogsHtml = "";
   blogs.forEach(blog => {
+    const safeLink = escapeHTML(sanitizeExternalUrl(blog.link));
+    const safeImage = escapeHTML(sanitizeExternalUrl(blog.image));
+    const safeTitle = escapeHTML(blog.title);
+    const safeAuthor = escapeHTML(blog.author);
+    const safeDate = escapeHTML(blog.date);
+    const safeExcerpt = escapeHTML(blog.excerpt);
     blogsHtml += `
-      <div class="crossover-blog-card" onclick="window.open('${blog.link}', '_blank')">
+      <div class="crossover-blog-card" data-blog-link="${safeLink}">
         ${blog.image ? `
           <div class="blog-card-cover">
-            <img src="${blog.image}" alt="${blog.title}" loading="lazy">
+            <img src="${safeImage}" alt="${safeTitle}" loading="lazy">
           </div>
         ` : ''}
         <div class="blog-card-body">
           <div class="blog-card-meta">
-            <span>${blog.author}</span>
-            <span>${blog.date}</span>
+            <span>${safeAuthor}</span>
+            <span>${safeDate}</span>
           </div>
-          <h4 class="blog-card-title">${blog.title}</h4>
-          <p class="blog-card-excerpt">${blog.excerpt}</p>
+          <h4 class="blog-card-title">${safeTitle}</h4>
+          <p class="blog-card-excerpt">${safeExcerpt}</p>
           <span class="crossover-blog-link" style="color: var(--accent-color); font-size: 11px; font-weight: 500; margin-top: 4px; display: inline-block;">Read Full Post &rarr;</span>
         </div>
       </div>
     `;
   });
   blogContainer.innerHTML = blogsHtml;
+  blogContainer.querySelectorAll(".crossover-blog-card[data-blog-link]").forEach(card => {
+    card.addEventListener("click", () => {
+      const link = card.getAttribute("data-blog-link");
+      if (link) window.open(link, "_blank", "noopener,noreferrer");
+    });
+  });
+}
+
+function sanitizeExternalUrl(value) {
+  try {
+    const parsed = new URL(String(value || ""));
+    if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+      return parsed.toString();
+    }
+  } catch (error) {
+    return "";
+  }
+  return "";
 }
 
 async function fetchViaProxy(url) {
@@ -1705,10 +1896,28 @@ function filterCrossover(query) {
 // ==========================================
 // --- 8.5. macOS Release Notes Engine ---
 // ==========================================
+// Active changelog order: Golden Gate 27 (beta/stable) first, then fresh Tahoe 26.x below.
+// Older releases live in MACOS_HISTORICAL. Do not fabricate entries.
 const MACOS_CHANGELOG = [
+  {
+    version: "27 beta 1",
+    date: "June 8, 2026",
+    codename: "Golden Gate",
+    notes: [
+      "macOS 27 SDK supports developing apps for Mac computers running Golden Gate 27 beta, bundled with Xcode 27.",
+      "AppKit adds NSRefreshController for NSScrollView pull-to-refresh in the macOS 27.0 SDK.",
+      "NSToolbarItemGroup adds a role property; NSSegmentedControl adds a tabs role for tab-based navigation.",
+      "NSTextSelectionManager provides common text selection interactions via NSGestureRecognizers.",
+      "Fixed NSSegmentedCell drawing incorrectly under the Liquid Glass appearance.",
+      "Automatic Assessment Configuration adds granular controls for Dock, Menu Bar, and accessibility during testing.",
+      "Background Assets supports localized asset packs delivered by the user's preferred languages.",
+      "Encrypted HFS+ (CoreStorage) is deprecated; migrate encrypted backups to APFS-formatted drives."
+    ]
+  },
   {
     version: "26.5",
     date: "May 11, 2026",
+    codename: "Tahoe",
     notes: [
       "StoreKit adds PricingTerms for subscriptions with a monthly, 12-month commitment billing plan.",
       "StoreKit adds a billingPlanType purchase option for monthly, 12-month commitment subscriptions.",
@@ -1721,6 +1930,7 @@ const MACOS_CHANGELOG = [
   {
     version: "26.4",
     date: "March 24, 2026",
+    codename: "Tahoe",
     notes: [
       "Background Assets can report local asset-pack status while offline.",
       "Background Assets can make the latest version of an asset pack available locally.",
@@ -1734,6 +1944,7 @@ const MACOS_CHANGELOG = [
   {
     version: "26.3",
     date: "February 11, 2026",
+    codename: "Tahoe",
     notes: [
       "StoreKit fixes Product.products(for:) failing silently instead of throwing errors.",
       "Documents a known AppKit issue where the window resize pointer does not follow the window corner shape.",
@@ -1743,6 +1954,7 @@ const MACOS_CHANGELOG = [
   {
     version: "26.2",
     date: "December 12, 2025",
+    codename: "Tahoe",
     notes: [
       "Fixes AirDrop discoverability between devices set to Everyone across 26.2 beta builds.",
       "Fixes the Allocations instrument sometimes failing to report reference counting operations for native Swift types.",
@@ -1753,6 +1965,7 @@ const MACOS_CHANGELOG = [
   {
     version: "26.1",
     date: "November 3, 2025",
+    codename: "Tahoe",
     notes: [
       "Fixes the missing Search bar in the Apple TV app on macOS.",
       "Fixes AssetPackManager.url(for:) unexpectedly throwing when looking up a locally available asset file.",
@@ -1763,6 +1976,7 @@ const MACOS_CHANGELOG = [
   {
     version: "26",
     date: "September 15, 2025",
+    codename: "Tahoe",
     notes: [
       "Recovery Assistant helps recover a device if it does not start up normally.",
       "macOS supports Apple Sparse Image Format (ASIF) disk images.",
@@ -1828,13 +2042,18 @@ function renderMacosData(changelogs, historical) {
   if (changelogs.length === 0) {
     activeHtml = `<div style="padding: 24px; text-align: center; opacity: 0.6; font-size: 13px;">No matching active changelogs found.</div>`;
   } else {
+    let lastCodename = null;
     changelogs.forEach((item, index) => {
+      if (lastCodename && item.codename && item.codename !== lastCodename) {
+        activeHtml += `<h4 class="macos-changelog-group-title">macOS ${item.codename}</h4>`;
+      }
+      lastCodename = item.codename || lastCodename;
       const notesList = item.notes.map(note => `<li>${note}</li>`).join("");
       const isFirst = index === 0;
       activeHtml += `
         <div class="macos-changelog-card ${isFirst ? 'expanded' : ''}">
           <div class="changelog-header" style="background: rgba(0, 122, 255, ${isFirst ? '0.06' : '0.02'});">
-            <div class="changelog-title" style="color: #fff;">macOS Tahoe ${item.version}</div>
+            <div class="changelog-title" style="color: #fff;">macOS ${item.codename || "Golden Gate"} ${item.version}</div>
             <div class="changelog-right" style="display: flex; align-items: center; gap: 8px;">
               <div class="changelog-date">${item.date}</div>
               <span class="changelog-chevron" style="transform: rotate(${isFirst ? '180deg' : '0deg'}); transition: transform 0.2s;">▼</span>
@@ -1860,7 +2079,7 @@ function renderMacosData(changelogs, historical) {
         <div class="macos-changelog-card">
           <div class="changelog-header">
             <div>
-              <span class="changelog-title">${item.version}</span>
+              <span class="changelog-title">${item.category ? `${item.category} · ` : ""}${item.version}</span>
             </div>
             <div class="changelog-right" style="display: flex; align-items: center; gap: 8px;">
               <div class="changelog-date">${item.date}</div>
@@ -1902,7 +2121,8 @@ function renderMacosData(changelogs, historical) {
 function filterMacos(query) {
   const q = query.toLowerCase();
   const filteredChangelogs = MACOS_CHANGELOG.filter(item => 
-    item.version.toLowerCase().includes(q) || 
+    item.version.toLowerCase().includes(q) ||
+    (item.codename && item.codename.toLowerCase().includes(q)) ||
     item.notes.some(note => note.toLowerCase().includes(q))
   );
 
@@ -2026,6 +2246,7 @@ const db = new SQLiteBridge();
 let gamesCache = [];
 let gamesLoaded = false;
 let gamesLoading = false;
+let gamesPendingForceReload = false;
 const STEAM_GAMES_CACHE_KEY = "macready_steam_games_cache_v3";
 const STEAM_GAMES_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const CROSSOVER_COMPAT_CACHE_KEY = "macready_crossover_compat_cache_v1";
@@ -2079,7 +2300,13 @@ function loadCachedSteamGames() {
       gamesCache = generatedGames;
       steamGamesLastSavedAt = Date.now();
       gamesLoaded = true;
-      saveSteamGamesCache();
+      const nextPayload = JSON.stringify({
+        savedAt: steamGamesLastSavedAt,
+        games: gamesCache
+      });
+      if (localStorage.getItem(STEAM_GAMES_CACHE_KEY) !== nextPayload) {
+        saveSteamGamesCache();
+      }
       return;
     }
 
@@ -2154,10 +2381,7 @@ function normalizeCrossoverCacheKey(title) {
 }
 
 function getCrossoverCompatibilityEndpoint(game) {
-  const apiOrigin = ["localhost", "127.0.0.1"].includes(window.location.hostname)
-    ? window.location.origin
-    : "https://macosmacready.fpt4g789c6.workers.dev";
-  const url = new URL("/api/crossover-compatibility", apiOrigin);
+  const url = new URL("/api/crossover-compatibility", window.location.origin);
   url.searchParams.set("title", game.title);
   return url.toString();
 }
@@ -2486,16 +2710,13 @@ function decodeCodeWeaversHtml(value) {
 }
 
 function refreshSteamGamesIfNeeded() {
-  if (steamGamesRefreshStarted || gamesLoading) return;
-  const cacheAge = Date.now() - steamGamesLastSavedAt;
-  if (!steamGamesLastSavedAt || cacheAge > STEAM_GAMES_CACHE_TTL_MS) {
-    steamGamesRefreshStarted = true;
-    loadAllGamesData({ silent: true, force: true });
-  }
+  // Generated Steam catalog is authoritative; scheduled rebuild keeps data fresh.
+  steamGamesRefreshStarted = true;
 }
 
 loadCachedSteamGames();
 if (gamesCache.length > 0) gamesLoaded = true;
+ensureUserVideoFeedLoaded().catch(() => {});
 
 // --- Dynamic Wallpaper Glass Blending (Atmospheric Blur) ---
 function applyAtmosphericGlow(game) {
@@ -2964,7 +3185,11 @@ function mergeGamesIntoCache(newGames) {
 // --- Dynamic Startup: Fetch live from Steam search result pages ---
 async function loadAllGamesData(options = {}) {
   const { silent = false, force = false } = options;
-  if ((gamesLoaded && !force) || gamesLoading) return;
+  if (gamesLoading) {
+    if (force) gamesPendingForceReload = true;
+    return;
+  }
+  if (gamesLoaded && !force) return;
   gamesLoading = true;
 
   const grid = document.getElementById("games-grid");
@@ -3034,6 +3259,11 @@ async function loadAllGamesData(options = {}) {
     pushNotification("SteamDB Error", "Could not fetch Steam search data.");
   } finally {
     gamesLoading = false;
+    if (gamesPendingForceReload) {
+      gamesPendingForceReload = false;
+      loadAllGamesData({ silent: true, force: true });
+      return;
+    }
     if (currentApp === "games" || !silent) renderGamesView();
     updateSteamStats();
   }
@@ -3430,6 +3660,217 @@ async function loadGameCrossoverCompatibility(game) {
   updateCrossoverCompatibilityCard(game);
 }
 
+const USER_VIDEO_CHANNELS = [
+  {
+    id: "macprotips",
+    name: "MacProTipsX",
+    channelUrl: "https://www.youtube.com/@macprotips",
+    feedUrl: "https://www.youtube.com/feeds/videos.xml?channel_id=UCk-DkoUmqZUn2VHL3Eawm6g"
+  }
+];
+const USER_VIDEO_FEED_TTL_MS = 6 * 60 * 60 * 1000;
+const USER_VIDEO_MATCH_STOP_WORDS = new Set([
+  "the", "a", "an", "of", "and", "or", "for", "to", "on", "in", "at", "with",
+  "edition", "definitive", "deluxe", "game", "demo", "mac", "crossover", "native", "port",
+  "first", "light", "dark", "new", "old", "pro", "max", "mini", "ultra", "super",
+  "playing", "running", "impressions", "gameplay", "review", "guide", "update", "beta"
+]);
+
+let userVideoFeedCache = {
+  loadedAt: 0,
+  videos: [],
+  loading: null
+};
+let userVideosRenderToken = 0;
+
+function normalizeGameMatchText(text) {
+  return String(text || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/['’]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function decodeXmlEntities(value) {
+  return String(value || "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#39;/g, "'");
+}
+
+function buildDistinctiveGameTokens(title) {
+  return normalizeGameMatchText(title)
+    .split(/\s+/)
+    .filter(token => {
+      if (!token || USER_VIDEO_MATCH_STOP_WORDS.has(token)) return false;
+      if (/^\d+$/.test(token)) return true;
+      return token.length >= 4;
+    });
+}
+
+function tokenMatchesText(token, text) {
+  if (!token || !text) return false;
+  const pattern = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+  return pattern.test(text);
+}
+
+function countSteamAppLinks(text) {
+  return (String(text).match(/store\.steampowered\.com\/app\/\d+/gi) || []).length;
+}
+
+function videoTitleMatchesGame(game, videoTitle) {
+  const gameTitle = normalizeGameMatchText(game.title);
+  if (gameTitle.length >= 4 && videoTitle.includes(gameTitle)) return true;
+
+  const tokens = buildDistinctiveGameTokens(game.title);
+  if (tokens.length === 0) return false;
+
+  if (tokens.every(token => /^\d+$/.test(token))) {
+    return gameTitle.length >= 4 && videoTitle.includes(gameTitle);
+  }
+
+  return tokens.every(token => tokenMatchesText(token, videoTitle));
+}
+
+function videoMatchesGame(video, game) {
+  if (!video || !game?.title) return false;
+
+  const videoTitle = normalizeGameMatchText(video.title);
+  const videoDescription = `${video.description || ""} ${video.url || ""}`;
+
+  if (videoTitleMatchesGame(game, videoTitle)) return true;
+
+  if (game.appid) {
+    const appidPattern = new RegExp(`store\\.steampowered\\.com/app/${game.appid}\\b`, "i");
+    if (appidPattern.test(videoDescription)) {
+      return countSteamAppLinks(videoDescription) <= 1 || videoTitleMatchesGame(game, videoTitle);
+    }
+  }
+
+  return false;
+}
+
+function findUserVideosForGame(game, videos = []) {
+  return videos
+    .filter(video => videoMatchesGame(video, game))
+    .sort((a, b) => Date.parse(b.published || 0) - Date.parse(a.published || 0))
+    .slice(0, 6);
+}
+
+function parseYouTubeChannelFeed(xmlText) {
+  const entries = String(xmlText || "").match(/<entry>[\s\S]*?<\/entry>/g) || [];
+
+  return entries
+    .map(entryXml => {
+      const videoId = (entryXml.match(/<yt:videoId>([^<]+)/) || [])[1]?.trim()
+        || (entryXml.match(/<id>\s*yt:video:([^<]+)/) || [])[1]?.trim()
+        || "";
+      const title = decodeXmlEntities((entryXml.match(/<title>([^<]+)/) || [])[1]?.trim() || "");
+      const published = (entryXml.match(/<published>([^<]+)/) || [])[1]?.trim() || "";
+      const url = (entryXml.match(/<link[^>]*rel="alternate"[^>]*href="([^"]+)"/) || entryXml.match(/<link[^>]*href="([^"]+)"[^>]*rel="alternate"/) || [])[1]?.trim()
+        || (videoId ? `https://www.youtube.com/watch?v=${videoId}` : "");
+      const thumbnail = (entryXml.match(/<media:thumbnail[^>]*url="([^"]+)"/) || [])[1]?.trim()
+        || (videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : "");
+      const description = decodeXmlEntities((entryXml.match(/<media:description>([\s\S]*?)<\/media:description>/) || [])[1]?.trim() || "");
+
+      return { videoId, title, url, published, thumbnail, description };
+    })
+    .filter(video => video.videoId && video.title && video.url);
+}
+
+async function ensureUserVideoFeedLoaded() {
+  const now = Date.now();
+  if (userVideoFeedCache.videos.length && now - userVideoFeedCache.loadedAt < USER_VIDEO_FEED_TTL_MS) {
+    return userVideoFeedCache.videos;
+  }
+  if (userVideoFeedCache.loading) return userVideoFeedCache.loading;
+
+  userVideoFeedCache.loading = Promise.all(
+    USER_VIDEO_CHANNELS.map(async channel => {
+      try {
+        const response = await fetchDevProxy(channel.feedUrl);
+        if (!response.ok) return [];
+        const xml = await response.text();
+        return parseYouTubeChannelFeed(xml).map(video => ({ ...video, channel }));
+      } catch (error) {
+        console.warn("User video channel could not be loaded.", channel.name, error);
+        return [];
+      }
+    })
+  )
+    .then(results => {
+      userVideoFeedCache.videos = results.flat();
+      userVideoFeedCache.loadedAt = Date.now();
+      userVideoFeedCache.loading = null;
+      return userVideoFeedCache.videos;
+    })
+    .catch(error => {
+      userVideoFeedCache.loading = null;
+      throw error;
+    });
+
+  return userVideoFeedCache.loading;
+}
+
+function buildYouTubeEmbedUrl(videoId) {
+  return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?rel=0&modestbranding=1&playsinline=1`;
+}
+
+async function renderGameUserVideos(game) {
+  const section = document.getElementById("game-user-videos-section");
+  const wrapper = document.getElementById("game-user-videos-wrapper");
+  const channelLink = document.getElementById("game-user-videos-channel-link");
+  const channelName = document.getElementById("game-user-videos-channel-name");
+  if (!section || !wrapper) return;
+
+  const renderToken = ++userVideosRenderToken;
+  section.classList.add("hidden");
+  wrapper.innerHTML = "";
+
+  try {
+    const allVideos = await ensureUserVideoFeedLoaded();
+    if (renderToken !== userVideosRenderToken) return;
+
+    const matches = findUserVideosForGame(game, allVideos);
+    if (matches.length === 0) return;
+
+    const primaryChannel = matches[0].channel || USER_VIDEO_CHANNELS[0];
+    if (channelLink) {
+      channelLink.href = primaryChannel.channelUrl;
+      channelLink.title = `Open ${primaryChannel.name} on YouTube`;
+    }
+    if (channelName) channelName.textContent = primaryChannel.name;
+
+    wrapper.innerHTML = matches.map(video => `
+      <article class="game-user-video-card">
+        <div class="game-user-video-frame">
+          <iframe
+            src="${escapeHtml(buildYouTubeEmbedUrl(video.videoId))}"
+            title="${escapeHtml(video.title)}"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin"
+          ></iframe>
+        </div>
+        <div class="game-user-video-meta">
+          <p class="game-user-video-title">${escapeHtml(video.title)}</p>
+          <a class="game-user-video-watch-link" href="${escapeHtml(video.url)}" target="_blank" rel="noopener noreferrer">Open on YouTube</a>
+        </div>
+      </article>
+    `).join("");
+
+    section.classList.remove("hidden");
+  } catch (error) {
+    if (renderToken !== userVideosRenderToken) return;
+    console.warn("User videos could not be loaded for", game.title, error);
+  }
+}
+
 function buildQuickLookRequirementHtml(game) {
   const requirements = game.systemRequirements?.mac || game.systemRequirements?.windows;
   const text = cleanSteamHtml(requirements?.minimum || requirements?.recommended || "");
@@ -3548,6 +3989,8 @@ function renderGameQuickLookContent(game) {
       reviewCard.classList.add("hidden");
     }
   }
+
+  renderGameUserVideos(game);
 }
 
 function enableGameScreenshotCarousel(wrapper) {
@@ -4413,6 +4856,15 @@ function renderGamesView() {
   // Slice to visible count (Lazy Loading Pagination)
   const toRender = allFiltered.slice(0, visibleGamesCount);
 
+  const profileRow = db.query("SELECT * FROM hardware_profile");
+  const hardwareChip = profileRow?.[0]?.chip || null;
+  const testedAppIds = new Set();
+  if (hardwareChip) {
+    db.query("SELECT * FROM reports")
+      .filter(report => report.chip === hardwareChip)
+      .forEach(report => testedAppIds.add(report.appid));
+  }
+
   let html = "";
   toRender.forEach(game => {
     const cardImage = game.cover || buildGeneratedGameCover(game.title);
@@ -4433,21 +4885,14 @@ function renderGamesView() {
       }
     }
 
-    // Dynamic Relational tested badge
     let testedBadgeHtml = "";
-    const profileRow = db.query("SELECT * FROM hardware_profile");
-    if (profileRow && profileRow.length > 0) {
-      const p = profileRow[0];
-      if (p.chip) {
-        const matchingReports = db.query("SELECT * FROM reports").filter(r => r.appid === game.appid && r.chip === p.chip);
-        if (matchingReports.length > 0) {
-          testedBadgeHtml = `
-            <span class="tested-spec-badge animate-scale-up" style="position: absolute; bottom: 6px; right: 6px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(255, 255, 255, 0.15); color: #ffd042; font-size: 8px; font-weight: 700; text-transform: uppercase; padding: 2px 5px; border-radius: 4px; z-index: 2; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 3px;">
-              <span style="font-size: 9px; line-height: 1;">✓</span> Tested on ${p.chip}
-            </span>
-          `;
-        }
-      }
+    if (hardwareChip && testedAppIds.has(game.appid)) {
+      const safeChip = escapeHtml(hardwareChip);
+      testedBadgeHtml = `
+        <span class="tested-spec-badge animate-scale-up" style="position: absolute; bottom: 6px; right: 6px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(255, 255, 255, 0.15); color: #ffd042; font-size: 8px; font-weight: 700; text-transform: uppercase; padding: 2px 5px; border-radius: 4px; z-index: 2; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 3px;">
+          <span style="font-size: 9px; line-height: 1;">✓</span> Tested on ${safeChip}
+        </span>
+      `;
     }
 
     html += `
@@ -4458,7 +4903,7 @@ function renderGamesView() {
           ${testedBadgeHtml}
         </div>
         <div class="game-card-body">
-          <h4 class="game-card-title">${game.title}</h4>
+          <h4 class="game-card-title">${safeTitle}</h4>
           <div class="game-card-rating-row">
             <div class="game-card-pricing">${priceHtml}</div>
           </div>
@@ -5501,7 +5946,8 @@ const FINDER_FS = {
       { name: "Monterey Dark.webp", kind: "image", size: "2.9 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/12-Dark.webp", wallpaperId: "monterey-dark" },
       { name: "Ventura Dark.webp", kind: "image", size: "3.2 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/13-Ventura-Dark.webp", wallpaperId: "ventura-dark" },
       { name: "MacBook Neo Blue.webp", kind: "image", size: "2.1 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Blue.webp", wallpaperId: "macbook-neo-blue" },
-      { name: "MacBook Neo Purple.webp", kind: "image", size: "2.3 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp", wallpaperId: "macbook-neo-purple" }
+      { name: "MacBook Neo Purple.webp", kind: "image", size: "2.3 MB", date: "May 22, 2026", src: "public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp", wallpaperId: "macbook-neo-purple" },
+      { name: "Golden Gate (Dark).webp", kind: "image", size: "3.3 MB", date: "Jun 10, 2026", src: "public/assets/imgs/wallpapers/optimized/27-Golden-Gate-Dark.webp", wallpaperId: "golden-gate-dark" }
     ]
   }
 };
@@ -5885,7 +6331,7 @@ function closeQuickLook() {
 
 // Helpers for HTML Escaping & Highlighter code
 function escapeHtml(str) {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return escapeHTML(String(str || ""));
 }
 
 function highlightCode(code, type) {
@@ -5945,10 +6391,7 @@ function bindEvents() {
         const settingsWin = document.getElementById("settings-window");
         if (settingsWin) settingsWin.classList.add("hidden-window");
 
-        const widgetDrawer = document.getElementById("widget-center");
-        if (widgetDrawer) widgetDrawer.classList.remove("show");
-        const widgetToggle = document.getElementById("control-center-toggle");
-        if (widgetToggle) widgetToggle.classList.remove("active");
+        closeWidgetCenter();
         
         const dockNews = document.querySelector('[data-app="news"] .dock-indicator');
         if (dockNews) dockNews.classList.remove("active-dot");
@@ -5972,10 +6415,7 @@ function bindEvents() {
         const settingsWin = document.getElementById("settings-window");
         if (settingsWin) settingsWin.classList.add("minimized");
 
-        const widgetDrawer = document.getElementById("widget-center");
-        if (widgetDrawer) widgetDrawer.classList.remove("show");
-        const widgetToggle = document.getElementById("control-center-toggle");
-        if (widgetToggle) widgetToggle.classList.remove("active");
+        closeWidgetCenter();
 
         pushNotification("Window Minimized", "Access items seamlessly from the desktop Dock.");
         refreshGlobalMenuBarSoon();
@@ -6363,9 +6803,44 @@ function bindEvents() {
     }
   };
 
+  let widgetCenterCloseTimer = null;
+
+  const finishWidgetCenterClose = () => {
+    if (widgetCenterCloseTimer) {
+      clearTimeout(widgetCenterCloseTimer);
+      widgetCenterCloseTimer = null;
+    }
+    if (!widgetDrawer) return;
+    widgetDrawer.classList.remove("show", "cc-opening", "cc-closing");
+  };
+
   const closeWidgetCenter = () => {
-    if (widgetDrawer) widgetDrawer.classList.remove("show");
+    if (!widgetDrawer) return;
+    if (!widgetDrawer.classList.contains("show")) {
+      if (widgetToggle) widgetToggle.classList.remove("active");
+      return;
+    }
+    if (widgetDrawer.classList.contains("cc-closing")) return;
+
+    widgetDrawer.classList.remove("cc-opening");
+    widgetDrawer.classList.add("cc-closing");
     if (widgetToggle) widgetToggle.classList.remove("active");
+
+    if (widgetCenterCloseTimer) clearTimeout(widgetCenterCloseTimer);
+    widgetCenterCloseTimer = setTimeout(finishWidgetCenterClose, 400);
+  };
+
+  const openWidgetCenter = () => {
+    if (!widgetDrawer) return;
+    if (widgetCenterCloseTimer) {
+      clearTimeout(widgetCenterCloseTimer);
+      widgetCenterCloseTimer = null;
+    }
+    widgetDrawer.classList.remove("show", "cc-opening", "cc-closing");
+    void widgetDrawer.offsetWidth;
+    requestAnimationFrame(() => {
+      widgetDrawer.classList.add("show", "cc-opening");
+    });
   };
 
   const toggleWidgetCenter = (mode, e) => {
@@ -6379,13 +6854,23 @@ function bindEvents() {
       }
 
       switchTahoeTab(nextTab);
-      widgetDrawer.classList.add("show");
+      openWidgetCenter();
       widgetToggle.classList.toggle("active", mode === "widgets");
     }
   };
 
   if (widgetToggle) widgetToggle.addEventListener("click", (e) => toggleWidgetCenter("widgets", e));
   if (widgetDrawer) {
+    widgetDrawer.addEventListener("animationend", (e) => {
+      if (e.target !== widgetDrawer) return;
+      if (e.animationName === "cc-panel-fade-in" || e.animationName === "cc-panel-fade-in-reduced") {
+        widgetDrawer.classList.remove("cc-opening");
+      }
+      if (e.animationName === "cc-panel-fade-out" || e.animationName === "cc-panel-fade-out-reduced") {
+        finishWidgetCenterClose();
+      }
+    });
+
     document.addEventListener("click", (e) => {
       if (!widgetDrawer.classList.contains("show")) return;
 
@@ -6401,7 +6886,7 @@ function bindEvents() {
 
   window.addEventListener("resize", () => {
     if (window.innerWidth <= 900 && widgetDrawer && widgetToggle) {
-      widgetDrawer.classList.remove("show");
+      finishWidgetCenterClose();
       widgetToggle.classList.remove("active");
     }
   });
@@ -6729,18 +7214,20 @@ function bindEvents() {
       // Simple markdown-to-HTML parser
       const formattedContent = contentVal.split("\n\n").map(p => {
         if (p.startsWith("## ")) {
-          return `<h2>${p.substring(3)}</h2>`;
+          return `<h2>${escapeHTML(p.substring(3))}</h2>`;
         } else if (p.startsWith("> ")) {
-          return `<blockquote>${p.substring(2)}</blockquote>`;
+          return `<blockquote>${escapeHTML(p.substring(2))}</blockquote>`;
         }
-        return `<p>${p}</p>`;
+        return `<p>${escapeHTML(p)}</p>`;
       }).join("");
 
       const words = author.trim().split(" ");
       const avatar = words.map(w => w[0].toUpperCase()).join("").substring(0, 2);
 
+      const storyId = `custom-${Date.now()}`;
       const customStory = {
-        id: `custom-${Date.now()}`,
+        id: storyId,
+        sourceUrl: `custom://${storyId}`,
         title: title,
         subtitle: subtitle,
         category: category,
@@ -8230,55 +8717,222 @@ function initAll() {
 }
 
 // --- 16. Apple Events Calendar Widget Controller ---
-function initAppleEventsCalendar() {
-  const countdownText = document.getElementById("wwdc-countdown-text");
-  if (countdownText) {
-    const updateCountdown = () => {
-      const now = new Date();
-      const target = new Date("2026-06-08T10:00:00-07:00"); // Pacific Time WWDC Keynote
-      const diff = target - now;
-      if (diff <= 0) {
-        countdownText.textContent = "WWDC Keynote Active!";
-      } else {
-        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-        countdownText.textContent = `${days} days remaining`;
-      }
-    };
-    updateCountdown();
-    // Update every hour
-    setInterval(updateCountdown, 3600000);
-  }
+const APPLE_CALENDAR_EVENTS = [
+  {
+    id: "iphone-18",
+    startsAt: "2026-09-08T10:00:00-07:00",
+    month: "SEP",
+    day: "08",
+    monthTone: "violet",
+    title: "iPhone 18 Keynote",
+    desc: "A20 Ultra, Cam-Button 2 & Satellite SOS 2",
+  },
+  {
+    id: "watch-12",
+    startsAt: "2026-09-08T10:00:00-07:00",
+    month: "SEP",
+    day: "08",
+    monthTone: "violet",
+    title: "Apple Watch Series 12",
+    desc: "Thinner case, glucose alerts & watchOS 27",
+  },
+  {
+    id: "mac-ipad-fall",
+    startsAt: "2026-10-13T10:00:00-07:00",
+    month: "OCT",
+    day: "13",
+    monthTone: "blue",
+    title: "Mac & iPad Special",
+    desc: "M6 Ultra, MacBook Neo & iPad Pro OLED",
+  },
+  {
+    id: "vision-pro-2",
+    startsAt: "2026-11-11T10:00:00-08:00",
+    month: "NOV",
+    day: "11",
+    monthTone: "green",
+    title: "Apple Vision Pro 2",
+    desc: "Lighter frame, M6 Vision & visionOS 27",
+  },
+  {
+    id: "airpods-pro-4",
+    startsAt: "2026-12-02T10:00:00-08:00",
+    month: "DEC",
+    day: "02",
+    monthTone: "orange",
+    title: "AirPods Pro 4 Launch",
+    desc: "Hearing health suite & USB-C case",
+  },
+  {
+    id: "spring-services",
+    startsAt: "2027-03-04T10:00:00-08:00",
+    month: "MAR",
+    day: "04",
+    monthTone: "blue",
+    title: "Spring Services Showcase",
+    desc: "Apple TV+, Fitness+ & Arcade bundles",
+  },
+  {
+    id: "wwdc-2026",
+    startsAt: "2026-06-08T10:00:00-07:00",
+    month: "JUN",
+    day: "08",
+    monthTone: "",
+    title: "WWDC 2026 Keynote",
+    desc: "iOS 27, macOS 27 Golden Gate & Siri AI",
+    isPast: true,
+    actionLabel: "Replay",
+  },
+];
 
-  // Handle Event "Notify" buttons click
-  const eventBtns = document.querySelectorAll(".apple-events-widget .event-btn");
-  eventBtns.forEach(btn => {
-    // Restore state from localStorage if previously set
+function formatEventCountdown(targetDate, now = new Date()) {
+  const diff = targetDate - now;
+  if (diff <= 0) return "Live Today!";
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  if (days === 1) return "Tomorrow";
+  return `${days} days remaining`;
+}
+
+function getAppleCalendarBuckets(now = new Date()) {
+  const upcoming = APPLE_CALENDAR_EVENTS
+    .filter((event) => !event.isPast && new Date(event.startsAt) > now)
+    .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
+  const recent = APPLE_CALENDAR_EVENTS
+    .filter((event) => event.isPast || new Date(event.startsAt) <= now)
+    .sort((a, b) => new Date(b.startsAt) - new Date(a.startsAt));
+  return { upcoming, recent, nextEvent: upcoming[0] };
+}
+
+function updateAppleEventsCountdown() {
+  const countdownLabel = document.getElementById("events-countdown-label");
+  const countdownText = document.getElementById("events-countdown-text");
+  if (!countdownLabel || !countdownText) return;
+
+  const { nextEvent } = getAppleCalendarBuckets();
+  if (nextEvent) {
+    countdownLabel.textContent = "Since WWDC26";
+    const shortTitle = nextEvent.title.replace(/ Keynote$/, "");
+    countdownText.textContent = `${shortTitle} · ${formatEventCountdown(new Date(nextEvent.startsAt))}`;
+  } else {
+    countdownLabel.textContent = "Apple Events";
+    countdownText.textContent = "Stay tuned for updates";
+  }
+}
+
+function restoreAppleEventRsvpState(widget) {
+  widget.querySelectorAll(".event-btn:not(.is-replay)").forEach((btn) => {
     const eventName = btn.getAttribute("data-event");
-    const isRsvped = localStorage.getItem(`rsvp_${eventName}`) === "true";
-    if (isRsvped) {
+    if (localStorage.getItem(`rsvp_${eventName}`) === "true") {
       btn.classList.add("active");
       btn.textContent = "Added ✓";
     }
+  });
+}
 
-    btn.addEventListener("click", (e) => {
+function renderAppleEventsWidget() {
+  const listEl = document.getElementById("apple-events-list");
+  if (!listEl) return;
+
+  const now = new Date();
+  const { upcoming, recent } = getAppleCalendarBuckets(now);
+  updateAppleEventsCountdown();
+
+  const renderRow = (event) => {
+    const isPast = event.isPast || new Date(event.startsAt) <= now;
+    const monthClass = event.monthTone ? ` ${event.monthTone}` : "";
+    const defaultAction = isPast ? "Replay" : "Notify";
+    const actionLabel = event.actionLabel || defaultAction;
+    const row = document.createElement("div");
+    row.className = `event-row${isPast ? " is-past" : ""}`;
+    row.innerHTML = `
+      <div class="event-date-card">
+        <div class="event-date-month${monthClass}">${event.month}</div>
+        <div class="event-date-day">${event.day}</div>
+      </div>
+      <div class="event-details">
+        <p class="event-title">${event.title}</p>
+        <p class="event-desc">${event.desc}</p>
+      </div>
+      <button class="event-btn${isPast ? " is-replay" : ""}" data-event="${event.title}" data-event-id="${event.id}" type="button">${actionLabel}</button>
+    `;
+    return row;
+  };
+
+  listEl.replaceChildren();
+  upcoming.forEach((event) => listEl.appendChild(renderRow(event)));
+
+  if (recent.length) {
+    const recentHeading = document.createElement("p");
+    recentHeading.className = "events-recent-label";
+    recentHeading.textContent = "Recent";
+    listEl.appendChild(recentHeading);
+    recent.forEach((event) => listEl.appendChild(renderRow(event)));
+  }
+}
+
+function setAppleEventsExpanded(expanded) {
+  const widget = document.querySelector(".apple-events-widget");
+  const toggle = document.getElementById("events-expand-toggle");
+  if (!widget) return;
+
+  widget.classList.toggle("is-expanded", expanded);
+  localStorage.setItem("tahoe_events_expanded", expanded ? "true" : "false");
+
+  if (toggle) {
+    toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+    toggle.title = expanded ? "Collapse Apple Events" : "Expand Apple Events";
+    toggle.setAttribute("aria-label", toggle.title);
+  }
+}
+
+function initAppleEventsCalendar() {
+  const widget = document.querySelector(".apple-events-widget");
+  const expandToggle = document.getElementById("events-expand-toggle");
+  renderAppleEventsWidget();
+  if (widget) restoreAppleEventRsvpState(widget);
+
+  setInterval(updateAppleEventsCountdown, 3600000);
+
+  if (expandToggle) {
+    const savedExpanded = localStorage.getItem("tahoe_events_expanded") === "true";
+    setAppleEventsExpanded(savedExpanded);
+    expandToggle.addEventListener("click", (e) => {
       e.stopPropagation();
-      const alreadyRsvped = btn.classList.contains("active");
-      if (alreadyRsvped) {
-        // Mute / cancel
-        btn.classList.remove("active");
-        btn.textContent = "Notify";
-        localStorage.setItem(`rsvp_${eventName}`, "false");
-        playGlassChime();
-        pushNotification("Calendar RSVP Removed", `Muted notifications for "${eventName}".`);
-      } else {
-        // RSVP
-        btn.classList.add("active");
-        btn.textContent = "Added ✓";
-        localStorage.setItem(`rsvp_${eventName}`, "true");
-        playGlassChime();
-        pushNotification("Calendar Event Added", `Successfully added "${eventName}" RSVP! We will alert you when the livestream goes live.`);
-      }
+      setAppleEventsExpanded(!widget?.classList.contains("is-expanded"));
     });
+  }
+
+  if (!widget) return;
+
+  widget.addEventListener("click", (e) => {
+    const btn = e.target.closest(".event-btn");
+    if (!btn) return;
+    e.stopPropagation();
+
+    const eventName = btn.getAttribute("data-event");
+    const isReplay = btn.classList.contains("is-replay");
+
+    if (isReplay) {
+      playGlassChime();
+      pushNotification("WWDC26 Recap", "Replay the keynote highlights: iOS 27, macOS 27 Golden Gate, and the new Siri AI experience.");
+      return;
+    }
+
+    const isRsvped = btn.classList.contains("active");
+    if (isRsvped) {
+      btn.classList.remove("active");
+      btn.textContent = "Notify";
+      localStorage.setItem(`rsvp_${eventName}`, "false");
+      playGlassChime();
+      pushNotification("Calendar RSVP Removed", `Muted notifications for "${eventName}".`);
+      return;
+    }
+
+    btn.classList.add("active");
+    btn.textContent = "Added ✓";
+    localStorage.setItem(`rsvp_${eventName}`, "true");
+    playGlassChime();
+    pushNotification("Calendar Event Added", `Successfully added "${eventName}" RSVP! We will alert you when the livestream goes live.`);
   });
 }
 
@@ -8576,6 +9230,12 @@ function applyGamingWallpaperUrl(imageUrl) {
   return activeGamingWallpaperCssUrl;
 }
 
+function updateGamingWallpaperPreview(imageUrl) {
+  const preview = document.querySelector('[data-wallpaper="gaming-cycle"] .wallpaper-preview');
+  if (!preview || !imageUrl) return;
+  preview.style.backgroundImage = `url('${imageUrl}')`;
+}
+
 function createGamingWallpaperSeed() {
   const currentSource = localStorage.getItem("tahoe_gaming_wallpaper_source");
   const candidates = GAMING_WALLPAPER_APPIDS.filter(appid => appid !== currentSource);
@@ -8592,14 +9252,18 @@ function applySavedGamingWallpaper() {
     currentSource = createGamingWallpaperSeed();
     localStorage.setItem("tahoe_gaming_wallpaper_source", currentSource);
   }
-  applyGamingWallpaperUrl(getGamingWallpaperUrl(currentSource));
+  const imageUrl = getGamingWallpaperUrl(currentSource);
+  applyGamingWallpaperUrl(imageUrl);
+  updateGamingWallpaperPreview(imageUrl);
   setWallpaper("gaming-cycle");
   return true;
 }
 
 async function refreshGamingWallpaper({ notify = true } = {}) {
   const source = createGamingWallpaperSeed();
-  applyGamingWallpaperUrl(getGamingWallpaperUrl(source));
+  const imageUrl = getGamingWallpaperUrl(source);
+  applyGamingWallpaperUrl(imageUrl);
+  updateGamingWallpaperPreview(imageUrl);
   localStorage.setItem("tahoe_gaming_wallpaper_source", source);
   setWallpaper("gaming-cycle");
   if (notify) {
@@ -8632,8 +9296,30 @@ const wallpaperGlows = {
   "ventura-dark": ["rgba(249, 115, 22, 0.45)", "rgba(220, 38, 38, 0.35)", "rgba(30, 41, 59, 0.3)"],
   "macbook-neo-blue": ["rgba(6, 182, 212, 0.45)", "rgba(59, 130, 246, 0.4)", "rgba(255, 255, 255, 0.15)"],
   "macbook-neo-purple": ["rgba(168, 85, 247, 0.45)", "rgba(236, 72, 153, 0.4)", "rgba(255, 255, 255, 0.15)"],
+  "golden-gate-dark": ["rgba(180, 140, 90, 0.45)", "rgba(71, 85, 105, 0.5)", "rgba(49, 46, 129, 0.45)"],
   "gaming-cycle": ["rgba(168, 85, 247, 0.45)", "rgba(0, 240, 255, 0.45)", "rgba(255, 45, 85, 0.4)"]
 };
+
+// Wallpapers that read as light behind translucent titlebar chrome
+const LIGHT_WALLPAPERS = new Set([
+  "tahoe-liquid",
+  "tahoe-beach-dawn",
+  "tahoe-beach-dusk",
+  "sequoia-sunrise",
+  "macbook-neo-blue",
+  "macbook-neo-purple",
+  "os-x-cheetah-puma",
+  "os-x-tiger",
+  "os-x-snow-leopard",
+  "os-x-leopard",
+  "os-x-lion",
+  "os-x-mavericks",
+  "os-x-yosemite"
+]);
+
+function syncLightWallpaperClass(wallpaperName) {
+  document.body.classList.toggle("light-wallpaper", LIGHT_WALLPAPERS.has(wallpaperName));
+}
 
 // --- Wallpaper Switching Engine ---
 function setWallpaper(wallpaperName) {
@@ -8662,6 +9348,7 @@ function setWallpaper(wallpaperName) {
     "ventura-dark": "url('public/assets/imgs/wallpapers/optimized/13-Ventura-Dark.webp')",
     "macbook-neo-blue": "url('public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Blue.webp')",
     "macbook-neo-purple": "url('public/assets/imgs/wallpapers/optimized/MacBook-Neo-wallpaper-Purple.webp')",
+    "golden-gate-dark": "url('public/assets/imgs/wallpapers/optimized/27-Golden-Gate-Dark.webp?v=4')",
     "gaming-cycle": activeGamingWallpaperCssUrl
   };
 
@@ -8685,6 +9372,7 @@ function setWallpaper(wallpaperName) {
     "ventura-dark",
     "macbook-neo-blue",
     "macbook-neo-purple",
+    "golden-gate-dark",
     "gaming-cycle"
   ];
 
@@ -8699,6 +9387,7 @@ function setWallpaper(wallpaperName) {
       document.querySelectorAll(".wallpaper-card").forEach(card => {
         card.classList.toggle("active", card.getAttribute("data-wallpaper") === wallpaperName);
       });
+      syncLightWallpaperClass(wallpaperName);
       return;
     }
 
@@ -8782,6 +9471,8 @@ function setWallpaper(wallpaperName) {
   desktop.style.setProperty("--glow-color-1", colors[0]);
   desktop.style.setProperty("--glow-color-2", colors[1]);
   desktop.style.setProperty("--glow-color-3", colors[2]);
+
+  syncLightWallpaperClass(wallpaperName);
 }
 
 // --- Appearance & Dark Mode Sync Engine ---
@@ -9096,6 +9787,11 @@ async function initSettingsWindow() {
     });
   });
 
+  const savedGamingSource = localStorage.getItem("tahoe_gaming_wallpaper_source");
+  if (savedGamingSource) {
+    updateGamingWallpaperPreview(getGamingWallpaperUrl(savedGamingSource));
+  }
+
   // E. Wallpaper Grids
   const wallpaperCards = document.querySelectorAll(".wallpaper-grid .wallpaper-card");
   wallpaperCards.forEach(card => {
@@ -9122,20 +9818,6 @@ async function initSettingsWindow() {
       pushNotification("Wallpaper Changed", `Desktop wallpaper set to ${capitalized}.`);
     });
   });
-
-  const cycleBtn = document.getElementById("cycle-gaming-btn");
-  if (cycleBtn) {
-    cycleBtn.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      cycleBtn.disabled = true;
-      try {
-        await cycleGamingWallpaper();
-      } finally {
-        cycleBtn.disabled = false;
-      }
-      playGlassChime();
-    });
-  }
 
   // F. Appearance Toggles
   const darkCard = document.getElementById("appearance-dark");
@@ -9332,7 +10014,13 @@ async function initSettingsWindow() {
 
 // --- macOS Tahoe Retro Iframe Window Spawner ---
 function openIframeApp(title, url, icon, appId) {
-  const existingId = `iframe-win-${title.replace(/\s+/g, '-').toLowerCase()}`;
+  const safeUrl = sanitizeExternalUrl(url);
+  if (!safeUrl) {
+    pushNotification("Invalid URL", "Only http(s) URLs can be opened in a window.");
+    return;
+  }
+  const safeTitle = escapeHTML(String(title || "App"));
+  const existingId = `iframe-win-${String(appId || safeUrl).replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}`;
   let win = document.getElementById(existingId);
   if (win) {
     win.classList.remove("hidden-window");
@@ -9380,12 +10068,12 @@ function openIframeApp(title, url, icon, appId) {
       </div>
       <div class="window-title" style="color: #fff; font-size: 11px; font-weight: 500; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none;">
         ${iconHtml}
-        <span>${title}</span>
+        <span>${safeTitle}</span>
       </div>
       <div style="width: 80px;"></div>
     </div>
     <div class="window-body" style="flex: 1; background: #000; display: flex; flex-direction: column; padding: 0; position: relative;">
-      <iframe src="${url}" style="width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen; keyboard" allowfullscreen></iframe>
+      <iframe src="${escapeHTML(safeUrl)}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" style="width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen; keyboard" allowfullscreen></iframe>
       <div class="iframe-loader" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: #121217; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; z-index: 10; transition: opacity 0.5s;">
         <svg class="update-sync-icon syncing" style="width: 36px; height: 36px; color: var(--accent-color);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
@@ -10058,6 +10746,10 @@ function initPwaManager() {
       const color = document.getElementById("pwa-store-color-input").value;
 
       if (!name || !url || !emoji) return;
+      if (!sanitizeExternalUrl(url)) {
+        pushNotification("Invalid URL", "Only http(s) URLs can be installed.");
+        return;
+      }
 
       const id = `pwa-${Date.now()}`;
       const newPwa = { id, name, url, emoji, color };
@@ -11177,22 +11869,43 @@ function initAccountSystem() {
     });
   }
 
+  const btnChangePassword = document.getElementById("btn-change-password");
+  const btnChangePasswordCancel = document.getElementById("btn-change-password-cancel");
+  const btnChangePasswordSave = document.getElementById("btn-change-password-save");
+
   // B. Standard Sign In Callback
   if (btnStandardSignin) {
     btnStandardSignin.addEventListener("click", (e) => {
       e.stopPropagation();
       const usernameInput = document.getElementById("signin-username");
       const emailInput = document.getElementById("signin-email");
+      const passwordInput = document.getElementById("signin-password");
       
       const username = usernameInput ? usernameInput.value.trim() : "";
       const email = emailInput ? emailInput.value.trim() : "";
+      const password = passwordInput ? passwordInput.value : "";
       
       if (!username || !email) {
         pushNotification("Sign In Error", "Please enter both a username and email address.", { silent: true });
         return;
       }
+
+      const storedPassword = localStorage.getItem(MACREADY_PASSWORD_KEY) || "";
+      if (storedPassword) {
+        if (!password) {
+          pushNotification("Sign In Error", "Enter your password to continue.", { silent: true });
+          return;
+        }
+        if (password !== storedPassword) {
+          pushNotification("Sign In Error", "Incorrect password. Try again.", { silent: true });
+          return;
+        }
+      } else if (password.length < MIN_ACCOUNT_PASSWORD_LENGTH) {
+        pushNotification("Sign In Error", `Choose a password with at least ${MIN_ACCOUNT_PASSWORD_LENGTH} characters.`, { silent: true });
+        return;
+      }
       
-      performSignIn(username, email, "standard");
+      performSignIn(username, email, "standard", password);
     });
   }
 
@@ -11244,6 +11957,27 @@ function initAccountSystem() {
       openPasskeyPrompt(currentUsername, currentUserEmail, true);
     });
   }
+
+  if (btnChangePassword) {
+    btnChangePassword.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openChangePasswordPrompt();
+    });
+  }
+
+  if (btnChangePasswordCancel) {
+    btnChangePasswordCancel.addEventListener("click", () => {
+      closeChangePasswordPrompt();
+    });
+  }
+
+  if (btnChangePasswordSave) {
+    btnChangePasswordSave.addEventListener("click", () => {
+      submitChangePassword();
+    });
+  }
+
+  syncAccountDetailsToWindow();
 }
 
 // Helpers
@@ -11357,8 +12091,10 @@ function openSignInWindow() {
     // Reset inputs
     const usernameInput = document.getElementById("signin-username");
     const emailInput = document.getElementById("signin-email");
+    const passwordInput = document.getElementById("signin-password");
     if (usernameInput) usernameInput.value = "";
     if (emailInput) emailInput.value = "";
+    if (passwordInput) passwordInput.value = "";
     
     // Focus first input
     setTimeout(() => {
@@ -11380,12 +12116,18 @@ function closeSignInWindow() {
   }
 }
 
-function performSignIn(username, email, authType = "standard") {
+function performSignIn(username, email, authType = "standard", password = "") {
   currentUsername = username;
   currentUserEmail = email;
   localStorage.setItem("macready_username", username);
   localStorage.setItem("macready_email", email);
   localStorage.setItem("macready_auth_type", authType);
+  if (authType === "standard" && password) {
+    localStorage.setItem(MACREADY_PASSWORD_KEY, password);
+  }
+  if (authType === "passkey") {
+    localStorage.removeItem(MACREADY_PASSWORD_KEY);
+  }
   
   updateAppHeader();
   syncAccountDetailsToWindow();
@@ -11408,6 +12150,7 @@ function performSignOut() {
   localStorage.removeItem("macready_username");
   localStorage.removeItem("macready_email");
   localStorage.removeItem("macready_auth_type");
+  localStorage.removeItem(MACREADY_PASSWORD_KEY);
   
   updateAppHeader();
   syncAccountDetailsToWindow();
@@ -11419,8 +12162,44 @@ function performSignOut() {
 
 function syncAccountDetailsToWindow() {
   const detailUser = document.getElementById("profile-detail-username");
+  const detailBiometric = document.getElementById("profile-detail-biometric");
+  const biometricRow = document.getElementById("profile-biometric-row");
+  const passwordRow = document.getElementById("profile-password-row");
+  const detailPassword = document.getElementById("profile-detail-password");
+  const changePasswordBtn = document.getElementById("btn-change-password");
   
   if (detailUser) detailUser.textContent = currentUsername;
+
+  const authType = localStorage.getItem("macready_auth_type") || "standard";
+  const isSignedIn = currentUsername && currentUsername !== "Guest";
+  const hasPassword = Boolean(localStorage.getItem(MACREADY_PASSWORD_KEY));
+  if (detailBiometric) {
+    if (!isSignedIn) {
+      detailBiometric.textContent = "Not Available";
+      detailBiometric.style.color = "rgba(255, 255, 255, 0.45)";
+    } else if (authType === "passkey") {
+      detailBiometric.textContent = "Passkey (Apple Touch ID Enabled)";
+      detailBiometric.style.color = "#22c55e";
+    } else {
+      detailBiometric.textContent = "Passkey Not Registered";
+      detailBiometric.style.color = "";
+    }
+  }
+  if (biometricRow) {
+    biometricRow.style.display = isSignedIn ? "flex" : "none";
+  }
+  if (passwordRow) {
+    passwordRow.style.display = isSignedIn && authType !== "passkey" ? "flex" : "none";
+  }
+  if (detailPassword) {
+    detailPassword.textContent = hasPassword ? "••••••••" : "";
+    detailPassword.style.display = hasPassword ? "" : "none";
+    detailPassword.style.letterSpacing = hasPassword ? "0.12em" : "0";
+    detailPassword.style.color = "";
+  }
+  if (changePasswordBtn) {
+    changePasswordBtn.textContent = hasPassword ? "Change…" : "Set…";
+  }
 
   // Query hardware profile from SQLite
   const profileRow = db.query("SELECT * FROM hardware_profile");
@@ -11442,7 +12221,6 @@ function syncAccountDetailsToWindow() {
   }
 
   // Passkey Status Card
-  const authType = localStorage.getItem("macready_auth_type") || "standard";
   const passkeyCard = document.getElementById("account-passkey-card");
   if (passkeyCard) {
     if (authType === "passkey") {
@@ -11476,6 +12254,97 @@ function syncAccountDetailsToWindow() {
   }
 }
 
+function openChangePasswordPrompt() {
+  const prompt = document.getElementById("change-password-prompt");
+  if (!prompt) return;
+
+  const hasPassword = Boolean(localStorage.getItem(MACREADY_PASSWORD_KEY));
+  const title = document.getElementById("change-password-title");
+  const subtitle = document.getElementById("change-password-subtitle");
+  const currentInput = document.getElementById("change-password-current");
+  const newInput = document.getElementById("change-password-new");
+  const confirmInput = document.getElementById("change-password-confirm");
+  const error = document.getElementById("change-password-error");
+
+  if (title) title.textContent = hasPassword ? "Change Password" : "Set Password";
+  if (subtitle) {
+    subtitle.textContent = hasPassword
+      ? "Enter your current password and choose a new one."
+      : "Create a password for standard sign-in on this Mac.";
+  }
+  if (currentInput) {
+    currentInput.value = "";
+    currentInput.style.display = hasPassword ? "block" : "none";
+    currentInput.placeholder = "Current Password";
+  }
+  if (newInput) newInput.value = "";
+  if (confirmInput) confirmInput.value = "";
+  if (error) {
+    error.hidden = true;
+    error.textContent = "";
+  }
+
+  prompt.classList.remove("hidden-window");
+  setTimeout(() => {
+    (hasPassword ? currentInput : newInput)?.focus();
+  }, 50);
+}
+
+function closeChangePasswordPrompt() {
+  const prompt = document.getElementById("change-password-prompt");
+  if (prompt) prompt.classList.add("hidden-window");
+}
+
+function submitChangePassword() {
+  const hasPassword = Boolean(localStorage.getItem(MACREADY_PASSWORD_KEY));
+  const currentInput = document.getElementById("change-password-current");
+  const newInput = document.getElementById("change-password-new");
+  const confirmInput = document.getElementById("change-password-confirm");
+  const error = document.getElementById("change-password-error");
+
+  const currentPassword = currentInput?.value || "";
+  const newPassword = newInput?.value || "";
+  const confirmPassword = confirmInput?.value || "";
+  const storedPassword = localStorage.getItem(MACREADY_PASSWORD_KEY) || "";
+
+  const showError = message => {
+    if (!error) return;
+    error.textContent = message;
+    error.hidden = false;
+  };
+
+  if (error) {
+    error.hidden = true;
+    error.textContent = "";
+  }
+
+  if (hasPassword && currentPassword !== storedPassword) {
+    showError("Current password is incorrect.");
+    return;
+  }
+  if (newPassword.length < MIN_ACCOUNT_PASSWORD_LENGTH) {
+    showError(`New password must be at least ${MIN_ACCOUNT_PASSWORD_LENGTH} characters.`);
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    showError("New passwords do not match.");
+    return;
+  }
+  if (hasPassword && newPassword === currentPassword) {
+    showError("Choose a different password than your current one.");
+    return;
+  }
+
+  localStorage.setItem(MACREADY_PASSWORD_KEY, newPassword);
+  closeChangePasswordPrompt();
+  syncAccountDetailsToWindow();
+  pushNotification(
+    hasPassword ? "Password Updated" : "Password Set",
+    hasPassword ? "Your account password was changed successfully." : "Your account password is now active for sign-in.",
+    { silent: true }
+  );
+}
+
 function openAccountWindow() {
   const win = document.getElementById("account-window");
   if (win) {
@@ -11503,6 +12372,47 @@ function openSettingsTab(tab = "wallpaper") {
   if (targetPane) targetPane.classList.add("active");
 }
 
+
+// --- Golden Gate Liquid Glass: pointer-tracked specular highlight ---
+// Updates --spec-x / --spec-y on control-layer glass so the sheen follows
+// the pointer. Single delegated listener, rAF-throttled; skipped entirely
+// under prefers-reduced-motion.
+(function initLiquidGlassSpecular() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const GLASS_SELECTOR = "#menu-bar, #dock, .dropdown-menu, .spotlight-search-pill, .spotlight-action-circle, .spotlight-dropdown-card, #siri-hud, .notifications-panel, .apple-events-widget";
+  let pendingFrame = 0;
+  let pointerX = 0;
+  let pointerY = 0;
+  let hoveredGlass = null;
+
+  const clearSpecular = element => {
+    if (!element) return;
+    element.style.removeProperty("--spec-x");
+    element.style.removeProperty("--spec-y");
+  };
+
+  document.addEventListener("pointermove", event => {
+    pointerX = event.clientX;
+    pointerY = event.clientY;
+    const target = event.target instanceof Element ? event.target.closest(GLASS_SELECTOR) : null;
+
+    if (target !== hoveredGlass) {
+      clearSpecular(hoveredGlass);
+      hoveredGlass = target;
+    }
+    if (!hoveredGlass || pendingFrame) return;
+
+    pendingFrame = requestAnimationFrame(() => {
+      pendingFrame = 0;
+      if (!hoveredGlass) return;
+      const rect = hoveredGlass.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      hoveredGlass.style.setProperty("--spec-x", `${(((pointerX - rect.left) / rect.width) * 100).toFixed(1)}%`);
+      hoveredGlass.style.setProperty("--spec-y", `${(((pointerY - rect.top) / rect.height) * 100).toFixed(1)}%`);
+    });
+  }, { passive: true });
+})();
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initAll);

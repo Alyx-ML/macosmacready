@@ -8,15 +8,31 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: update-news
+  cancel-in-progress: false
+
 jobs:
   update-news:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            tools/news_builder/target
+          key: ${{ runner.os }}-cargo-news-${{ hashFiles('tools/news_builder/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-news-
 
       - name: Generate news JSON
         run: cargo run --manifest-path tools/news_builder/Cargo.toml --release
@@ -26,5 +42,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/data/news.generated.json
-          git diff --cached --quiet || git commit -m "Update generated news data"
-          git push
+          if git diff --cached --quiet; then
+            echo "No news changes to commit."
+          else
+            git commit -m "Update generated news data"
+            git push
+          fi

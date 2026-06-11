@@ -1,24 +1,32 @@
 {
-  "name": "macos-tahoe-newsreader",
+  "name": "macready",
   "version": "1.0.0",
-  "description": "Premium dark themed macOS Tahoe designed news site with liquid glass visual styling.",
+  "description": "MacReady — macOS Tahoe desktop simulation for Apple news, Mac games, app discovery, and desktop utilities.",
   "main": "index.html",
   "scripts": {
     "dev": "vite",
     "news:update": "cargo run --manifest-path tools/news_builder/Cargo.toml --release",
+    "games:update": "node scripts/generate-games-data.mjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run test && cargo test --manifest-path tools/news_builder/Cargo.toml && npm run build"
   },
   "keywords": [
     "macos",
     "tahoe",
     "glassmorphism",
     "liquidglass",
-    "newsreader"
+    "newsreader",
+    "steam",
+    "crossover"
   ],
   "author": "Antigravity Pair Programmer",
   "license": "MIT",
   "devDependencies": {
-    "vite": "^5.0.0"
+    "vite": "^5.0.0",
+    "vitest": "^3.0.0",
+    "wrangler": "^4.0.0"
   }
 }

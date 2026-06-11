@@ -1,7 +1,13 @@
+import { corsHeaders, isAllowedApiRequest } from "./request-guard.js";
+
 const TRANSCRIBE_MODEL = "@cf/openai/whisper";
 const MAX_AUDIO_BYTES = 8 * 1024 * 1024;
 
 export async function onRequestPost({ request, env }) {
+  if (!isAllowedApiRequest(request)) {
+    return json({ error: "Forbidden." }, 403, request);
+  }
+
   if (!env.AI) {
     return json({ error: "Siri voice AI is not configured." }, 500, request);
   }
@@ -21,8 +27,7 @@ export async function onRequestPost({ request, env }) {
     });
   } catch (error) {
     return json({
-      error: "Voice transcription failed.",
-      detail: String(error?.message || error || "").slice(0, 240)
+      error: "Voice transcription failed."
     }, 502, request);
   }
 
@@ -37,7 +42,7 @@ export async function onRequestPost({ request, env }) {
 export function onRequestOptions({ request } = {}) {
   return new Response(null, {
     status: 204,
-    headers: corsHeaders(request)
+    headers: corsHeaders(request, "POST, OPTIONS")
   });
 }
 
@@ -46,27 +51,9 @@ function json(payload, status = 200, request) {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      ...corsHeaders(request)
+      ...corsHeaders(request, "POST, OPTIONS")
     }
   });
-}
-
-function corsHeaders(request) {
-  return {
-    "Access-Control-Allow-Origin": getAllowedOrigin(request),
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
-  };
-}
-
-function getAllowedOrigin(request) {
-  const origin = request?.headers?.get("Origin") || "";
-  const allowedOrigins = new Set([
-    "https://alyx-ml.github.io",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173"
-  ]);
-  return allowedOrigins.has(origin) ? origin : "https://alyx-ml.github.io";
 }
 
 function extractTranscriptionText(result) {

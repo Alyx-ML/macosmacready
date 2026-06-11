@@ -1,3 +1,5 @@
+import { corsHeaders, isAllowedApiRequest } from "./request-guard.js";
+
 const AI_MODEL = "@cf/zai-org/glm-4.7-flash";
 
 const WEATHER_CODES = {
@@ -23,6 +25,10 @@ const WEATHER_CODES = {
 };
 
 export async function onRequestPost({ request, env }) {
+  if (!isAllowedApiRequest(request)) {
+    return json({ reply: "Forbidden." }, 403, request);
+  }
+
   const body = await request.json().catch(() => ({}));
   const message = String(body.message || "").trim().slice(0, 1200);
   const context = body.context && typeof body.context === "object" ? body.context : {};
@@ -67,8 +73,7 @@ export async function onRequestPost({ request, env }) {
     });
   } catch (error) {
     return json({
-      reply: "Siri could not reach the AI service.",
-      detail: String(error?.message || error || "").slice(0, 240)
+      reply: "Siri could not reach the AI service."
     }, 502, request);
   }
 
@@ -80,14 +85,14 @@ export async function onRequestPost({ request, env }) {
   return json({ reply }, 200, request);
 }
 
-export function onRequestGet() {
-  return json({ reply: "Siri is ready. Send a POST request with a message." });
+export function onRequestGet({ request } = {}) {
+  return json({ reply: "Siri is ready. Send a POST request with a message." }, 200, request);
 }
 
 export function onRequestOptions({ request } = {}) {
   return new Response(null, {
     status: 204,
-    headers: corsHeaders(request)
+    headers: corsHeaders(request, "GET, POST, OPTIONS")
   });
 }
 
@@ -97,27 +102,9 @@ function json(payload, status = 200, request) {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
-      ...corsHeaders(request)
+      ...corsHeaders(request, "GET, POST, OPTIONS")
     }
   });
-}
-
-function corsHeaders(request) {
-  return {
-    "Access-Control-Allow-Origin": getAllowedOrigin(request),
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
-  };
-}
-
-function getAllowedOrigin(request) {
-  const origin = request?.headers?.get("Origin") || "";
-  const allowedOrigins = new Set([
-    "https://alyx-ml.github.io",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173"
-  ]);
-  return allowedOrigins.has(origin) ? origin : "https://alyx-ml.github.io";
 }
 
 function extractAiText(result) {
