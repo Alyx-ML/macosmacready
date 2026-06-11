@@ -4,13 +4,32 @@ import path from "path";
 import { lookupCrossoverCompatibility } from "./functions/api/crossover-compatibility.js";
 import { isAllowedFeedUrl } from "./functions/api/rss-proxy.js";
 
-const ROOT_STYLESHEET = '<link rel="stylesheet" href="styles.css?v=asset-paths-2">';
+const PROD_BASE = "/macosmacready/";
+const STYLESHEET_VERSION = "asset-paths-3";
+const ROOT_STYLESHEET = `<link rel="stylesheet" href="styles.css?v=${STYLESHEET_VERSION}">`;
 const BUNDLED_STYLESHEET_RE =
   /<link rel="stylesheet"[^>]*href="[^"]*\/assets\/index-[^"]+\.css"[^>]*>/;
 
 function useRootStylesheet(html) {
   if (!BUNDLED_STYLESHEET_RE.test(html)) return html;
   return html.replace(BUNDLED_STYLESHEET_RE, ROOT_STYLESHEET);
+}
+
+/** CSS url() resolves against the stylesheet URL — use absolute paths in production. */
+function rewriteProductionCssAssetUrls(css) {
+  return css.replace(/url\((['"])assets\//g, `url($1${PROD_BASE}assets/`);
+}
+
+function patchProductionIndexHtml(html) {
+  let patched = useRootStylesheet(html);
+  if (!patched.includes("<base href")) {
+    patched = patched.replace("<head>", `<head>\n  <base href="${PROD_BASE}">`);
+  }
+  patched = patched.replace(
+    /<link rel="stylesheet" href="styles\.css\?[^"]+">/,
+    `<link rel="stylesheet" href="${PROD_BASE}styles.css?v=${STYLESHEET_VERSION}">`
+  );
+  return patched;
 }
 
 export default defineConfig(({ command }) => ({
@@ -45,15 +64,20 @@ export default defineConfig(({ command }) => ({
         for (const file of files) {
           const sourcePath = path.resolve(process.cwd(), file);
           const destinationPath = path.resolve(distDir, file);
-          if (fs.existsSync(sourcePath)) {
+          if (!fs.existsSync(sourcePath)) continue;
+
+          if (file === "styles.css") {
+            const css = rewriteProductionCssAssetUrls(fs.readFileSync(sourcePath, "utf-8"));
+            fs.writeFileSync(destinationPath, css);
+          } else {
             fs.copyFileSync(sourcePath, destinationPath);
-            console.log(`Successfully copied ${file} to dist/${file}`);
           }
+          console.log(`Successfully copied ${file} to dist/${file}`);
         }
 
         const indexPath = path.resolve(distDir, "index.html");
         if (fs.existsSync(indexPath)) {
-          const html = useRootStylesheet(fs.readFileSync(indexPath, "utf-8"));
+          const html = patchProductionIndexHtml(fs.readFileSync(indexPath, "utf-8"));
           fs.writeFileSync(indexPath, html);
         }
       }
