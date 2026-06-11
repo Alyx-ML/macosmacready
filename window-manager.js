@@ -92,6 +92,23 @@ function initDockMagnification() {
 // --- macOS Tahoe Premium Dragging & Focusing System ---
 let maxZIndex = 100;
 const MAX_WINDOW_Z_INDEX = 7900;
+const WINDOW_SELECTOR =
+  "#app-window, #settings-window, #account-window, #terminal-window, #calculator-window, #textedit-window, .utility-window";
+
+function getVisibleWindows() {
+  return [...document.querySelectorAll(WINDOW_SELECTOR)].filter(
+    win => !win.classList.contains("hidden-window") && !win.classList.contains("minimized")
+  );
+}
+
+function readWindowZIndex(windowEl) {
+  const inlineZ = windowEl.style.zIndex;
+  if (inlineZ) {
+    const parsed = Number.parseInt(inlineZ, 10);
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  return Number.parseInt(getComputedStyle(windowEl).zIndex, 10) || 0;
+}
 
 function updateGlobalMenuBar() {
   const topWin = getTopVisibleWindow();
@@ -142,19 +159,48 @@ function refreshGlobalMenuBarSoon() {
   requestAnimationFrame(updateGlobalMenuBar);
 }
 
+function rebalanceWindowStack(focusedWindow) {
+  const visibleWindows = getVisibleWindows().filter(win => win !== focusedWindow);
+  let z = 100;
+  for (const win of visibleWindows) {
+    win.style.zIndex = String(z++);
+  }
+  const focusedZ = Math.min(z, MAX_WINDOW_Z_INDEX);
+  focusedWindow.style.zIndex = String(focusedZ);
+  maxZIndex = focusedZ;
+}
+
 function bringWindowToFront(windowEl) {
-  maxZIndex = Math.min(maxZIndex + 1, MAX_WINDOW_Z_INDEX);
-  windowEl.style.zIndex = maxZIndex;
+  if (!windowEl) return;
+
+  const visibleWindows = getVisibleWindows();
+  let highest = 100;
+  for (const win of visibleWindows) {
+    if (win === windowEl) continue;
+    highest = Math.max(highest, readWindowZIndex(win));
+  }
+
+  let nextZ = Math.min(highest + 1, MAX_WINDOW_Z_INDEX);
+  if (nextZ <= highest) {
+    rebalanceWindowStack(windowEl);
+  } else {
+    maxZIndex = nextZ;
+    windowEl.style.zIndex = String(nextZ);
+  }
+
+  const desktop = document.getElementById("desktop");
+  if (desktop && windowEl.parentElement === desktop) {
+    desktop.appendChild(windowEl);
+  }
+
   refreshGlobalMenuBarSoon();
 }
 
 function getTopVisibleWindow() {
-  const visibleWindows = [...document.querySelectorAll("#app-window, #settings-window, #account-window, #terminal-window, #calculator-window, #textedit-window, .utility-window")]
-    .filter(win => !win.classList.contains("hidden-window") && !win.classList.contains("minimized"));
-
+  const visibleWindows = getVisibleWindows();
   return visibleWindows.reduce((topWindow, win) => {
-    const winZ = Number.parseInt(getComputedStyle(win).zIndex, 10) || 0;
-    const topZ = topWindow ? Number.parseInt(getComputedStyle(topWindow).zIndex, 10) || 0 : -1;
+    const winZ = readWindowZIndex(win);
+    const topZ = topWindow ? readWindowZIndex(topWindow) : -1;
     return winZ > topZ ? win : topWindow;
   }, null);
 }

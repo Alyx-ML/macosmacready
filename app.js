@@ -9350,9 +9350,14 @@ async function initSettingsWindow() {
           }, 600);
         }
 
+        const appWindow = document.getElementById("app-window");
+        const mainWindowCoveringSettings =
+          appWindow?.classList.contains("maximized") &&
+          getTopVisibleWindow()?.id === "app-window";
+
         if (isHidden || isMinimized) {
           openSettings();
-        } else if (settingsWin !== getTopVisibleWindow()) {
+        } else if (mainWindowCoveringSettings || settingsWin !== getTopVisibleWindow()) {
           bringWindowToFront(settingsWin);
           playGlassChime();
         } else {
