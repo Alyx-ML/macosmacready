@@ -275,7 +275,7 @@ body.light-mode ::-webkit-scrollbar-thumb:hover {
 }
 
 #desktop-bg-base {
-  background-image: url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp');
+  background-image: url('assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp');
 }
 
 #desktop-bg-overlay {
@@ -660,33 +660,33 @@ body.light-mode .window-titlebar {
 }
 
 .traffic-light.red::before {
-  background-image: url('public/assets/imgs/macos-traffic-light-buttons-as-SVG-master/1-close-1-normal.svg');
+  background-image: url('assets/imgs/macos-traffic-light-buttons-as-SVG-master/1-close-1-normal.svg');
 }
 .traffic-light.yellow::before {
-  background-image: url('public/assets/imgs/macos-traffic-light-buttons-as-SVG-master/2-minimize-1-normal.svg');
+  background-image: url('assets/imgs/macos-traffic-light-buttons-as-SVG-master/2-minimize-1-normal.svg');
 }
 .traffic-light.green::before {
-  background-image: url('public/assets/imgs/macos-traffic-light-buttons-as-SVG-master/3-maximize-1-normal.svg');
+  background-image: url('assets/imgs/macos-traffic-light-buttons-as-SVG-master/3-maximize-1-normal.svg');
 }
 
 .traffic-lights:hover .traffic-light.red::before {
-  background-image: url('public/assets/imgs/macos-traffic-light-buttons-as-SVG-master/2-close-2-hover.svg');
+  background-image: url('assets/imgs/macos-traffic-light-buttons-as-SVG-master/2-close-2-hover.svg');
 }
 .traffic-lights:hover .traffic-light.yellow::before {
-  background-image: url('public/assets/imgs/macos-traffic-light-buttons-as-SVG-master/2-minimize-2-hover.svg');
+  background-image: url('assets/imgs/macos-traffic-light-buttons-as-SVG-master/2-minimize-2-hover.svg');
 }
 .traffic-lights:hover .traffic-light.green::before {
-  background-image: url('public/assets/imgs/macos-traffic-light-buttons-as-SVG-master/3-maximize-2-hover.svg');
+  background-image: url('assets/imgs/macos-traffic-light-buttons-as-SVG-master/3-maximize-2-hover.svg');
 }
 
 .traffic-light.red:active::before {
-  background-image: url('public/assets/imgs/macos-traffic-light-buttons-as-SVG-master/2-close-3-press.svg');
+  background-image: url('assets/imgs/macos-traffic-light-buttons-as-SVG-master/2-close-3-press.svg');
 }
 .traffic-light.yellow:active::before {
-  background-image: url('public/assets/imgs/macos-traffic-light-buttons-as-SVG-master/2-minimize-3-press.svg');
+  background-image: url('assets/imgs/macos-traffic-light-buttons-as-SVG-master/2-minimize-3-press.svg');
 }
 .traffic-light.green:active::before {
-  background-image: url('public/assets/imgs/macos-traffic-light-buttons-as-SVG-master/3-maximize-3-press.svg');
+  background-image: url('assets/imgs/macos-traffic-light-buttons-as-SVG-master/3-maximize-3-press.svg');
 }
 
 /* Toolbar Items */
@@ -4162,7 +4162,7 @@ body.light-mode .dock-tooltip {
 @media (max-width: 900px) {
   #desktop {
     padding-bottom: 0;
-    background-image: url('public/assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp');
+    background-image: url('assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp');
   }
   
   #menu-bar {
@@ -8462,37 +8462,37 @@ body.light-mode .wallpaper-section-title {
 
 /* Wallpaper previews */
 .wallpaper-preview-tahoe {
-  background-image: url('public/assets/imgs/wallpapers/previews/TahoeWallpaper-mobile.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/TahoeWallpaper-mobile.jpg');
 }
 .wallpaper-preview-tahoe-beach {
-  background-image: url('public/assets/imgs/wallpapers/previews/26-Tahoe-Beach-Dawn.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/26-Tahoe-Beach-Dawn.jpg');
 }
 .wallpaper-preview-tahoe-beach-dusk {
-  background-image: url('public/assets/imgs/wallpapers/previews/26-Tahoe-Beach-Dusk.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/26-Tahoe-Beach-Dusk.jpg');
 }
 .wallpaper-preview-tahoe-dark {
-  background-image: url('public/assets/imgs/wallpapers/previews/26-Tahoe-Dark-6K.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/26-Tahoe-Dark-6K.jpg');
 }
 .wallpaper-preview-sequoia {
-  background-image: url('public/assets/imgs/wallpapers/previews/15-Sequoia-Sunrise.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/15-Sequoia-Sunrise.jpg');
 }
 .wallpaper-preview-big-sur {
-  background-image: url('public/assets/imgs/wallpapers/previews/11-0-Big-Sur-Color-Night.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/11-0-Big-Sur-Color-Night.jpg');
 }
 .wallpaper-preview-big-sur-night-dark {
-  background-image: url('public/assets/imgs/wallpapers/previews/11-0-Night.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/11-0-Night.jpg');
 }
 .wallpaper-preview-mojave-night {
-  background-image: url('public/assets/imgs/wallpapers/previews/10-14-Night.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/10-14-Night.jpg');
 }
 .wallpaper-preview-os-x-cheetah-puma {
-  background-image: url('public/assets/imgs/wallpapers/previews/10-0_10.1.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/10-0_10.1.jpg');
 }
 .wallpaper-preview-os-x-tiger {
-  background-image: url('public/assets/imgs/wallpapers/previews/Tiger.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/Tiger.jpg');
 }
 .wallpaper-preview-os-x-snow-leopard {
-  background-image: url('public/assets/imgs/wallpapers/previews/10-6.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/10-6.jpg');
 }
 .wallpaper-preview-os-x-leopard {
   background: linear-gradient(135deg, #0d1020 0%, #2f2f72 44%, #7b5cff 100%);
@@ -8507,22 +8507,22 @@ body.light-mode .wallpaper-section-title {
   background: linear-gradient(135deg, #1c3b6e 0%, #e3664c 48%, #f4d27a 100%);
 }
 .wallpaper-preview-monterey-dark {
-  background-image: url('public/assets/imgs/wallpapers/previews/12-Dark.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/12-Dark.jpg');
 }
 .wallpaper-preview-ventura-dark {
-  background-image: url('public/assets/imgs/wallpapers/previews/13-Ventura-Dark.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/13-Ventura-Dark.jpg');
 }
 .wallpaper-preview-macbook-neo-blue {
-  background-image: url('public/assets/imgs/wallpapers/previews/MacBook-Neo-wallpaper-Blue.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/MacBook-Neo-wallpaper-Blue.jpg');
 }
 .wallpaper-preview-macbook-neo-purple {
-  background-image: url('public/assets/imgs/wallpapers/previews/MacBook-Neo-wallpaper-Purple.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/MacBook-Neo-wallpaper-Purple.jpg');
 }
 .wallpaper-preview-golden-gate-dark {
-  background-image: url('public/assets/imgs/wallpapers/previews/27-Golden-Gate-Dark.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/27-Golden-Gate-Dark.jpg');
 }
 .wallpaper-preview-gaming-cycle {
-  background-image: url('public/assets/imgs/wallpapers/previews/Gaming-Wallpaper.jpg');
+  background-image: url('assets/imgs/wallpapers/previews/Gaming-Wallpaper.jpg');
 }
 .wallpaper-preview-black {
   background: #000000;

@@ -58,4 +58,4 @@ Never invent version numbers, release dates, changelog bullets, blog posts, SDK 
 - Shared globals (`articles`, `enabledNewsSources`, etc.) live in `app.js`
 - News filter functions live in `lib/news-filters.mjs` — tests import this module directly
 - Use `escapeHTML()` for any user/content interpolation into HTML templates
-- Asset paths use Vite `public/` root: `data/...` resolved via `document.baseURI`
+- Asset paths use Vite `public/` root: `assets/...` and `data/...` (never `public/assets/...`) resolved via `document.baseURI`

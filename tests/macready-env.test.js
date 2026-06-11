@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hostCapabilities, resolveDataUrl } from "../lib/macready-env.mjs";
+import { hostCapabilities, resolveDataUrl, resolvePublicAssetUrl } from "../lib/macready-env.mjs";
 
 describe("macready env helpers", () => {
   it("marks github.io as static-only", () => {
@@ -16,5 +16,10 @@ describe("macready env helpers", () => {
 
   it("resolves data URLs from a base path", () => {
     expect(resolveDataUrl("news.generated.json")).toBe("/data/news.generated.json");
+  });
+
+  it("strips public/ prefix from asset paths", () => {
+    expect(resolvePublicAssetUrl("public/assets/imgs/wallpapers/optimized/27-Golden-Gate-Dark.webp"))
+      .toBe("/assets/imgs/wallpapers/optimized/27-Golden-Gate-Dark.webp");
   });
 });
