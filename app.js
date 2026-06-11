@@ -5588,6 +5588,175 @@ function filterAppStore(query) {
 // ==========================================
 // --- 11. Finder Explorer File System Engine ---
 // ==========================================
+const BROWSER_GAMES_FOLDER_ICON = "assets/imgs/perf/apps/browser-games.webp";
+
+/** Playable Three.js demos with public browser builds (Jun 2026). */
+const BROWSER_GAME_ICON_VERSION = "23";
+const browserGameIcon = id => `assets/imgs/perf/browser-games/${id}?v=${BROWSER_GAME_ICON_VERSION}`;
+
+const BROWSER_THREEJS_GAMES = [
+  {
+    id: "three-quake",
+    title: "Quake III",
+    name: "Quake III.app",
+    url: "https://mrdoob.github.io/three-quake/",
+    size: "64 MB",
+    date: "Jan 2026",
+    icon: browserGameIcon("three-quake.webp")
+  },
+  {
+    id: "three-doom",
+    title: "Doom",
+    name: "Doom.app",
+    url: "https://mrdoob.github.io/three-doom/",
+    size: "48 MB",
+    date: "2026",
+    icon: browserGameIcon("three-doom.webp")
+  },
+  {
+    id: "doom3-wasm",
+    title: "Doom 3 Demo",
+    name: "Doom 3 Demo.app",
+    url: "https://wasm.continuation-labs.com/d3demo/",
+    size: "120 MB",
+    date: "2026",
+    width: 960,
+    height: 640,
+    iframeCropTop: 118,
+    icon: browserGameIcon("doom3-wasm.webp")
+  },
+  {
+    id: "three-descent",
+    title: "Descent",
+    name: "Descent.app",
+    url: "https://mrdoob.github.io/three-descent/",
+    size: "58 MB",
+    date: "Feb 2026",
+    icon: browserGameIcon("three-descent.webp")
+  },
+  {
+    id: "dunshire-doom",
+    title: "Dunshire Doom",
+    name: "Dunshire Doom.app",
+    url: "https://lloydmarkle.github.io/dunshire-doom/",
+    size: "32 MB",
+    date: "2024",
+    icon: browserGameIcon("dunshire-doom.svg")
+  },
+  {
+    id: "clockwork-climb",
+    title: "Clockwork Climb",
+    name: "Clockwork Climb.app",
+    url: "https://tommyato.github.io/gamedevjs-2026-entry/",
+    size: "24 MB",
+    date: "Apr 2026",
+    icon: browserGameIcon("clockwork-climb.webp")
+  },
+  {
+    id: "lava-surge",
+    title: "Lava Surge",
+    name: "Lava Surge.app",
+    url: "https://lava-surge.vercel.app/",
+    size: "18 MB",
+    date: "Jan 2025",
+    icon: browserGameIcon("lava-surge.webp")
+  },
+  {
+    id: "drysland",
+    title: "Drysland",
+    name: "Drysland.app",
+    url: "https://drysland.netlify.app/",
+    size: "12 MB",
+    date: "May 2025",
+    icon: browserGameIcon("drysland.webp")
+  },
+  {
+    id: "phewland",
+    title: "Phewland",
+    name: "Phewland.app",
+    url: "https://grep-many.github.io/phewland/",
+    size: "22 MB",
+    date: "Mar 2026",
+    icon: browserGameIcon("phewland.webp")
+  },
+  {
+    id: "enari-engine",
+    title: "Enari Engine",
+    name: "Enari Engine.app",
+    url: "https://enari-engine.vercel.app/",
+    size: "28 MB",
+    date: "2025",
+    icon: browserGameIcon("enari-engine.webp")
+  },
+  {
+    id: "fps-game",
+    title: "Zombie Survival",
+    name: "Zombie Survival.app",
+    url: "https://tapiwamakandigona.github.io/fps-game/",
+    size: "20 MB",
+    date: "Dec 2025",
+    icon: browserGameIcon("fps-game.webp")
+  },
+  {
+    id: "nemesis",
+    title: "Nemesis",
+    name: "Nemesis.app",
+    url: "https://icecreamyou.github.io/Nemesis/",
+    size: "16 MB",
+    date: "2012",
+    icon: browserGameIcon("nemesis.webp")
+  },
+  {
+    id: "neon-maze",
+    title: "Neon Maze",
+    name: "Neon Maze.app",
+    url: "https://bhanu2006-24.github.io/neon-maze/",
+    size: "14 MB",
+    date: "Nov 2025",
+    icon: browserGameIcon("neon-maze.webp")
+  },
+  {
+    id: "three-punch-out",
+    title: "Punch Out",
+    name: "Punch Out.app",
+    url: "https://matthewsziklay.github.io/THREEPunchOut/",
+    size: "10 MB",
+    date: "2014",
+    icon: browserGameIcon("three-punch-out.webp")
+  }
+];
+
+function getBrowserGameById(gameId) {
+  return BROWSER_THREEJS_GAMES.find(game => game.id === gameId);
+}
+
+function resolveLaunchUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("/")) {
+    try {
+      return new URL(raw, window.location.origin).href;
+    } catch (error) {
+      return "";
+    }
+  }
+  return sanitizeExternalUrl(raw);
+}
+
+function openBrowserGame(gameId) {
+  const game = getBrowserGameById(gameId);
+  if (!game) return;
+
+  openIframeApp(game.title, game.url, game.icon, game.id, {
+    isGame: true,
+    width: game.width,
+    height: game.height,
+    iframeCropTop: game.iframeCropTop,
+    noSandbox: game.noSandbox,
+    launchHint: game.launchHint
+  });
+}
+
 const FINDER_FS = {
   desktop: {
     name: "Desktop",
@@ -7154,8 +7323,11 @@ function bindEvents() {
   const openSpotlightSettingsTab = (tab) => {
     const settingsWin = document.getElementById("settings-window");
     if (!settingsWin) return;
-    settingsWin.classList.remove("hidden-window", "minimized");
+    settingsWin.classList.remove("hidden-window", "minimized", "settings-closing");
     bringWindowToFront(settingsWin);
+    if (typeof markWindowAnimationComplete === "function") {
+      markWindowAnimationComplete(settingsWin, "settings-opened");
+    }
     const indicator = document.getElementById("dock-settings-indicator");
     if (indicator) indicator.classList.add("active-dot");
     document.querySelectorAll(".settings-sidebar .sidebar-item").forEach(item => {
@@ -8295,7 +8467,16 @@ function initAll() {
   
   // Initialize macOS Settings Window & Lock Screen
   const mainWindow = document.getElementById("app-window");
-  if (mainWindow) makeWindowDraggable(mainWindow);
+  if (mainWindow) {
+    makeWindowDraggable(mainWindow);
+    if (typeof markWindowAnimationComplete === "function") {
+      markWindowAnimationComplete(mainWindow, "window-opened");
+    }
+  }
+  const settingsWindow = document.getElementById("settings-window");
+  if (settingsWindow && typeof markWindowAnimationComplete === "function") {
+    markWindowAnimationComplete(settingsWindow, "settings-opened");
+  }
   initSettingsWindow();
   initLockScreen();
   initUtilityApps();
@@ -8916,6 +9097,21 @@ function wallpaperCssUrl(assetPath) {
   return `url('${normalized}')`;
 }
 
+function resolveWallpaperImageUrl(cssUrlValue) {
+  const raw = cssUrlValue.replace(/^url\(['"]?/, "").replace(/['"]?\)$/, "");
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith("/")) {
+    return new URL(raw, window.location.origin).href;
+  }
+  if (typeof window.macreadyResolveAssetUrl === "function") {
+    return new URL(window.macreadyResolveAssetUrl(raw), window.location.origin).href;
+  }
+  return new URL(raw, window.location.origin).href;
+}
+
+let wallpaperTransitionGen = 0;
+let wallpaperFinishTimer = null;
+
 // --- Wallpaper Switching Engine ---
 function setWallpaper(wallpaperName) {
   const desktop = document.getElementById("desktop");
@@ -8990,27 +9186,41 @@ function setWallpaper(wallpaperName) {
     const isImage = physicalImages.includes(wallpaperName);
     
     if (isImage) {
-      // Clean and extract the raw URL for asynchronous GPU pre-decoding
-      const cleanUrl = newBgValue.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
+      const transitionGen = ++wallpaperTransitionGen;
+      if (wallpaperFinishTimer) {
+        clearTimeout(wallpaperFinishTimer);
+        wallpaperFinishTimer = null;
+      }
+
       const img = new Image();
-      img.src = cleanUrl;
-      
+      img.decoding = "async";
+
       const startTransition = () => {
+        if (transitionGen !== wallpaperTransitionGen) return;
+
         overlayBg.style.backgroundImage = newBgValue;
         overlayBg.style.opacity = "1";
-        
-        // After fade transition (600ms):
-        setTimeout(() => {
+
+        wallpaperFinishTimer = setTimeout(() => {
+          if (transitionGen !== wallpaperTransitionGen) return;
           baseBg.style.backgroundImage = newBgValue;
           overlayBg.style.opacity = "0";
+          wallpaperFinishTimer = null;
         }, 600);
       };
 
-      if (typeof img.decode === 'function') {
-        img.decode().then(startTransition).catch(startTransition);
-      } else {
-        img.onload = startTransition;
-      }
+      const preloadUrl = resolveWallpaperImageUrl(newBgValue);
+      img.onload = () => {
+        if (typeof img.decode === "function") {
+          img.decode().then(startTransition).catch(startTransition);
+        } else {
+          startTransition();
+        }
+      };
+      img.onerror = () => {
+        console.warn("Wallpaper image failed to load:", preloadUrl);
+      };
+      img.src = preloadUrl;
     } else {
       // Solid colors / Gradients - Transition gracefully
       overlayBg.style.backgroundImage = "none";
@@ -9200,6 +9410,9 @@ function applyLanguage(lang) {
 
 // --- Initialize Settings Window Controller ---
 async function initSettingsWindow() {
+  if (document.body.dataset.settingsInit === "1") return;
+  document.body.dataset.settingsInit = "1";
+
   // A. Load saved values on startup
   try {
     const savedWallpaper = localStorage.getItem("tahoe_wallpaper") || "tahoe-liquid";
@@ -9268,7 +9481,7 @@ async function initSettingsWindow() {
         settingsWin.classList.add("settings-closing");
         window.setTimeout(() => {
           settingsWin.classList.add("hidden-window");
-          settingsWin.classList.remove("settings-closing");
+          settingsWin.classList.remove("settings-closing", "settings-opened");
         }, 220);
         playGlassChime();
         
@@ -9314,6 +9527,9 @@ async function initSettingsWindow() {
       settingsWin.classList.remove("hidden-window");
       settingsWin.classList.remove("minimized");
       bringWindowToFront(settingsWin);
+      if (typeof markWindowAnimationComplete === "function") {
+        markWindowAnimationComplete(settingsWin, "settings-opened");
+      }
       playGlassChime();
       
       // Add active-dot under the Settings dock icon
@@ -9395,8 +9611,14 @@ async function initSettingsWindow() {
   // E. Wallpaper Grids
   const wallpaperCards = document.querySelectorAll(".wallpaper-grid .wallpaper-card");
   wallpaperCards.forEach(card => {
-    card.addEventListener("click", () => {
+    card.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const wallpaperName = card.getAttribute("data-wallpaper");
+      const currentWallpaper = localStorage.getItem("tahoe_wallpaper");
+      if (wallpaperName === currentWallpaper && wallpaperName !== "gaming-cycle") {
+        return;
+      }
       if (wallpaperName === "gaming-cycle") {
         if (!applySavedGamingWallpaper()) {
           setWallpaper("gaming-cycle");
@@ -9613,20 +9835,28 @@ async function initSettingsWindow() {
 }
 
 // --- macOS Tahoe Retro Iframe Window Spawner ---
-function openIframeApp(title, url, icon, appId) {
-  const safeUrl = sanitizeExternalUrl(url);
+function openIframeApp(title, url, icon, appId, options = {}) {
+  const safeUrl = resolveLaunchUrl(url);
   if (!safeUrl) {
     pushNotification("Invalid URL", "Only http(s) URLs can be opened in a window.");
     return;
   }
   const safeTitle = escapeHTML(String(title || "App"));
   const existingId = `iframe-win-${String(appId || safeUrl).replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}`;
+  const iframeCropTop = Math.max(0, Number(options.iframeCropTop) || 0);
   let win = document.getElementById(existingId);
   if (win) {
-    win.classList.remove("hidden-window");
-    bringWindowToFront(win);
-    playGlassChime();
-    return;
+    const cropMismatch = String(win.dataset.iframeCropTop || "0") !== String(iframeCropTop);
+    if (cropMismatch) {
+      win.remove();
+      win = null;
+    } else {
+      win.classList.remove("hidden-window");
+      win.classList.remove("minimized");
+      bringWindowToFront(win);
+      playGlassChime();
+      return;
+    }
   }
 
   // Add emulator to the Dock when opened
@@ -9634,12 +9864,27 @@ function openIframeApp(title, url, icon, appId) {
     addAppToDock(appId);
   }
 
+  const frameWidth = options.width || (options.isGame ? 960 : 860);
+  const contentHeight = options.height || (options.isGame ? 720 : 640);
+  const titlebarHeight = 42;
+  const frameHeight = iframeCropTop > 0 ? contentHeight + titlebarHeight : contentHeight;
+  const loaderLabel = options.isGame ? "Loading game..." : "Starting Classic Emulator...";
+  const sandboxAttrs = options.noSandbox
+    ? ""
+    : options.isGame
+      ? "allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock allow-modals"
+      : "allow-scripts allow-same-origin allow-forms allow-popups";
+  const iframeStyle = iframeCropTop > 0
+    ? `width: 100%; height: ${contentHeight + iframeCropTop}px; margin-top: -${iframeCropTop}px; border: none;`
+    : "width: 100%; height: 100%; border: none;";
+  const bodyOverflow = iframeCropTop > 0 ? "overflow: hidden;" : "";
+
   win = document.createElement("div");
   win.id = existingId;
   win.className = "liquid-glass utility-window";
   win.style.cssText = `
-    width: 860px;
-    height: 640px;
+    width: ${frameWidth}px;
+    height: ${frameHeight}px;
     position: absolute;
     left: 45%;
     top: 48%;
@@ -9655,6 +9900,8 @@ function openIframeApp(title, url, icon, appId) {
   if (icon) {
     if (icon.trim().startsWith("<svg")) {
       iconHtml = `<span style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; vertical-align: middle;">${icon.replace(/width="[0-9]+"/g, 'width="14"').replace(/height="[0-9]+"/g, 'height="14"')}</span>`;
+    } else if (/^(data:image|assets\/|https?:\/\/)/.test(icon)) {
+      iconHtml = `<img src="${escapeHTML(icon)}" alt="" width="14" height="14" style="border-radius: 3px; vertical-align: middle;">`;
     } else {
       iconHtml = `<span>${icon}</span>`;
     }
@@ -9672,17 +9919,18 @@ function openIframeApp(title, url, icon, appId) {
       </div>
       <div style="width: 80px;"></div>
     </div>
-    <div class="window-body" style="flex: 1; background: #000; display: flex; flex-direction: column; padding: 0; position: relative;">
-      <iframe src="${escapeHTML(safeUrl)}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" style="width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen; keyboard" allowfullscreen></iframe>
+    <div class="window-body" style="flex: 1; background: #000; display: flex; flex-direction: column; padding: 0; position: relative; ${bodyOverflow}">
+      <iframe src="${escapeHTML(safeUrl)}"${sandboxAttrs ? ` sandbox="${sandboxAttrs}"` : ""} style="${iframeStyle}" allow="autoplay; fullscreen; keyboard; gamepad" allowfullscreen></iframe>
       <div class="iframe-loader" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: #121217; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; z-index: 10; transition: opacity 0.5s;">
         <svg class="update-sync-icon syncing" style="width: 36px; height: 36px; color: var(--accent-color);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
         </svg>
-        <div style="color: #fff; font-size: 12px; font-weight: 500; opacity: 0.85;">Starting Classic Emulator...</div>
+        <div style="color: #fff; font-size: 12px; font-weight: 500; opacity: 0.85;">${escapeHTML(loaderLabel)}</div>
       </div>
     </div>
   `;
 
+  win.dataset.iframeCropTop = String(iframeCropTop);
   document.body.appendChild(win);
 
   const iframe = win.querySelector("iframe");
@@ -9742,9 +9990,157 @@ function openIframeApp(title, url, icon, appId) {
 
   bringWindowToFront(win);
   playGlassChime();
+
+  if (options.launchHint) {
+    pushNotification(safeTitle, options.launchHint);
+  }
 }
 
 // --- macOS Tahoe Launchpad Controller ---
+function isLaunchpadBrowserGamesPageActive() {
+  const gamesPage = document.getElementById("launchpad-browser-games-page");
+  return Boolean(gamesPage && !gamesPage.classList.contains("hidden"));
+}
+
+function filterLaunchpadSearch(query = "") {
+  const q = String(query).toLowerCase().trim();
+  const selector = isLaunchpadBrowserGamesPageActive()
+    ? "#launchpad-browser-games-grid .launchpad-app-item"
+    : "#launchpad-apps-grid .launchpad-app-item";
+
+  document.querySelectorAll(selector).forEach(item => {
+    const name = item.querySelector(".launchpad-app-name")?.textContent.toLowerCase() || "";
+    item.style.display = !q || name.includes(q) ? "flex" : "none";
+  });
+}
+
+function setLaunchpadPage(page = "main") {
+  const mainPage = document.getElementById("launchpad-main-page");
+  const gamesPage = document.getElementById("launchpad-browser-games-page");
+  const searchInput = document.getElementById("launchpad-search-input");
+  if (!mainPage || !gamesPage) return;
+
+  const showGames = page === "browser-games";
+  mainPage.classList.toggle("hidden", showGames);
+  gamesPage.classList.toggle("hidden", !showGames);
+  gamesPage.setAttribute("aria-hidden", showGames ? "false" : "true");
+
+  if (searchInput) {
+    searchInput.value = "";
+    searchInput.placeholder = showGames ? "Search games" : "Search";
+  }
+  filterLaunchpadSearch("");
+}
+
+function handleLaunchpadAppItemClick(item) {
+  const launchpadPage = item.getAttribute("data-launchpad-page");
+  const browserGame = item.getAttribute("data-browser-game");
+  const app = item.getAttribute("data-app");
+  const utility = item.getAttribute("data-utility");
+  const emulator = item.getAttribute("data-emulator");
+
+  if (launchpadPage === "browser-games") {
+    setLaunchpadPage("browser-games");
+    const search = document.getElementById("launchpad-search-input");
+    if (search) search.focus();
+    return;
+  }
+
+  if (browserGame) {
+    openBrowserGame(browserGame);
+    setLaunchpadPage("main");
+    toggleLaunchpad();
+    return;
+  }
+
+  if (app) {
+    switchApp(app);
+    toggleLaunchpad();
+    return;
+  }
+
+  if (utility) {
+    if (utility === "terminal") {
+      const win = document.getElementById("terminal-window");
+      if (win) {
+        win.classList.remove("hidden-window");
+        addAppToDock("terminal");
+        const input = document.getElementById("terminal-input");
+        if (input) input.focus();
+        playGlassChime();
+      }
+    } else if (utility === "calculator") {
+      const win = document.getElementById("calculator-window");
+      if (win) {
+        win.classList.remove("hidden-window");
+        addAppToDock("calculator");
+        playGlassChime();
+      }
+    } else if (utility === "textedit") {
+      openTextEditFile({ name: "Untitled.txt", content: "" });
+    } else if (utility === "settings") {
+      const win = document.getElementById("settings-window");
+      if (win) {
+        win.classList.remove("hidden-window");
+        win.classList.remove("minimized");
+        const ind = document.getElementById("dock-settings-indicator");
+        if (ind) ind.classList.add("active-dot");
+        playGlassChime();
+      }
+    } else if (utility === "pwa-manager") {
+      const win = document.getElementById("pwa-store-window");
+      if (win) {
+        win.classList.remove("hidden-window", "minimized");
+        bringWindowToFront(win);
+        playGlassChime();
+      }
+    }
+    toggleLaunchpad();
+    return;
+  }
+
+  if (emulator) {
+    if (emulator === "macos9") {
+      openIframeApp("Mac OS 9", "/classic/mac-os-9/index.html", "", "macos9");
+    } else if (emulator === "marathon") {
+      openIframeApp("Marathon", "https://archive.org/embed/marathon-demo", "", "marathon");
+    } else if (emulator === "lisa") {
+      openIframeApp("Apple Lisa", "https://alpha.lisagui.com/", "🖥️", "lisa");
+    } else if (emulator === "system7") {
+      openIframeApp("System 7", "https://jamesfriend.com.au/pce-js/", "💾", "system7");
+    }
+    toggleLaunchpad();
+  }
+}
+
+function bindLaunchpadGridClicks(gridId) {
+  const grid = document.getElementById(gridId);
+  if (!grid || grid.dataset.clickBound === "1") return;
+  grid.dataset.clickBound = "1";
+  grid.addEventListener("click", (e) => {
+    const item = e.target.closest(".launchpad-app-item");
+    if (!item || !grid.contains(item)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    handleLaunchpadAppItemClick(item);
+  });
+}
+
+const BROWSER_GAMES_GRID_VERSION = "23";
+
+function renderLaunchpadBrowserGames() {
+  const grid = document.getElementById("launchpad-browser-games-grid");
+  if (!grid || grid.dataset.rendered === BROWSER_GAMES_GRID_VERSION) return;
+
+  grid.innerHTML = BROWSER_THREEJS_GAMES.map(game => `
+    <div class="launchpad-app-item" data-browser-game="${escapeHTML(game.id)}">
+      <img src="${escapeHTML(game.icon)}" alt="${escapeHTML(game.title)}" class="launchpad-app-icon">
+      <div class="launchpad-app-name">${escapeHTML(game.title)}</div>
+    </div>
+  `).join("");
+  grid.dataset.rendered = BROWSER_GAMES_GRID_VERSION;
+}
+
 function toggleLaunchpad() {
   const overlay = document.getElementById("launchpad-overlay");
   const indicator = document.getElementById("dock-applications-indicator");
@@ -9754,6 +10150,7 @@ function toggleLaunchpad() {
   playGlassChime();
 
   if (isHidden) {
+    setLaunchpadPage("main");
     overlay.classList.remove("hidden-launchpad");
     document.body.classList.add("launchpad-active");
     if (indicator) indicator.classList.add("active-dot");
@@ -9762,11 +10159,9 @@ function toggleLaunchpad() {
       search.value = "";
       search.focus();
     }
-    // Show all items
-    document.querySelectorAll(".launchpad-app-item").forEach(item => {
-      item.style.display = "flex";
-    });
+    filterLaunchpadSearch("");
   } else {
+    setLaunchpadPage("main");
     overlay.classList.add("hidden-launchpad");
     document.body.classList.remove("launchpad-active");
     if (indicator) indicator.classList.remove("active-dot");
@@ -9774,6 +10169,23 @@ function toggleLaunchpad() {
 }
 
 function initLaunchpad() {
+  if (document.body.dataset.launchpadInit === "1") return;
+  document.body.dataset.launchpadInit = "1";
+
+  renderLaunchpadBrowserGames();
+  bindLaunchpadGridClicks("launchpad-apps-grid");
+  bindLaunchpadGridClicks("launchpad-browser-games-grid");
+
+  const gamesBackBtn = document.getElementById("launchpad-browser-games-back");
+  if (gamesBackBtn) {
+    gamesBackBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setLaunchpadPage("main");
+      const search = document.getElementById("launchpad-search-input");
+      if (search) search.focus();
+    });
+  }
+
   const dockBtn = document.getElementById("dock-applications-btn");
   if (dockBtn) {
     dockBtn.addEventListener("click", (e) => {
@@ -9797,88 +10209,21 @@ function initLaunchpad() {
   const overlay = document.getElementById("launchpad-overlay");
   if (overlay) {
     overlay.addEventListener("click", (e) => {
-      if (e.target === overlay || e.target.id === "launchpad-apps-grid") {
+      if (
+        e.target === overlay ||
+        e.target.id === "launchpad-apps-grid" ||
+        e.target.id === "launchpad-browser-games-grid"
+      ) {
         toggleLaunchpad();
       }
     });
   }
 
-  // Bind App clicks
-  document.querySelectorAll(".launchpad-app-item").forEach(item => {
-    item.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const app = item.getAttribute("data-app");
-      const utility = item.getAttribute("data-utility");
-      const emulator = item.getAttribute("data-emulator");
-
-      if (app) {
-        switchApp(app);
-        toggleLaunchpad();
-      } else if (utility) {
-        if (utility === "terminal") {
-          const win = document.getElementById("terminal-window");
-          if (win) {
-            win.classList.remove("hidden-window");
-            addAppToDock("terminal");
-            const input = document.getElementById("terminal-input");
-            if (input) input.focus();
-            playGlassChime();
-          }
-        } else if (utility === "calculator") {
-          const win = document.getElementById("calculator-window");
-          if (win) {
-            win.classList.remove("hidden-window");
-            addAppToDock("calculator");
-            playGlassChime();
-          }
-        } else if (utility === "textedit") {
-          openTextEditFile({ name: "Untitled.txt", content: "" });
-        } else if (utility === "settings") {
-          const win = document.getElementById("settings-window");
-          if (win) {
-            win.classList.remove("hidden-window");
-            win.classList.remove("minimized");
-            const ind = document.getElementById("dock-settings-indicator");
-            if (ind) ind.classList.add("active-dot");
-            playGlassChime();
-          }
-        } else if (utility === "pwa-manager") {
-          const win = document.getElementById("pwa-store-window");
-          if (win) {
-            win.classList.remove("hidden-window", "minimized");
-            bringWindowToFront(win);
-            playGlassChime();
-          }
-        }
-        toggleLaunchpad();
-      } else if (emulator) {
-        if (emulator === "macos9") {
-          openIframeApp("Mac OS 9", "/classic/mac-os-9/index.html", "", "macos9");
-        } else if (emulator === "marathon") {
-          openIframeApp("Marathon", "https://archive.org/embed/marathon-demo", "", "marathon");
-        } else if (emulator === "lisa") {
-          openIframeApp("Apple Lisa", "https://alpha.lisagui.com/", "🖥️", "lisa");
-        } else if (emulator === "system7") {
-          openIframeApp("System 7", "https://jamesfriend.com.au/pce-js/", "💾", "system7");
-        }
-        toggleLaunchpad();
-      }
-    });
-  });
-
   // Search input live-filtering
   const searchInput = document.getElementById("launchpad-search-input");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
-      const q = e.target.value.toLowerCase().trim();
-      document.querySelectorAll(".launchpad-app-item").forEach(item => {
-        const name = item.querySelector(".launchpad-app-name").textContent.toLowerCase();
-        if (name.includes(q)) {
-          item.style.display = "flex";
-        } else {
-          item.style.display = "none";
-        }
-      });
+      filterLaunchpadSearch(e.target.value);
     });
   }
 }
@@ -10039,6 +10384,10 @@ function addAppToDock(appId) {
   } else if (appId === "system7") {
     iconHtmlContent = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' class="dock-icon" width='48' height='48'><rect x='2' y='2' width='44' height='44' rx='6' ry='6' fill='#1e88e5'/><rect x='10' y='2' width='28' height='16' fill='#ffffff'/><rect x='30' y='5' width='5' height='10' fill='#1e88e5'/><rect x='8' y='24' width='32' height='22' rx='2' ry='2' fill='#ffffff'/><line x1='12' y1='30' x2='36' y2='30' stroke='#757575' stroke-width='2'/><line x1='12' y1='35' x2='36' y2='35' stroke='#757575' stroke-width='2'/><line x1='12' y1='40' x2='36' y2='40' stroke='#757575' stroke-width='2'/></svg>`;
     tooltipName = "System 7";
+  } else if (getBrowserGameById(appId)) {
+    const browserGame = getBrowserGameById(appId);
+    iconHtmlContent = `<img src="${browserGame.icon}" alt="${escapeHTML(browserGame.title)}" class="dock-icon" width="48" height="48" style="border-radius: 9px;">`;
+    tooltipName = browserGame.title;
   } else if (appId.startsWith("pwa-")) {
     const customPwas = JSON.parse(localStorage.getItem("tahoe_custom_pwas") || "[]");
     const pwa = customPwas.find(p => p.id === appId) || FEATURED_PWAS.find(p => p.id === appId);
@@ -10064,6 +10413,10 @@ function addAppToDock(appId) {
     else if (appId === "marathon") winId = "iframe-win-marathon";
     else if (appId === "lisa") winId = "iframe-win-apple-lisa";
     else if (appId === "system7") winId = "iframe-win-system-7";
+    else if (getBrowserGameById(appId)) {
+      openBrowserGame(appId);
+      return;
+    }
     else if (appId.startsWith("pwa-")) {
       const customPwas = JSON.parse(localStorage.getItem("tahoe_custom_pwas") || "[]");
       const pwa = customPwas.find(p => p.id === appId) || FEATURED_PWAS.find(p => p.id === appId);
@@ -11958,8 +12311,11 @@ function openAccountWindow() {
 function openSettingsTab(tab = "wallpaper") {
   const settingsWin = document.getElementById("settings-window");
   if (!settingsWin) return;
-  settingsWin.classList.remove("hidden-window", "minimized");
+  settingsWin.classList.remove("hidden-window", "minimized", "settings-closing");
   bringWindowToFront(settingsWin);
+  if (typeof markWindowAnimationComplete === "function") {
+    markWindowAnimationComplete(settingsWin, "settings-opened");
+  }
   const indicator = document.getElementById("dock-settings-indicator");
   if (indicator) indicator.classList.add("active-dot");
   document.querySelectorAll(".settings-sidebar .sidebar-item").forEach(item => {

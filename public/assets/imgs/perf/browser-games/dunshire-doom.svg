@@ -1,0 +1,82 @@
+<svg width="32" height="32" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">
+   <defs>
+      <linearGradient xlink:href="#prefix__a" id="prefix__k" gradientUnits="userSpaceOnUse" x1="98.747" y1="-40.689"
+         x2="98.747" y2="-11.631" gradientTransform="translate(-33.176 27.43) scale(.49966)" />
+      <linearGradient id="prefix__a">
+         <stop offset="0" stop-color="#004192" />
+         <stop offset=".997" stop-color="#d1f7ff" />
+      </linearGradient>
+      <linearGradient xlink:href="#prefix__b" id="prefix__l" gradientUnits="userSpaceOnUse" x1="82.696" y1="-40.716"
+         x2="82.696" y2="-8.865" gradientTransform="translate(-33.176 27.43) scale(.49966)" />
+      <linearGradient id="prefix__b">
+         <stop offset="0" stop-color="#4d3c14" />
+         <stop offset=".604" stop-color="#b89336" />
+      </linearGradient>
+      <linearGradient xlink:href="#prefix__c" id="prefix__u" gradientUnits="userSpaceOnUse" x1="97.446" y1="-4.845"
+         x2="97.49" y2="-30.771" />
+      <linearGradient id="prefix__c">
+         <stop offset="0" stop-color="#dfb100" />
+         <stop offset="1" stop-color="#3e1e00" />
+      </linearGradient>
+      <linearGradient xlink:href="#prefix__d" id="prefix__v" gradientUnits="userSpaceOnUse" x1="108.619" y1="-31.444"
+         x2="108.619" y2="-7.74" />
+      <linearGradient id="prefix__d">
+         <stop offset="0" stop-color="#d5b64d" />
+         <stop offset="1" stop-color="#765e17" />
+      </linearGradient>
+      <linearGradient xlink:href="#prefix__a" id="prefix__e" gradientUnits="userSpaceOnUse" x1="98.747" y1="-40.689"
+         x2="98.747" y2="-11.631" gradientTransform="translate(-33.176 27.43) scale(.49966)" />
+      <linearGradient xlink:href="#prefix__b" id="prefix__f" gradientUnits="userSpaceOnUse" x1="82.696" y1="-40.716"
+         x2="82.696" y2="-8.865" gradientTransform="translate(-33.176 27.43) scale(.49966)" />
+      <linearGradient xlink:href="#prefix__a" id="prefix__g" gradientUnits="userSpaceOnUse" x1="98.747" y1="-40.689"
+         x2="98.747" y2="-11.631" gradientTransform="translate(-33.176 27.43) scale(.49966)" />
+      <linearGradient xlink:href="#prefix__b" id="prefix__h" gradientUnits="userSpaceOnUse" x1="82.696" y1="-40.716"
+         x2="82.696" y2="-8.865" gradientTransform="translate(-33.176 27.43) scale(.49966)" />
+      <linearGradient xlink:href="#prefix__a" id="prefix__i" gradientUnits="userSpaceOnUse" x1="98.747" y1="-40.689"
+         x2="98.747" y2="-11.631" gradientTransform="translate(-33.176 27.43) scale(.49966)" />
+      <linearGradient xlink:href="#prefix__b" id="prefix__j" gradientUnits="userSpaceOnUse" x1="82.696" y1="-40.716"
+         x2="82.696" y2="-8.865" gradientTransform="translate(-33.176 27.43) scale(.49966)" />
+      <linearGradient xlink:href="#prefix__c" id="prefix__m" gradientUnits="userSpaceOnUse" x1="97.446" y1="-4.845"
+         x2="97.49" y2="-30.771" gradientTransform="translate(-33.176 27.43) scale(.49966)" />
+      <linearGradient xlink:href="#prefix__d" id="prefix__n" gradientUnits="userSpaceOnUse" x1="108.619" y1="-31.444"
+         x2="108.619" y2="-7.74" gradientTransform="translate(-33.176 27.43) scale(.49966)" />
+      <linearGradient xlink:href="#prefix__c" id="prefix__o" gradientUnits="userSpaceOnUse" x1="97.446" y1="-4.845"
+         x2="97.49" y2="-30.771" gradientTransform="translate(-33.176 27.43) scale(.49966)" />
+      <linearGradient xlink:href="#prefix__d" id="prefix__p" gradientUnits="userSpaceOnUse" x1="108.619" y1="-31.444"
+         x2="108.619" y2="-7.74" gradientTransform="translate(-33.176 27.43) scale(.49966)" />
+      <linearGradient xlink:href="#prefix__c" id="prefix__q" gradientUnits="userSpaceOnUse" x1="97.446" y1="-4.845"
+         x2="97.49" y2="-30.771" />
+      <linearGradient xlink:href="#prefix__d" id="prefix__r" gradientUnits="userSpaceOnUse" x1="108.619" y1="-31.444"
+         x2="108.619" y2="-7.74" />
+      <linearGradient xlink:href="#prefix__c" id="prefix__s" gradientUnits="userSpaceOnUse" x1="97.446" y1="-4.845"
+         x2="97.49" y2="-30.771" />
+      <linearGradient xlink:href="#prefix__d" id="prefix__t" gradientUnits="userSpaceOnUse" x1="108.619" y1="-31.444"
+         x2="108.619" y2="-7.74" />
+   </defs>
+   <path
+      d="M9.739 7.37L8.524 8.391l.078 10.188 3.138 2.495 3.715-2.646-.19-10.14-.927-.907zm2.928 2.626l.009 7.577-1.409-1.071.005-6.486z"
+      fill="url(#prefix__e)" fill-rule="evenodd" stroke="url(#prefix__f)" stroke-width=".4" />
+   <path
+      d="M.317 7.336l.857.824.125 15.668c-.189.42-.221.452-.467.873l7.374-5.614-.323-.303.111-10.439-1.217-.958zm3.468 2.573l1.42.042.008 6.64-1.465 1.043z"
+      fill="url(#prefix__g)" fill-rule="evenodd" stroke="url(#prefix__h)" stroke-width=".4" />
+   <path
+      d="M22.578 7.49l3.62-.04 1.017 3.734.823-3.754 3.795-.043-.611.62-.054 16.103.253 1.106-3.098-2.41.38-.316-.13-5.587-1.368 4.568-1.528-6.815-.017 6.09-2.593-2.013.239-.31-.09-10.393z"
+      fill="url(#prefix__i)" fill-rule="evenodd" stroke="url(#prefix__j)" stroke-width=".4" />
+   <path
+      d="M16.736 7.394l-1.06.92.078 10.136 3.319 2.572 3.534-2.672-.19-10.14-.927-.778zm3.063 2.74l.027 6.443-1.304 1.082-.005-7.515z"
+      fill="url(#prefix__k)" fill-rule="evenodd" stroke="url(#prefix__l)" stroke-width=".4" />
+   <path
+      d="M7.928 12.454L5.21 15.075l.002 1.517-1.465 1.042.006-1.199-2.496 2.329.04 5.064c-.188.42-.22.452-.466.874l7.374-5.614-.192-.369z"
+      fill="url(#prefix__m)" stroke="url(#prefix__n)" stroke-width=".4" />
+   <path
+      d="M8.554 12.399l.048 6.18 3.138 2.496 3.715-2.646-.004-.185-.038.031-2.74-2.382.003 1.68-1.409-1.071.001-1.83z"
+      fill="url(#prefix__o)" stroke="url(#prefix__p)" stroke-width=".4" />
+   <g stroke-width=".8">
+      <path d="M123.714-21.043l.13 11.156-.763.631 5.839 4.542h.298l-.442-1.93.033-9.974z" fill="url(#prefix__q)"
+         stroke="url(#prefix__r)" transform="translate(-33.176 27.43) scale(.49966)" />
+      <path d="M111.424-29.799l-5.363 4.34.016 3.738-2.611 2.165-.003-3.8-5.544 4.486.007.897 6.642 5.148 7.073-5.349z"
+         fill="url(#prefix__s)" stroke="url(#prefix__t)" transform="translate(-33.176 27.43) scale(.49966)" />
+      <path d="M112.933-30.408l.107 12.382-.477.619 5.189 4.027.034-12.187 3.059 13.64 2.742-9.227z"
+         fill="url(#prefix__u)" stroke="url(#prefix__v)" transform="translate(-33.176 27.43) scale(.49966)" />
+   </g>
+</svg>

@@ -46,7 +46,7 @@
   </script>
   <link rel="icon" type="image/webp" href="assets/imgs/finderfavicon.webp">
   <link rel="preload" as="image" href="assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" imagesrcset="assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp 960w, assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
-  <link rel="stylesheet" href="styles.css?v=asset-paths-3">
+  <link rel="stylesheet" href="styles.css?v=wallpaper-fix-1">
   <style>
     #btn-new-story[hidden] {
       display: none !important;
@@ -2909,6 +2909,7 @@
         </svg>
         <input type="text" id="launchpad-search-input" placeholder="Search">
       </div>
+      <div id="launchpad-main-page">
       <div class="launchpad-apps-grid" id="launchpad-apps-grid">
         <div class="launchpad-app-item" data-app="news">
           <img src="assets/imgs/perf/dock/news.webp" alt="MacReady" class="launchpad-app-icon">
@@ -2943,18 +2944,14 @@
           <div class="launchpad-app-name">Settings</div>
         </div>
         <div class="launchpad-app-item" data-utility="pwa-manager">
-          <div class="launchpad-app-icon-wrapper" style="background: linear-gradient(135deg, #10b981, #059669); border: 1.5px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 32px;">
-            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="9"></circle>
-              <path d="M3 12h18"></path>
-              <path d="M12 3a14 14 0 0 1 0 18"></path>
-              <path d="M12 3a14 14 0 0 0 0 18"></path>
-            </svg>
-          </div>
+          <img src="assets/imgs/perf/apps/pwa-manager.webp?v=safari-tahoe" alt="PWA Manager" class="launchpad-app-icon" width="136" height="136">
           <div class="launchpad-app-name">PWA Manager</div>
         </div>
-        
-        
+        <div class="launchpad-app-item" data-launchpad-page="browser-games" role="button" tabindex="0" aria-label="Browser Games">
+          <img src="assets/imgs/perf/apps/browser-games.webp?v=games-tahoe-dark" alt="Games" class="launchpad-app-icon" width="136" height="136">
+          <div class="launchpad-app-name">Games</div>
+        </div>
+
         <!-- Retro macOS Browser Apps -->
         <div class="launchpad-app-item" data-emulator="macos9">
           <div class="launchpad-app-icon-wrapper" style="background: transparent; box-shadow: none;">
@@ -2980,6 +2977,19 @@
           </div>
           <div class="launchpad-app-name">System 7</div>
         </div>
+      </div>
+      </div>
+
+      <div id="launchpad-browser-games-page" class="launchpad-subpage hidden">
+        <button type="button" class="launchpad-page-back" id="launchpad-browser-games-back" aria-label="Back to Applications">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Applications
+        </button>
+        <h2 class="launchpad-page-title">Browser Games</h2>
+        <p class="launchpad-page-subtitle">Browser demos — Three.js &amp; WebAssembly</p>
+        <div class="launchpad-apps-grid" id="launchpad-browser-games-grid"></div>
       </div>
     </div>
 
@@ -3042,10 +3052,10 @@
   <script type="module" src="lib/macready-bootstrap.mjs"></script>
   <script defer src="desktop-chrome.js?v=desktop-chrome-1"></script>
   <script defer src="news-reader.js?v=refactor-1"></script>
-  <script defer src="window-manager.js?v=window-module-1"></script>
+  <script defer src="window-manager.js?v=window-module-2"></script>
   <script defer src="siri-assistant.js?v=siri-module-1"></script>
   <script defer src="/data/games.generated.js?v=games-data-2"></script>
-  <script defer src="app.js?v=asset-paths-1"></script>
+  <script defer src="app.js?v=browser-games-23"></script>
 
   <!-- SVG Color Vision Deficiency Matrices -->
   <svg style="position: absolute; height: 0; width: 0; pointer-events: none;" aria-hidden="true">
