@@ -32,28 +32,6 @@ const NEWS_RSS_SOURCES = [
   { name: "9to5Toys Mac Deals", url: "https://9to5toys.com/guides/mac/feed/", category: "deals" },
   { name: "9to5Toys Apple Deals", url: "https://9to5toys.com/guides/apple/feed/", category: "deals" }
 ];
-const APPLE_ECOSYSTEM_SOURCES = new Set(["iClarified"]);
-const APPLE_ECOSYSTEM_TERMS = /\b(Apple|WWDC|iOS|iPhone|iPad|macOS|Mac\b|AirPods|watchOS|visionOS|Siri|App Store|iCloud|Xcode|Apple TV|Apple Watch)\b/i;
-const MAC_NEWS_TERMS = /\b(macOS|Mac\b|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]\b|WWDC|Safari|Finder|Time Machine|Xcode|Gatekeeper|FileVault|Launch Services|MDM|Jamf|SwiftUI|AppKit|Terminal|malware|Security Update)\b/i;
-const STRONG_MAC_CONTEXT_TERMS = /\b(macOS|Mac\b|MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Apple silicon|M[1-9]\b|Finder|Time Machine|Xcode|Gatekeeper|FileVault|Launch Services|MDM|Jamf|SwiftUI|AppKit|Terminal|Security Update)\b/i;
-const IOS_ONLY_TERMS = /\b(iOS|iPhone|iPad|iPadOS|watchOS|Apple Watch|AirPods|visionOS|Vision Pro)\b/i;
-const DEAL_TERMS = /\b(deal|deals|sale|discount|coupon|save \$|save up to|% off|today only|lowest price|record-low|price drop|clearance|promo|promotion|bundle|lifetime license|sponsored|advertorial|stacksocial|walmart|best buy|amazon|b&h)\b/i;
-const SALES_DEAL_TERMS = /\b(sale|on sale|discount|discounted|coupon|save \$|save up to|% off|today only|lowest price|record-low|record low|all-time low|price drop|price cut|clearance|promo|promotion|bundle|lifetime license|sponsored|advertorial|stacksocial|walmart|best buy|amazon|b&h|marked down)\b/i;
-const IDIOMATIC_DEAL_TERMS = /\b(?:biggest|main|real|whole|entire|true)\s+deal\s+(?:about|with|here|is|was|isn't|is not|breaker)|(?:the|this|that|a)\s+deal\s+(?:about|with|here|is|was|isn't|is not|breaker)|not\s+(?:the|a)\s+deal\b|\bdeal\s+breaker\b/i;
-const COMMERCIAL_PRICE_TERMS = /(?:[$£€]\s?\d[\d,]*(?:\.\d{2})?|\d{1,3}%\s?off|save\s?(?:up to\s?)?[$£€]?\s?\d[\d,]*|[$£€]?\s?\d[\d,]*\s?off|all-time low|record low|lowest price)/i;
-const MAC_DEAL_TERMS = /\b(MacBook|iMac|Mac mini|Mac Studio|Mac Pro|Studio Display|Apple display|Apple silicon)\b/i;
-const MACBOOK_DEAL_TERMS = /\b(MacBook|MacBook Air|MacBook Pro|USB-C|Thunderbolt|MagSafe|dock|hub|charger|adapter|monitor|display|SSD|external drive|keyboard|mouse|trackpad|sleeve|case|stand|backpack|accessor(?:y|ies)|AppleCare|M[1-9]\b)\b/i;
-const MAC_DEAL_PRODUCT_TERMS = /\b(MacBook|MacBook Air|MacBook Pro|Mac mini|Mac Studio|Mac Pro|iMac|Studio Display|Mac\b)\b/i;
-const MOBILE_PRODUCT_TERMS = /\b(iPhone|iPad|AirPods|Apple Watch|Watch|Vision Pro|MagSafe Battery)\b/i;
-const PRICE_PATTERN = /(?:[$£€]\s?\d[\d,]*(?:\.\d{2})?|\d{1,3}%\s?off|save\s?(?:up to\s?)?[$£€]?\s?\d[\d,]*|[$£€]?\s?\d[\d,]*\s?off|all-time low|record low|lowest price)/ig;
-const RSS_CATEGORY_TERMS = {
-  technology: MAC_NEWS_TERMS,
-  design: /\b(game|games|gaming|Steam|Xbox|PlayStation|Nintendo|Switch|PC|trailer|release|released|launch|update|patch|DLC|demo|early access|indie|developer|studio)\b/i,
-  science: /\b(review|reviews|hands-on|tested|benchmark|benchmarks|performance|long-term|versus|vs\.?|Mac|macOS|MacBook|iMac|Mac mini|Mac Studio|Mac Pro)\b/i,
-  culture: /\b(Mac app|Mac apps|macOS app|macOS apps|for Mac|on Mac|Mac version|menu bar|Safari extension|Setapp|Raycast|Alfred|BBEdit|Pixelmator|CleanMyMac|Final Cut|Logic Pro|developer tool|Apple silicon)\b/i,
-  ai: /\b(Apple Intelligence|AI|artificial intelligence|Siri|LLM|language model|machine learning|Foundation Models|Image Playground|Genmoji|Writing Tools|ChatGPT|OpenAI|Claude|Gemini|Shortcuts Playground|macOS)\b/i,
-  deals: /\b(MacBook|MacBook Air|MacBook Pro|Mac mini|Mac Studio|Studio Display|Thunderbolt|USB-C|MagSafe|charger|dock|hub|monitor|display|SSD|keyboard|mouse|trackpad|case|sleeve|stand|backpack|accessor(?:y|ies)|deal|deals|discount|sale|off|low|price|Amazon|Best Buy|B&H)\b/i
-};
 const RSS_CATEGORY_LABELS = {
   all: "Today",
   technology: "News",
@@ -63,9 +41,9 @@ const RSS_CATEGORY_LABELS = {
   ai: "Apple Intelligence",
   deals: "Deals"
 };
-const GENERATED_NEWS_URL = typeof window.macreadyDataUrl === "function"
-  ? window.macreadyDataUrl("news.generated.json")
-  : "/data/news.generated.json";
+const GENERATED_NEWS_URL = typeof window.macreadyResolveDataUrl === "function"
+  ? window.macreadyResolveDataUrl("news.generated.json")
+  : new URL("data/news.generated.json", document.baseURI).pathname;
 const GENERATED_NEWS_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 const BOOKMARKED_ARTICLE_URLS_KEY = "tahoe_bookmarked_urls";
 const CUSTOM_ARTICLES_KEY = "tahoe_custom_articles";
@@ -76,6 +54,12 @@ let bookmarkedArticleUrls = new Set(
 
 function fetchDevProxy(url) {
   const isLocalDev = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const hasWorkerApis = typeof window.macreadyHasWorkerApis === "function"
+    ? window.macreadyHasWorkerApis()
+    : !window.location.hostname.endsWith(".github.io");
+  if (!isLocalDev && !hasWorkerApis) {
+    return Promise.reject(new Error("RSS proxy unavailable on static GitHub Pages host"));
+  }
   const requestUrl = isLocalDev
     ? `/rss?url=${encodeURIComponent(url)}`
     : `/api/rss?url=${encodeURIComponent(url)}`;
@@ -348,129 +332,6 @@ function getRSSItemLink(item) {
   const alternateLink = [...item.querySelectorAll("link")]
     .find(link => !link.getAttribute("rel") || link.getAttribute("rel") === "alternate");
   return alternateLink?.getAttribute("href") || "";
-}
-
-function isPodcastFeedEntry(title, subtitle = "", content = "", link = "") {
-  const titleLower = cleanArticleText(title).toLowerCase();
-  const subtitleLower = cleanArticleText(subtitle).toLowerCase();
-  const contentLower = stripHTML(content || "").toLowerCase();
-  const linkLower = String(link || "").toLowerCase();
-  const combined = `${titleLower} ${subtitleLower} ${contentLower}`;
-
-  if (titleLower.includes("podcast rewind")) return true;
-  if (titleLower.includes("macstories weekly")) return true;
-  if (linkLower.includes("/podcast-rewind") || linkLower.includes("/podcast/episode") || linkLower.includes("/feed/podcast")) {
-    return true;
-  }
-  if (subtitleLower.startsWith("enjoy the latest episodes from") || contentLower.startsWith("enjoy the latest episodes from")) {
-    return true;
-  }
-  if (combined.includes("recap of") && combined.includes("articles and podcasts")) return true;
-  if (titleLower.startsWith("podcast:") || titleLower.startsWith("listen now:") || titleLower.startsWith("watch:")) {
-    return true;
-  }
-
-  return false;
-}
-
-function shouldIncludeRSSArticle(source, title, rawDescription, content) {
-  if (!title) return false;
-  if (isPodcastFeedEntry(title, stripHTML(rawDescription || ""), stripHTML(content || ""))) return false;
-
-  const headlineText = `${title} ${stripHTML(rawDescription || "")}`;
-  if (source.category !== "design" && source.category !== "deals" && !isAppleEcosystemSource && isIOSLedTitle(title)) return false;
-
-  const combinedText = `${title} ${rawDescription || ""} ${stripHTML(content || "")}`;
-  const isAppleEcosystemSource = APPLE_ECOSYSTEM_SOURCES.has(source.name);
-  const categoryTerms = RSS_CATEGORY_TERMS[source.category] || MAC_NEWS_TERMS;
-  const categoryOk = isAppleEcosystemSource && source.category === "technology"
-    ? APPLE_ECOSYSTEM_TERMS.test(combinedText)
-    : categoryTerms.test(combinedText);
-  if (!categoryOk) return false;
-
-  if (source.category === "deals") {
-    if (MOBILE_PRODUCT_TERMS.test(title) && !MAC_DEAL_PRODUCT_TERMS.test(title)) return false;
-    return DEAL_TERMS.test(combinedText) && MACBOOK_DEAL_TERMS.test(headlineText);
-  }
-
-  if (source.category !== "technology") return true;
-
-  const hasMacContext = isAppleEcosystemSource
-    ? APPLE_ECOSYSTEM_TERMS.test(combinedText)
-    : STRONG_MAC_CONTEXT_TERMS.test(headlineText);
-  if (!hasMacContext) return false;
-
-  const dealHeadline = isAppleEcosystemSource ? title : headlineText;
-  const isDeal = DEAL_TERMS.test(dealHeadline);
-  if (isDeal && !MAC_DEAL_TERMS.test(dealHeadline)) return false;
-
-  if (!isAppleEcosystemSource && isIOSLedTitle(title)) return false;
-
-  return true;
-}
-
-function isIOSLedTitle(title) {
-  return IOS_ONLY_TERMS.test(title || "") && !STRONG_MAC_CONTEXT_TERMS.test(title || "");
-}
-
-function isMobileAppleArticle(article) {
-  if (!article || article.category === "design" || article.category === "deals") return false;
-  const title = article.title || "";
-  const headline = `${article.title || ""} ${article.subtitle || ""}`;
-  if (IOS_ONLY_TERMS.test(title) && !STRONG_MAC_CONTEXT_TERMS.test(title)) return true;
-  return IOS_ONLY_TERMS.test(headline) && !STRONG_MAC_CONTEXT_TERMS.test(headline);
-}
-
-function isIOSFocusedNewsText(title, subtitle = "") {
-  const headlineText = `${title || ""} ${subtitle || ""}`;
-  return IOS_ONLY_TERMS.test(headlineText) && !STRONG_MAC_CONTEXT_TERMS.test(headlineText);
-}
-
-function shouldRenderArticle(article) {
-  if (isPodcastFeedEntry(
-    article.title,
-    article.subtitle,
-    article.content,
-    article.sourceUrl
-  )) {
-    return false;
-  }
-  if (isMobileAppleArticle(article)) return false;
-  if (article.category === "technology" && isIOSLedTitle(article.title)) return false;
-
-  const imageRequiredSources = ["The Mac Observer", "Six Colors", "MacStories"];
-  if (imageRequiredSources.includes(article.sourceName) && (!article.cover || article.cover.startsWith("preset-"))) {
-    return false;
-  }
-
-  return true;
-}
-
-function hasCommercialDealSignal(title, headlineText) {
-  if (SALES_DEAL_TERMS.test(headlineText) || COMMERCIAL_PRICE_TERMS.test(headlineText)) return true;
-  if (/\b(deals?)\b/i.test(title) && !IDIOMATIC_DEAL_TERMS.test(headlineText)) return true;
-  return false;
-}
-
-function isMacDealArticle(article) {
-  if (!article) return false;
-  const title = article.title || "";
-  const headlineText = `${title} ${article.subtitle || ""}`;
-  if (!hasCommercialDealSignal(title, headlineText)) return false;
-  if (MOBILE_PRODUCT_TERMS.test(title) && !MAC_DEAL_PRODUCT_TERMS.test(title)) return false;
-  return MACBOOK_DEAL_TERMS.test(headlineText) || MAC_DEAL_TERMS.test(headlineText);
-}
-
-function resolveArticleCategory(article, sourceCategory) {
-  const baseCategory = sourceCategory || article?.category || "technology";
-  if (baseCategory === "design" || baseCategory === "deals") return baseCategory;
-  return isMacDealArticle(article) ? "deals" : baseCategory;
-}
-
-function extractDealSignals(article) {
-  if (!article || article.category !== "deals") return [];
-  const text = `${article.title || ""} ${article.subtitle || ""}`;
-  return [...new Set((text.match(PRICE_PATTERN) || []).map(value => cleanArticleText(value)).filter(Boolean))].slice(0, 3);
 }
 
 function parseRSSHTML(html) {
@@ -859,79 +720,6 @@ function setAccentColor(color) {
   }
 }
 
-const SEGMENT_SLOT_PX = 28;
-const SEGMENT_PAD_PX = 2;
-const SEGMENT_THUMB_PX = 28;
-const SEGMENT_STRETCH_PX = 52;
-const SEGMENT_MORPH_MS = 460;
-const SEGMENT_MORPH_EASE = "cubic-bezier(1, 0, 0.4, 1)";
-
-function syncViewSegmentControl(mode) {
-  const control = document.getElementById("view-segment-control");
-  if (!control) return;
-
-  const thumb = control.querySelector(".segment-thumb");
-  if (!thumb) return;
-
-  const previous = control.dataset.activeView;
-  const toIndex = mode === "grid" ? 0 : 1;
-  const fromIndex = previous === "list" ? 1 : 0;
-  const changed = previous !== undefined && previous !== mode;
-
-  if (previous) {
-    control.dataset.previous = previous;
-  }
-
-  control.dataset.activeView = mode;
-
-  const reduceMotion = document.body.classList.contains("reduce-motion");
-  if (!changed || reduceMotion) {
-    thumb.getAnimations().forEach((animation) => animation.cancel());
-    thumb.style.left = "";
-    thumb.style.width = "";
-    thumb.style.transition = "";
-    control.classList.remove("is-morphing");
-    control.style.setProperty("--active-index", String(toIndex));
-    return;
-  }
-
-  thumb.getAnimations().forEach((animation) => animation.cancel());
-  control.classList.add("is-morphing");
-  control.style.setProperty("--active-index", String(fromIndex));
-
-  const fromLeft = SEGMENT_PAD_PX + fromIndex * SEGMENT_SLOT_PX;
-  const toLeft = SEGMENT_PAD_PX + toIndex * SEGMENT_SLOT_PX;
-  const stretchLeft = (fromLeft + toLeft + SEGMENT_THUMB_PX - SEGMENT_STRETCH_PX) / 2;
-
-  thumb.style.transition = "none";
-  thumb.style.left = `${fromLeft}px`;
-  thumb.style.width = `${SEGMENT_THUMB_PX}px`;
-
-  requestAnimationFrame(() => {
-    const morph = thumb.animate(
-      [
-        { left: `${fromLeft}px`, width: `${SEGMENT_THUMB_PX}px` },
-        { left: `${stretchLeft}px`, width: `${SEGMENT_STRETCH_PX}px`, offset: 0.32 },
-        { left: `${stretchLeft}px`, width: `${SEGMENT_STRETCH_PX}px`, offset: 0.68 },
-        { left: `${toLeft}px`, width: `${SEGMENT_THUMB_PX}px` }
-      ],
-      {
-        duration: SEGMENT_MORPH_MS,
-        easing: SEGMENT_MORPH_EASE,
-        fill: "forwards"
-      }
-    );
-
-    morph.onfinish = () => {
-      control.classList.remove("is-morphing");
-      thumb.style.transition = "";
-      thumb.style.left = "";
-      thumb.style.width = "";
-      control.style.setProperty("--active-index", String(toIndex));
-    };
-  });
-}
-
 // Set View Grid/List Mode
 function setViewMode(mode) {
   currentView = mode;
@@ -953,7 +741,7 @@ function setViewMode(mode) {
     }
   }
 
-  syncViewSegmentControl(mode);
+  if (typeof syncViewSegmentControl === "function") syncViewSegmentControl(mode);
 
   // Update widget control panel status label
   const layoutStatus = document.getElementById("layout-status");
@@ -1357,7 +1145,6 @@ function switchApp(appName, pushHistory = true) {
       loadAllGamesData();
     } else {
       renderGamesView();
-      refreshSteamGamesIfNeeded();
     }
     applyAtmosphericGlow(activeAtmosphericGame);
   }
@@ -2255,7 +2042,6 @@ const CROSSOVER_COMPAT_CACHE_KEY = "macready_crossover_compat_cache_v1";
 const CROSSOVER_COMPAT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const crossoverCompatibilityRequests = new Map();
 let steamGamesLastSavedAt = 0;
-let steamGamesRefreshStarted = false;
 let currentGameFilter = "trending";
 let currentGameCompat = "all";
 let gameSearchQuery = "";
@@ -2709,11 +2495,6 @@ function decodeCodeWeaversHtml(value) {
     .replace(/&apos;/g, "'")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">");
-}
-
-function refreshSteamGamesIfNeeded() {
-  // Generated Steam catalog is authoritative; scheduled rebuild keeps data fresh.
-  steamGamesRefreshStarted = true;
 }
 
 loadCachedSteamGames();
@@ -3671,29 +3452,12 @@ const USER_VIDEO_CHANNELS = [
   }
 ];
 const USER_VIDEO_FEED_TTL_MS = 6 * 60 * 60 * 1000;
-const USER_VIDEO_MATCH_STOP_WORDS = new Set([
-  "the", "a", "an", "of", "and", "or", "for", "to", "on", "in", "at", "with",
-  "edition", "definitive", "deluxe", "game", "demo", "mac", "crossover", "native", "port",
-  "first", "light", "dark", "new", "old", "pro", "max", "mini", "ultra", "super",
-  "playing", "running", "impressions", "gameplay", "review", "guide", "update", "beta"
-]);
-
 let userVideoFeedCache = {
   loadedAt: 0,
   videos: [],
   loading: null
 };
 let userVideosRenderToken = 0;
-
-function normalizeGameMatchText(text) {
-  return String(text || "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/['’]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, " ")
-    .trim()
-    .toLowerCase();
-}
 
 function decodeXmlEntities(value) {
   return String(value || "")
@@ -3702,65 +3466,6 @@ function decodeXmlEntities(value) {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, "\"")
     .replace(/&#39;/g, "'");
-}
-
-function buildDistinctiveGameTokens(title) {
-  return normalizeGameMatchText(title)
-    .split(/\s+/)
-    .filter(token => {
-      if (!token || USER_VIDEO_MATCH_STOP_WORDS.has(token)) return false;
-      if (/^\d+$/.test(token)) return true;
-      return token.length >= 4;
-    });
-}
-
-function tokenMatchesText(token, text) {
-  if (!token || !text) return false;
-  const pattern = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
-  return pattern.test(text);
-}
-
-function countSteamAppLinks(text) {
-  return (String(text).match(/store\.steampowered\.com\/app\/\d+/gi) || []).length;
-}
-
-function videoTitleMatchesGame(game, videoTitle) {
-  const gameTitle = normalizeGameMatchText(game.title);
-  if (gameTitle.length >= 4 && videoTitle.includes(gameTitle)) return true;
-
-  const tokens = buildDistinctiveGameTokens(game.title);
-  if (tokens.length === 0) return false;
-
-  if (tokens.every(token => /^\d+$/.test(token))) {
-    return gameTitle.length >= 4 && videoTitle.includes(gameTitle);
-  }
-
-  return tokens.every(token => tokenMatchesText(token, videoTitle));
-}
-
-function videoMatchesGame(video, game) {
-  if (!video || !game?.title) return false;
-
-  const videoTitle = normalizeGameMatchText(video.title);
-  const videoDescription = `${video.description || ""} ${video.url || ""}`;
-
-  if (videoTitleMatchesGame(game, videoTitle)) return true;
-
-  if (game.appid) {
-    const appidPattern = new RegExp(`store\\.steampowered\\.com/app/${game.appid}\\b`, "i");
-    if (appidPattern.test(videoDescription)) {
-      return countSteamAppLinks(videoDescription) <= 1 || videoTitleMatchesGame(game, videoTitle);
-    }
-  }
-
-  return false;
-}
-
-function findUserVideosForGame(game, videos = []) {
-  return videos
-    .filter(video => videoMatchesGame(video, game))
-    .sort((a, b) => Date.parse(b.published || 0) - Date.parse(a.published || 0))
-    .slice(0, 6);
 }
 
 function parseYouTubeChannelFeed(xmlText) {
@@ -3837,7 +3542,9 @@ async function renderGameUserVideos(game) {
     const allVideos = await ensureUserVideoFeedLoaded();
     if (renderToken !== userVideosRenderToken) return;
 
-    const matches = findUserVideosForGame(game, allVideos);
+    const matches = typeof findUserVideosForGame === "function"
+      ? findUserVideosForGame(game, allVideos)
+      : [];
     if (matches.length === 0) return;
 
     const primaryChannel = matches[0].channel || USER_VIDEO_CHANNELS[0];
@@ -6393,7 +6100,7 @@ function bindEvents() {
         const settingsWin = document.getElementById("settings-window");
         if (settingsWin) settingsWin.classList.add("hidden-window");
 
-        closeWidgetCenter();
+        if (typeof window.closeWidgetCenter === "function") window.closeWidgetCenter();
         
         const dockNews = document.querySelector('[data-app="news"] .dock-indicator');
         if (dockNews) dockNews.classList.remove("active-dot");
@@ -6417,7 +6124,7 @@ function bindEvents() {
         const settingsWin = document.getElementById("settings-window");
         if (settingsWin) settingsWin.classList.add("minimized");
 
-        closeWidgetCenter();
+        if (typeof window.closeWidgetCenter === "function") window.closeWidgetCenter();
 
         pushNotification("Window Minimized", "Access items seamlessly from the desktop Dock.");
         refreshGlobalMenuBarSoon();
@@ -6775,126 +6482,7 @@ function bindEvents() {
 
   // Using global closeAllDropdowns function instead
 
-  // --- L. Control widget drawer sliding panel toggle ---
-  const widgetToggle = document.getElementById("control-center-toggle");
-  const widgetDrawer = document.getElementById("widget-center");
-  const tabNotifications = document.getElementById("tab-notifications");
-  const tabWidgets = document.getElementById("tab-widgets");
-  const paneNotifications = document.getElementById("pane-notifications");
-  const paneWidgets = document.getElementById("pane-widgets");
-  const tabPill = document.querySelector(".tahoe-tab-pill");
-  let widgetCenterMode = "widgets";
-
-  const switchTahoeTab = (activeTabId) => {
-    if (activeTabId === "tab-notifications") {
-      widgetCenterMode = "notifications";
-      if (tabNotifications) tabNotifications.classList.add("active");
-      if (tabWidgets) tabWidgets.classList.remove("active");
-      if (paneNotifications) paneNotifications.classList.add("active");
-      if (paneWidgets) paneWidgets.classList.remove("active");
-      if (tabPill) tabPill.style.transform = "translateX(0)";
-    } else {
-      widgetCenterMode = "widgets";
-      if (tabWidgets) tabWidgets.classList.add("active");
-      if (tabNotifications) tabNotifications.classList.remove("active");
-      if (paneWidgets) paneWidgets.classList.add("active");
-      if (paneNotifications) paneNotifications.classList.remove("active");
-      if (tabPill) tabPill.style.transform = "translateX(calc(100% - 2px))";
-      
-      renderBookmarksWidget();
-    }
-  };
-
-  let widgetCenterCloseTimer = null;
-
-  const finishWidgetCenterClose = () => {
-    if (widgetCenterCloseTimer) {
-      clearTimeout(widgetCenterCloseTimer);
-      widgetCenterCloseTimer = null;
-    }
-    if (!widgetDrawer) return;
-    widgetDrawer.classList.remove("show", "cc-opening", "cc-closing");
-  };
-
-  const closeWidgetCenter = () => {
-    if (!widgetDrawer) return;
-    if (!widgetDrawer.classList.contains("show")) {
-      if (widgetToggle) widgetToggle.classList.remove("active");
-      return;
-    }
-    if (widgetDrawer.classList.contains("cc-closing")) return;
-
-    widgetDrawer.classList.remove("cc-opening");
-    widgetDrawer.classList.add("cc-closing");
-    if (widgetToggle) widgetToggle.classList.remove("active");
-
-    if (widgetCenterCloseTimer) clearTimeout(widgetCenterCloseTimer);
-    widgetCenterCloseTimer = setTimeout(finishWidgetCenterClose, 400);
-  };
-
-  const openWidgetCenter = () => {
-    if (!widgetDrawer) return;
-    if (widgetCenterCloseTimer) {
-      clearTimeout(widgetCenterCloseTimer);
-      widgetCenterCloseTimer = null;
-    }
-    widgetDrawer.classList.remove("show", "cc-opening", "cc-closing");
-    void widgetDrawer.offsetWidth;
-    requestAnimationFrame(() => {
-      widgetDrawer.classList.add("show", "cc-opening");
-    });
-  };
-
-  const toggleWidgetCenter = (mode, e) => {
-    if (e) e.stopPropagation();
-    if (widgetDrawer && widgetToggle) {
-      const nextTab = mode === "notifications" ? "tab-notifications" : "tab-widgets";
-      const isOpenInSameMode = widgetDrawer.classList.contains("show") && widgetCenterMode === mode;
-      if (isOpenInSameMode) {
-        closeWidgetCenter();
-        return;
-      }
-
-      switchTahoeTab(nextTab);
-      openWidgetCenter();
-      widgetToggle.classList.toggle("active", mode === "widgets");
-    }
-  };
-
-  if (widgetToggle) widgetToggle.addEventListener("click", (e) => toggleWidgetCenter("widgets", e));
-  if (widgetDrawer) {
-    widgetDrawer.addEventListener("animationend", (e) => {
-      if (e.target !== widgetDrawer) return;
-      if (e.animationName === "cc-panel-fade-in" || e.animationName === "cc-panel-fade-in-reduced") {
-        widgetDrawer.classList.remove("cc-opening");
-      }
-      if (e.animationName === "cc-panel-fade-out" || e.animationName === "cc-panel-fade-out-reduced") {
-        finishWidgetCenterClose();
-      }
-    });
-
-    document.addEventListener("click", (e) => {
-      if (!widgetDrawer.classList.contains("show")) return;
-
-      const clickedInsidePanel = widgetDrawer.contains(e.target);
-      const clickedControlCenter = widgetToggle && widgetToggle.contains(e.target);
-      const clickedDateTime = dateTimeToggle && dateTimeToggle.contains(e.target);
-
-      if (!clickedInsidePanel && !clickedControlCenter && !clickedDateTime) {
-        closeWidgetCenter();
-      }
-    });
-  }
-
-  window.addEventListener("resize", () => {
-    if (window.innerWidth <= 900 && widgetDrawer && widgetToggle) {
-      finishWidgetCenterClose();
-      widgetToggle.classList.remove("active");
-    }
-  });
-  
-  const dateTimeToggle = document.getElementById("date-time-toggle");
-  if (dateTimeToggle) dateTimeToggle.addEventListener("click", (e) => toggleWidgetCenter("notifications", e));
+  if (typeof initControlCenter === "function") initControlCenter();
 
   // Toggle Darkmode button
   const qsDark = document.getElementById("qs-darkmode");
@@ -6938,9 +6526,6 @@ function bindEvents() {
       paintBrightnessSlider();
     });
   }
-
-  if (tabNotifications) tabNotifications.addEventListener("click", () => switchTahoeTab("tab-notifications"));
-  if (tabWidgets) tabWidgets.addEventListener("click", () => switchTahoeTab("tab-widgets"));
 
   // --- N. macOS Tahoe 26 Control Center Event Bindings ---
   // 2. Night Light Control (Actual Website Feature)

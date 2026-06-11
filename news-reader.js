@@ -193,9 +193,9 @@ async function loadNewsFromRSS() {
   try {
     const generatedNewsUrl = typeof GENERATED_NEWS_URL !== "undefined"
       ? GENERATED_NEWS_URL
-      : (typeof window.macreadyDataUrl === "function"
-        ? window.macreadyDataUrl("news.generated.json")
-        : "/data/news.generated.json");
+      : (typeof window.macreadyResolveDataUrl === "function"
+        ? window.macreadyResolveDataUrl("news.generated.json")
+        : new URL("data/news.generated.json", document.baseURI).pathname);
     const response = await fetch(generatedNewsUrl);
     if (!response.ok) throw new Error(`Generated news request failed: ${response.status}`);
 
@@ -206,7 +206,10 @@ async function loadNewsFromRSS() {
     }
 
     const generatedIsStale = isGeneratedNewsStale(payload.generatedAt);
-    if (generatedIsStale) {
+    const canRefreshLive = typeof window.macreadyHasWorkerApis === "function"
+      ? window.macreadyHasWorkerApis()
+      : !window.location.hostname.endsWith(".github.io");
+    if (generatedIsStale && canRefreshLive) {
       console.info("Generated news cache is stale; refreshing from live RSS feeds.");
       try {
         const liveArticles = await fetchLiveNewsArticles();
@@ -227,6 +230,15 @@ async function loadNewsFromRSS() {
     mergeCustomArticlesIntoFeed(customArticles);
   } catch (error) {
     console.error("Generated news data failed to load", error);
+    const canRefreshLive = typeof window.macreadyHasWorkerApis === "function"
+      ? window.macreadyHasWorkerApis()
+      : !window.location.hostname.endsWith(".github.io");
+    if (!canRefreshLive) {
+      articles = [];
+      updateCounts();
+      renderFeed();
+      return;
+    }
     try {
       const liveArticles = await fetchLiveNewsArticles();
       articles = liveArticles;

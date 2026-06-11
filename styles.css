@@ -878,10 +878,6 @@ body.light-mode .segment-control {
   overflow: visible;
 }
 
-.segment-control.is-morphing .segment-thumb {
-  z-index: 2;
-}
-
 .segment-control .segment-thumb-glass {
   display: block;
   width: 100%;
@@ -896,23 +892,6 @@ body.light-mode .segment-control {
     0 2px 6px rgba(0, 0, 0, 0.16);
   transform: scale(1, 1);
   will-change: transform;
-}
-
-.segment-control.is-morphing .segment-thumb-glass {
-  animation: segmentThumbSquish 460ms cubic-bezier(1, 0, 0.4, 1) !important;
-}
-
-.segment-control[data-previous="grid"].is-morphing .segment-thumb-glass {
-  transform-origin: left center;
-}
-
-.segment-control[data-previous="list"].is-morphing .segment-thumb-glass {
-  transform-origin: right center;
-}
-
-@keyframes segmentThumbSquish {
-  0%, 100% { transform: scale3d(1, 1, 1); }
-  45%, 55% { transform: scale3d(1.04, 0.94, 1); }
 }
 
 .segment-control .segment-btn {
@@ -972,10 +951,6 @@ body.light-mode.reduce-transparency .segment-control .segment-thumb-glass {
 
 body:not(.reduce-motion) .segment-control .segment-thumb {
   transition-duration: 460ms !important;
-}
-
-body:not(.reduce-motion) .segment-control.is-morphing .segment-thumb-glass {
-  animation-duration: 460ms !important;
 }
 
 /* --- Split Layout: Sidebar & Content --- */

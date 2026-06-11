@@ -1,29 +1,5 @@
 import { describe, expect, it } from "vitest";
-
-function isPodcastFeedEntry(title, subtitle = "", content = "", link = "") {
-  const clean = value => String(value || "").replace(/\s+/g, " ").trim();
-  const strip = value => clean(String(value || "").replace(/<[^>]+>/g, " "));
-  const titleLower = clean(title).toLowerCase();
-  const subtitleLower = clean(subtitle).toLowerCase();
-  const contentLower = strip(content).toLowerCase();
-  const linkLower = String(link || "").toLowerCase();
-  const combined = `${titleLower} ${subtitleLower} ${contentLower}`;
-
-  if (titleLower.includes("podcast rewind")) return true;
-  if (titleLower.includes("macstories weekly")) return true;
-  if (linkLower.includes("/podcast-rewind") || linkLower.includes("/podcast/episode") || linkLower.includes("/feed/podcast")) {
-    return true;
-  }
-  if (subtitleLower.startsWith("enjoy the latest episodes from") || contentLower.startsWith("enjoy the latest episodes from")) {
-    return true;
-  }
-  if (combined.includes("recap of") && combined.includes("articles and podcasts")) return true;
-  if (titleLower.startsWith("podcast:") || titleLower.startsWith("listen now:") || titleLower.startsWith("watch:")) {
-    return true;
-  }
-
-  return false;
-}
+import { isPodcastFeedEntry } from "../lib/news-filters.mjs";
 
 describe("podcast feed filter", () => {
   it("rejects MacStories podcast roundups", () => {

@@ -38,6 +38,14 @@ Both are served at `/data/...` in dev and production.
 
 ## Deploy
 
+### GitHub Pages (static demo)
+
+Pushes to `main` run `.github/workflows/deploy-pages.yml`, which builds `dist/` with `base: /macosmacready/` and publishes to GitHub Pages.
+
+Live RSS proxy, Siri, and live CrossOver lookup are **not** available on GitHub Pages — the site uses generated `data/news.generated.json` and `data/games.generated.js`.
+
+### Cloudflare Workers (full APIs)
+
 ```bash
 npm run build
 npx wrangler deploy

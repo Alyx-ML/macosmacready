@@ -1,126 +1,66 @@
 import { describe, expect, it } from "vitest";
+import {
+  buildDistinctiveGameTokens,
+  countSteamAppLinks,
+  findUserVideosForGame,
+  normalizeGameMatchText,
+  tokenMatchesText,
+  videoMatchesGame,
+  videoTitleMatchesGame
+} from "../lib/games-media.mjs";
 
-const USER_VIDEO_MATCH_STOP_WORDS = new Set([
-  "the", "a", "an", "of", "and", "or", "for", "to", "on", "in", "at", "with",
-  "edition", "definitive", "deluxe", "game", "demo", "mac", "crossover", "native", "port",
-  "first", "light", "dark", "new", "old", "pro", "max", "mini", "ultra", "super",
-  "playing", "running", "impressions", "gameplay", "review", "guide", "update", "beta"
-]);
-
-function normalizeGameMatchText(text) {
-  return String(text || "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/['’]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, " ")
-    .trim()
-    .toLowerCase();
-}
-
-function buildDistinctiveGameTokens(title) {
-  return normalizeGameMatchText(title)
-    .split(/\s+/)
-    .filter(token => {
-      if (!token || USER_VIDEO_MATCH_STOP_WORDS.has(token)) return false;
-      if (/^\d+$/.test(token)) return true;
-      return token.length >= 4;
-    });
-}
-
-function tokenMatchesText(token, text) {
-  if (!token || !text) return false;
-  const pattern = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
-  return pattern.test(text);
-}
-
-function countSteamAppLinks(text) {
-  return (String(text).match(/store\.steampowered\.com\/app\/\d+/gi) || []).length;
-}
-
-function videoTitleMatchesGame(game, videoTitle) {
-  const gameTitle = normalizeGameMatchText(game.title);
-  if (gameTitle.length >= 4 && videoTitle.includes(gameTitle)) return true;
-
-  const tokens = buildDistinctiveGameTokens(game.title);
-  if (tokens.length === 0) return false;
-
-  if (tokens.every(token => /^\d+$/.test(token))) {
-    return gameTitle.length >= 4 && videoTitle.includes(gameTitle);
-  }
-
-  return tokens.every(token => tokenMatchesText(token, videoTitle));
-}
-
-function videoMatchesGame(video, game) {
-  if (!video || !game?.title) return false;
-
-  const videoTitle = normalizeGameMatchText(video.title);
-  const videoDescription = `${video.description || ""} ${video.url || ""}`;
-
-  if (videoTitleMatchesGame(game, videoTitle)) return true;
-
-  if (game.appid) {
-    const appidPattern = new RegExp(`store\\.steampowered\\.com/app/${game.appid}\\b`, "i");
-    if (appidPattern.test(videoDescription)) {
-      return countSteamAppLinks(videoDescription) <= 1 || videoTitleMatchesGame(game, videoTitle);
-    }
-  }
-
-  return false;
-}
-
-describe("user video matching", () => {
-  it("matches channel videos by Steam app id in the description", () => {
-    expect(videoMatchesGame(
-      {
-        title: "PRAGMATA Demo on Mac! (CrossOver 26) (M4 Mac Mini)",
-        description: "PRAGMATA - https://store.steampowered.com/app/3357650/PRAGMATA/"
-      },
-      { title: "PRAGMATA", appid: 3357650 }
-    )).toBe(true);
+describe("user video game matching", () => {
+  it("matches distinctive multi-token game titles", () => {
+    const game = { title: "Hades II", appid: "1145350" };
+    const videoTitle = normalizeGameMatchText("Playing Hades II on Mac with CrossOver");
+    expect(videoTitleMatchesGame(game, videoTitle)).toBe(true);
   });
 
-  it("matches channel videos by distinctive title tokens", () => {
-    expect(videoMatchesGame(
-      { title: "Backyard Baseball (2026) Demo on Mac! Native Port! (M4 Mac mini)", description: "" },
-      { title: "Backyard Baseball", appid: 3935020 }
-    )).toBe(true);
+  it("rejects unrelated videos with overlapping generic words", () => {
+    const game = { title: "Portal 2", appid: "620" };
+    const video = {
+      title: "Portal review for Windows gaming",
+      description: "A look at classic puzzle games",
+      url: "https://www.youtube.com/watch?v=example"
+    };
+    expect(videoMatchesGame(video, game)).toBe(false);
   });
 
-  it("does not match unrelated Mac gaming videos", () => {
-    expect(videoMatchesGame(
-      { title: "Random Mac gaming news roundup", description: "Lots of games this week" },
-      { title: "PRAGMATA", appid: 3357650 }
-    )).toBe(false);
+  it("matches by Steam app link when title tokens align", () => {
+    const game = { title: "Civilization VI", appid: "289070" };
+    const video = {
+      title: "Civilization VI on Apple Silicon",
+      description: "https://store.steampowered.com/app/289070",
+      url: "https://www.youtube.com/watch?v=abc"
+    };
+    expect(videoMatchesGame(video, game)).toBe(true);
   });
 
-  it("does not match generic words from another game's video", () => {
-    expect(videoMatchesGame(
-      {
-        title: "Playing Resident Evil: Requiem on M4 Mac mini! First Impressions (CrossOver 26)",
-        description: "First impressions of Resident Evil: Requiem running on a M4 Mac mini. To fix lighting, turn OFF Subsurface Scattering. Resident Evil: Requiem - https://store.steampowered.com/app/3764200/Resident_Evil_Requiem/"
-      },
-      { title: "007 First Light", appid: 3768760 }
-    )).toBe(false);
+  it("limits duplicate Steam links in roundup videos", () => {
+    const game = { title: "Stardew Valley", appid: "413150" };
+    const video = {
+      title: "Top 10 Mac games this week",
+      description: [
+        "https://store.steampowered.com/app/413150",
+        "https://store.steampowered.com/app/999999"
+      ].join(" "),
+      url: "https://www.youtube.com/watch?v=roundup"
+    };
+    expect(videoMatchesGame(video, game)).toBe(false);
   });
 
-  it("does not match other resident evil games to a requiem video", () => {
-    expect(videoMatchesGame(
-      {
-        title: "Playing Resident Evil: Requiem on M4 Mac mini! First Impressions (CrossOver 26)",
-        description: "Resident Evil: Requiem - https://store.steampowered.com/app/3764200/Resident_Evil_Requiem/"
-      },
-      { title: "Resident Evil 4", appid: 2050650 }
-    )).toBe(false);
-  });
+  it("builds distinctive tokens and sorts newest matches first", () => {
+    expect(buildDistinctiveGameTokens("The Witcher 3: Wild Hunt")).toContain("witcher");
+    expect(tokenMatchesText("witcher", "the witcher 3 wild hunt demo")).toBe(true);
+    expect(countSteamAppLinks("https://store.steampowered.com/app/1 https://store.steampowered.com/app/2")).toBe(2);
 
-  it("ignores roundup descriptions unless the title also matches", () => {
-    expect(videoMatchesGame(
-      {
-        title: "MacBook Neo Gaming - 11 Games Running on Mac!",
-        description: "HITMAN - https://store.steampowered.com/app/1659040/\\nPRAGMATA - https://store.steampowered.com/app/3357650/"
-      },
-      { title: "HITMAN World of Assassination", appid: 1659040 }
-    )).toBe(false);
+    const game = { title: "Baldur's Gate 3", appid: "1086940" };
+    const videos = [
+      { title: "Baldur's Gate 3 native on Mac", published: "2026-01-01T00:00:00Z", url: "https://youtu.be/old" },
+      { title: "Baldur's Gate 3 CrossOver impressions", published: "2026-06-01T00:00:00Z", url: "https://youtu.be/new" }
+    ];
+    const matches = findUserVideosForGame(game, videos);
+    expect(matches[0].url).toBe("https://youtu.be/new");
+    expect(matches).toHaveLength(2);
   });
 });

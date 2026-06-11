@@ -4,7 +4,8 @@ import path from "path";
 import { lookupCrossoverCompatibility } from "./functions/api/crossover-compatibility.js";
 import { isAllowedFeedUrl } from "./functions/api/rss-proxy.js";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === "serve" ? "/" : "/macosmacready/",
   plugins: [
     {
       name: "macready-copy-public-scripts",
@@ -16,6 +17,7 @@ export default defineConfig({
 
         const files = [
           "styles.css",
+          "desktop-chrome.js",
           "news-reader.js",
           "window-manager.js",
           "siri-assistant.js",
@@ -190,4 +192,4 @@ export default defineConfig({
       }
     }
   ]
-});
+}));
