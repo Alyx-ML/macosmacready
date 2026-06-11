@@ -10,6 +10,7 @@ function syncViewSegmentControl(mode) {
 function initControlCenter() {
   const widgetToggle = document.getElementById("control-center-toggle");
   const widgetDrawer = document.getElementById("widget-center");
+  const widgetBackdrop = document.getElementById("widget-center-backdrop");
   const tabNotifications = document.getElementById("tab-notifications");
   const tabWidgets = document.getElementById("tab-widgets");
   const paneNotifications = document.getElementById("pane-notifications");
@@ -38,6 +39,14 @@ function initControlCenter() {
     }
   };
 
+  const setWidgetCenterOpenState = (open) => {
+    document.body.classList.toggle("widget-center-open", open);
+    if (!widgetBackdrop) return;
+    widgetBackdrop.classList.toggle("hidden", !open);
+    widgetBackdrop.classList.toggle("show", open);
+    widgetBackdrop.setAttribute("aria-hidden", open ? "false" : "true");
+  };
+
   const finishWidgetCenterClose = () => {
     if (widgetCenterCloseTimer) {
       clearTimeout(widgetCenterCloseTimer);
@@ -45,6 +54,7 @@ function initControlCenter() {
     }
     if (!widgetDrawer) return;
     widgetDrawer.classList.remove("show", "cc-opening", "cc-closing");
+    setWidgetCenterOpenState(false);
   };
 
   const closeWidgetCenter = () => {
@@ -72,6 +82,7 @@ function initControlCenter() {
     widgetDrawer.classList.remove("show", "cc-opening", "cc-closing");
     void widgetDrawer.offsetWidth;
     requestAnimationFrame(() => {
+      setWidgetCenterOpenState(true);
       widgetDrawer.classList.add("show", "cc-opening");
     });
   };
@@ -95,6 +106,7 @@ function initControlCenter() {
 
   if (widgetToggle) widgetToggle.addEventListener("click", (e) => toggleWidgetCenter("widgets", e));
   if (dateTimeToggle) dateTimeToggle.addEventListener("click", (e) => toggleWidgetCenter("notifications", e));
+  if (widgetBackdrop) widgetBackdrop.addEventListener("click", closeWidgetCenter);
 
   if (widgetDrawer) {
     widgetDrawer.addEventListener("animationend", (e) => {
@@ -113,15 +125,16 @@ function initControlCenter() {
       const clickedInsidePanel = widgetDrawer.contains(e.target);
       const clickedControlCenter = widgetToggle && widgetToggle.contains(e.target);
       const clickedDateTime = dateTimeToggle && dateTimeToggle.contains(e.target);
+      const clickedBackdrop = widgetBackdrop && widgetBackdrop.contains(e.target);
 
-      if (!clickedInsidePanel && !clickedControlCenter && !clickedDateTime) {
+      if (!clickedInsidePanel && !clickedControlCenter && !clickedDateTime && !clickedBackdrop) {
         closeWidgetCenter();
       }
     });
   }
 
   window.addEventListener("resize", () => {
-    if (window.innerWidth <= 900 && widgetDrawer && widgetToggle) {
+    if (window.innerWidth <= 1024 && widgetDrawer && widgetToggle) {
       finishWidgetCenterClose();
       widgetToggle.classList.remove("active");
     }

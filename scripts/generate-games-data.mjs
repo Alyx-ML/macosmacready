@@ -162,7 +162,7 @@ async function main() {
   await mkdir("public/data", { recursive: true });
   await writeFile(
     "public/data/games.generated.js",
-    `window.MACREADY_GENERATED_STEAM_GAMES = ${JSON.stringify({ generatedAt: new Date().toISOString(), games }, null, 2)};\n`
+    `window.MACREADY_GENERATED_STEAM_GAMES=${JSON.stringify({ generatedAt: new Date().toISOString(), games })};\n`
   );
   console.log(`Generated ${games.length} games`);
 }

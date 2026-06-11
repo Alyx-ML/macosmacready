@@ -1,7 +1,9 @@
 const DEFAULT_ALLOWED_ORIGINS = new Set([
   "https://alyx-ml.github.io",
   "http://localhost:5173",
-  "http://127.0.0.1:5173"
+  "http://127.0.0.1:5173",
+  "http://localhost:5175",
+  "http://127.0.0.1:5175"
 ]);
 
 export function getAllowedOrigin(request) {
@@ -40,6 +42,6 @@ export function corsHeaders(request, methods = "GET, POST, OPTIONS") {
   return {
     "Access-Control-Allow-Origin": getAllowedOrigin(request),
     "Access-Control-Allow-Methods": methods,
-    "Access-Control-Allow-Headers": "Content-Type"
+    "Access-Control-Allow-Headers": "Content-Type, Range"
   };
 }

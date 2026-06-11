@@ -475,13 +475,33 @@ function optimizeArticleImageUrl(url, isFeatured = false) {
   }
 
   if (parsed.hostname === "images.macrumors.com") {
-    parsed.searchParams.delete("resize");
+    parsed.searchParams.set("w", width);
+    return parsed.toString();
+  }
+
+  if (parsed.hostname === "photos5.appleinsider.com" && /-xl\.(jpe?g|webp|png)$/i.test(url)) {
+    return url.replace(/-xl\.(jpe?g|webp|png)$/i, (_, ext) => (isFeatured ? `-lg.${ext}` : `-sm.${ext}`));
+  }
+
+  if (
+    parsed.hostname === "daringfireball.net" ||
+    parsed.hostname.endsWith("iclarified.com") ||
+    parsed.hostname.endsWith("macobserver.com")
+  ) {
     const resizedUrl = new URL("https://images.weserv.nl/");
-    resizedUrl.searchParams.set("url", `${parsed.hostname}${parsed.pathname}${parsed.search}`);
+    resizedUrl.searchParams.set("url", url);
     resizedUrl.searchParams.set("w", width);
     resizedUrl.searchParams.set("output", "webp");
-    resizedUrl.searchParams.set("q", "82");
+    resizedUrl.searchParams.set("q", "80");
     return resizedUrl.toString();
+  }
+
+  if (parsed.hostname.endsWith("macworld.com")) {
+    parsed.searchParams.set("w", width);
+    if (!parsed.searchParams.has("quality")) {
+      parsed.searchParams.set("quality", "50");
+    }
+    return parsed.toString();
   }
 
   return url;
@@ -1001,6 +1021,8 @@ function initDockAutohideSettings() {
 
 // --- 4. Multi-App Switching Routing System ---
 function switchApp(appName, pushHistory = true) {
+  if (appName === "finder" && window.matchMedia("(max-width: 1024px)").matches) return;
+
   currentApp = appName;
   openedApps.add(appName);
   if (appName === "news" || appName === "reviews") {
@@ -1014,6 +1036,8 @@ function switchApp(appName, pushHistory = true) {
     appHistoryIndex = appHistory.length - 1;
   }
   updateNavControls();
+  window.macreadyMobile?.syncTabBar?.(appName);
+  window.macreadyMobile?.closeMobileSidebars?.();
 
   // 2. Hide all app view containers
   const viewContainers = [
@@ -2069,6 +2093,55 @@ function getGeneratedSteamGames() {
   return Array.isArray(payload?.games) ? payload.games : [];
 }
 
+let generatedGamesScriptPromise = null;
+
+function getGeneratedGamesScriptUrl() {
+  if (typeof window.macreadyResolveDataUrl === "function") {
+    return window.macreadyResolveDataUrl("games.generated.js");
+  }
+  return new URL("data/games.generated.js", document.baseURI).pathname;
+}
+
+function loadGeneratedGamesScript() {
+  if (window.MACREADY_GENERATED_STEAM_GAMES) {
+    return Promise.resolve();
+  }
+  if (!generatedGamesScriptPromise) {
+    generatedGamesScriptPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = `${getGeneratedGamesScriptUrl()}?v=games-data-2`;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => {
+        generatedGamesScriptPromise = null;
+        reject(new Error("Failed to load generated games data"));
+      };
+      document.head.appendChild(script);
+    });
+  }
+  return generatedGamesScriptPromise;
+}
+
+function scheduleGeneratedGamesPrefetch() {
+  const warmGeneratedGames = () => {
+    loadGeneratedGamesScript()
+      .then(() => {
+        if (gamesCache.length === 0) {
+          loadCachedSteamGames();
+          if (gamesCache.length > 0) gamesLoaded = true;
+        }
+      })
+      .catch(() => {});
+  };
+
+  document
+    .querySelector('#dock .dock-item-wrapper[data-app="games"]')
+    ?.addEventListener("pointerenter", warmGeneratedGames, { once: true });
+  document
+    .querySelector('#mobile-tab-bar [data-mobile-tab="games"]')
+    ?.addEventListener("pointerenter", warmGeneratedGames, { once: true });
+}
+
 function cloneGeneratedSteamGame(game) {
   const cloned = {
     ...game,
@@ -2499,6 +2572,7 @@ function decodeCodeWeaversHtml(value) {
 
 loadCachedSteamGames();
 if (gamesCache.length > 0) gamesLoaded = true;
+scheduleGeneratedGamesPrefetch();
 ensureUserVideoFeedLoaded().catch(() => {});
 
 // --- Dynamic Wallpaper Glass Blending (Atmospheric Blur) ---
@@ -2974,6 +3048,15 @@ async function loadAllGamesData(options = {}) {
   }
   if (gamesLoaded && !force) return;
   gamesLoading = true;
+
+  try {
+    await loadGeneratedGamesScript();
+    if (gamesCache.length === 0) {
+      loadCachedSteamGames();
+    }
+  } catch (error) {
+    console.warn("Generated games seed could not be loaded.", error);
+  }
 
   const grid = document.getElementById("games-grid");
   if (grid && !silent) {
@@ -6321,16 +6404,9 @@ function bindEvents() {
   const backBtn = document.getElementById("nav-back");
   if (backBtn) {
     backBtn.addEventListener("click", (e) => {
-      // Mobile width sidebar toggling inside news view
-      const newsView = document.getElementById("news-app-view");
-      const newsViewVisible = newsView && window.getComputedStyle(newsView).display !== "none";
-      if (window.innerWidth <= 900 && newsViewVisible) {
-        const sidebar = document.getElementById("sidebar");
-        if (sidebar) {
-          e.stopPropagation();
-          sidebar.classList.toggle("mobile-open");
-          return;
-        }
+      if (window.macreadyMobile?.isActive?.()) {
+        e.stopPropagation();
+        if (window.macreadyMobile.toggleActiveSidebar()) return;
       }
       goBack();
     });
@@ -7424,7 +7500,7 @@ function bindEvents() {
       { title: "App Store", desc: "Download verified system tools and simulated apps", value: "app-store", type: "app", icon: "💎", keywords: "store apps downloads software" },
       { title: "Finder & Files", desc: "Browse folders, local file lists, and desktop files", value: "finder", type: "app", icon: "📂", keywords: "files folders finder desktop" },
       { title: "Crossover Update", desc: "Check system updates, packages, and crossover details", value: "crossover", type: "app", icon: "🧪", keywords: "updates bottles crossover wine" }
-    ];
+    ].filter((item) => !(item.value === "finder" && window.matchMedia("(max-width: 1024px)").matches));
 
     const utilities = [
       { title: "System Settings", desc: "Open wallpaper, general, and accessibility controls", value: "settings", type: "utility", icon: "⚙️", keywords: "settings preferences wallpaper appearance accessibility" },
@@ -8627,7 +8703,11 @@ function renderAppleEventsWidget() {
   };
 
   listEl.replaceChildren();
-  upcoming.forEach((event) => listEl.appendChild(renderRow(event)));
+  const widget = document.querySelector(".apple-events-widget");
+  const isMobile = window.matchMedia("(max-width: 1024px)").matches;
+  const isExpanded = widget?.classList.contains("is-expanded");
+  const visibleUpcoming = isMobile && !isExpanded ? upcoming.slice(0, 3) : upcoming;
+  visibleUpcoming.forEach((event) => listEl.appendChild(renderRow(event)));
 
   if (recent.length) {
     const recentHeading = document.createElement("p");
@@ -8645,6 +8725,8 @@ function setAppleEventsExpanded(expanded) {
 
   widget.classList.toggle("is-expanded", expanded);
   localStorage.setItem("tahoe_events_expanded", expanded ? "true" : "false");
+  renderAppleEventsWidget();
+  restoreAppleEventRsvpState(widget);
 
   if (toggle) {
     toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
@@ -9089,12 +9171,27 @@ function syncLightWallpaperClass(wallpaperName) {
   document.body.classList.toggle("light-wallpaper", LIGHT_WALLPAPERS.has(wallpaperName));
 }
 
-function wallpaperCssUrl(assetPath) {
-  if (typeof window.macreadyCssUrl === "function") {
-    return window.macreadyCssUrl(assetPath);
-  }
+function resolveWallpaperAssetPath(assetPath) {
   const normalized = assetPath.replace(/^public\//, "");
-  return `url('${normalized}')`;
+  if (normalized === "assets/imgs/wallpapers/optimized/27-Golden-Gate-Dark.webp") {
+    return "assets/imgs/wallpapers/optimized/27-Golden-Gate-Dark-1920.webp";
+  }
+  if (
+    normalized === "assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" &&
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 1024px)").matches
+  ) {
+    return "assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp";
+  }
+  return normalized;
+}
+
+function wallpaperCssUrl(assetPath) {
+  const resolvedPath = resolveWallpaperAssetPath(assetPath);
+  if (typeof window.macreadyCssUrl === "function") {
+    return window.macreadyCssUrl(resolvedPath);
+  }
+  return `url('${resolvedPath}')`;
 }
 
 function resolveWallpaperImageUrl(cssUrlValue) {
@@ -9932,6 +10029,7 @@ function openIframeApp(title, url, icon, appId, options = {}) {
 
   win.dataset.iframeCropTop = String(iframeCropTop);
   document.body.appendChild(win);
+  window.macreadyMobile?.normalizeMobileWindow?.(win);
 
   const iframe = win.querySelector("iframe");
   const loader = win.querySelector(".iframe-loader");
@@ -10053,6 +10151,16 @@ function handleLaunchpadAppItemClick(item) {
     return;
   }
 
+  const pwaId = item.getAttribute("data-pwa-id");
+  if (pwaId) {
+    const pwa = getCustomPwas().find(p => p.id === pwaId);
+    if (pwa) {
+      openIframeApp(pwa.name, pwa.url, pwa.emoji, pwa.id);
+      toggleLaunchpad();
+    }
+    return;
+  }
+
   if (app) {
     switchApp(app);
     toggleLaunchpad();
@@ -10141,6 +10249,26 @@ function renderLaunchpadBrowserGames() {
   grid.dataset.rendered = BROWSER_GAMES_GRID_VERSION;
 }
 
+function renderLaunchpadPwas() {
+  const grid = document.getElementById("launchpad-apps-grid");
+  if (!grid) return;
+
+  grid.querySelectorAll(".launchpad-pwa-item").forEach(item => item.remove());
+
+  const searchQuery = document.getElementById("launchpad-search-input")?.value || "";
+  const pwaMarkup = getCustomPwas().map(pwa => `
+    <div class="launchpad-app-item launchpad-pwa-item" data-pwa-id="${escapeHTML(pwa.id)}" role="button" tabindex="0" aria-label="${escapeHTML(pwa.name)}">
+      <div class="launchpad-app-icon-wrapper launchpad-pwa-icon" style="background: ${escapeHTML(pwa.color || "#007aff")}; border: 1.5px solid rgba(255,255,255,0.15); box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), 0 10px 24px rgba(0,0,0,0.22);">
+        <span aria-hidden="true">${pwa.emoji}</span>
+      </div>
+      <div class="launchpad-app-name">${escapeHTML(pwa.name)}</div>
+    </div>
+  `).join("");
+
+  grid.insertAdjacentHTML("beforeend", pwaMarkup);
+  filterLaunchpadSearch(searchQuery);
+}
+
 function toggleLaunchpad() {
   const overlay = document.getElementById("launchpad-overlay");
   const indicator = document.getElementById("dock-applications-indicator");
@@ -10165,6 +10293,7 @@ function toggleLaunchpad() {
     overlay.classList.add("hidden-launchpad");
     document.body.classList.remove("launchpad-active");
     if (indicator) indicator.classList.remove("active-dot");
+    window.macreadyMobile?.onLaunchpadDismissed?.();
   }
 }
 
@@ -10173,6 +10302,7 @@ function initLaunchpad() {
   document.body.dataset.launchpadInit = "1";
 
   renderLaunchpadBrowserGames();
+  renderLaunchpadPwas();
   bindLaunchpadGridClicks("launchpad-apps-grid");
   bindLaunchpadGridClicks("launchpad-browser-games-grid");
 
@@ -10637,6 +10767,7 @@ function getCustomPwas() {
 
 function saveCustomPwas(pwas) {
   localStorage.setItem("tahoe_custom_pwas", JSON.stringify(pwas));
+  renderLaunchpadPwas();
 }
 
 function initPwaManager() {
@@ -10745,6 +10876,7 @@ function initPwaManager() {
       });
       localStorage.removeItem("tahoe_custom_pwas");
       renderGrids();
+      renderLaunchpadPwas();
       pushNotification("Cache Purged", "All installed local PWAs have been removed.");
     });
   }
@@ -10758,6 +10890,7 @@ function initPwaManager() {
       });
       localStorage.setItem("tahoe_custom_pwas", JSON.stringify([]));
       renderGrids();
+      renderLaunchpadPwas();
       pushNotification("System Reset", "PWA settings restored to default.");
     });
   }

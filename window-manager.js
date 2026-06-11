@@ -189,11 +189,31 @@ function bringWindowToFront(windowEl) {
   }
 
   const desktop = document.getElementById("desktop");
-  if (desktop && windowEl.parentElement === desktop) {
+  if (desktop && windowEl.parentElement === desktop && desktop.lastElementChild !== windowEl) {
     desktop.appendChild(windowEl);
   }
 
   refreshGlobalMenuBarSoon();
+}
+
+function markWindowAnimationComplete(windowEl, openedClass = "window-opened") {
+  if (!windowEl || windowEl.classList.contains(openedClass)) return;
+
+  const finish = () => windowEl.classList.add(openedClass);
+  windowEl.addEventListener(
+    "animationend",
+    (event) => {
+      if (event.target === windowEl) finish();
+    },
+    { once: true }
+  );
+
+  requestAnimationFrame(() => {
+    const hasOpenAnimation = windowEl
+      .getAnimations()
+      .some((animation) => animation.playState === "running" || animation.playState === "pending");
+    if (!hasOpenAnimation) finish();
+  });
 }
 
 function getTopVisibleWindow() {
@@ -266,10 +286,18 @@ function makeWindowDraggable(windowEl) {
   function getWindowDragBounds(width, height) {
     const menuBar = document.getElementById("menu-bar");
     const dock = document.getElementById("dock-container");
+    const mobileTabBar = document.getElementById("mobile-tab-bar");
     const menuRect = menuBar?.getBoundingClientRect();
     const dockRect = dock?.getBoundingClientRect();
+    const tabRect = mobileTabBar && !mobileTabBar.classList.contains("hidden")
+      ? mobileTabBar.getBoundingClientRect()
+      : null;
     const top = menuRect && menuRect.height > 0 ? menuRect.bottom + 8 : 8;
-    const bottom = dockRect && dockRect.height > 0 ? dockRect.top - 8 : window.innerHeight - 8;
+    const bottom = tabRect && tabRect.height > 0
+      ? tabRect.top - 8
+      : dockRect && dockRect.height > 0
+        ? dockRect.top - 8
+        : window.innerHeight - 8;
     const maxHeight = Math.max(220, bottom - top);
     const adjustedHeight = Math.min(height, maxHeight);
 

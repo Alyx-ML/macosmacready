@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="MacReady is a macOS-style hub for Apple news, Mac games, app discovery, reviews, and desktop utilities.">
   <title>MacReady</title>
   <script>
@@ -41,12 +43,28 @@
         "--initial-wallpaper",
         `url('${initialSteamHero}')`
       );
+    } else if (initialWallpaperName === "golden-gate-dark") {
+      document.documentElement.style.setProperty(
+        "--initial-wallpaper",
+        "url('assets/imgs/wallpapers/optimized/27-Golden-Gate-Dark-1920.webp')"
+      );
+    } else if (
+      (!initialWallpaperName || initialWallpaperName === "tahoe-liquid") &&
+      window.matchMedia &&
+      window.matchMedia("(max-width: 1024px)").matches
+    ) {
+      document.documentElement.style.setProperty(
+        "--initial-wallpaper",
+        "url('assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp')"
+      );
     }
 
   </script>
   <link rel="icon" type="image/webp" href="assets/imgs/finderfavicon.webp">
+  <link rel="preload" href="data/news.generated.json" as="fetch" crossorigin>
   <link rel="preload" as="image" href="assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp" imagesrcset="assets/imgs/wallpapers/optimized/TahoeWallpaper-mobile.webp 960w, assets/imgs/wallpapers/optimized/TahoeWallpaper-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
-  <link rel="stylesheet" href="styles.css?v=wallpaper-fix-1">
+  <link rel="preload" href="styles.css?v=lighthouse-perf-2" as="style">
+  <link rel="stylesheet" href="styles.css?v=lighthouse-perf-2">
   <style>
     #btn-new-story[hidden] {
       display: none !important;
@@ -177,7 +195,8 @@
   <link rel="preconnect" href="https://photos5.appleinsider.com">
   <link rel="preconnect" href="https://images.macrumors.com">
   <!-- Inter is the webfont fallback for non-Apple devices; Apple hardware renders native SF via -apple-system. Lora powers the reader's paper theme only. -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap"></noscript>
 </head>
 <body class="theme-blue">
 
@@ -241,18 +260,18 @@
       <div class="menu-right">
         
         <!-- Search icon -->
-        <button class="menu-icon" id="menu-search-toggle" title="Spotlight Search">
+        <button class="menu-icon" id="menu-search-toggle" title="Spotlight Search" aria-label="Spotlight Search">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.4)); opacity: 0.95;">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
         </button>
         <!-- Control Center Button -->
-        <button class="menu-icon" id="control-center-toggle" title="Control Center">
+        <button class="menu-icon" id="control-center-toggle" title="Control Center" aria-label="Control Center">
           <img src="assets/imgs/control-centre.svg" alt="Control Center" class="menu-icon-img">
         </button>
         <!-- Siri / Copilot Assistant Button -->
-        <button class="menu-icon" id="menu-siri-toggle" title="MacReady AI Assistant">
+        <button class="menu-icon" id="menu-siri-toggle" title="MacReady AI Assistant" aria-label="Siri">
           <svg class="menu-siri-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));">
             <circle cx="12" cy="12" r="9" stroke="#ffffff" stroke-width="1.8" fill="rgba(255, 255, 255, 0.1)"></circle>
             <path d="M8 12c.5-1.5 1.5-2.5 4-2.5s3.5 1 4 2.5-1.5 2.5-4 2.5-3.5-1-4-2.5z" stroke="#ffffff" stroke-width="1.2" fill="none" opacity="0.85"></path>
@@ -1012,6 +1031,9 @@
 
       </div>
     </main>
+
+    <!-- Mobile Control Center backdrop -->
+    <div id="widget-center-backdrop" class="hidden" aria-hidden="true"></div>
 
     <!-- macOS Right Side Notification / Widget Center Drawer -->
     <aside id="widget-center">
@@ -2832,6 +2854,74 @@
       </div>
     </div>
 
+    <!-- Mobile / tablet navigation -->
+    <div id="mobile-sidebar-backdrop" class="mobile-sidebar-backdrop hidden" aria-hidden="true"></div>
+    <div id="mobile-more-backdrop" class="mobile-more-backdrop hidden" aria-hidden="true"></div>
+    <div id="mobile-more-sheet" class="mobile-more-sheet hidden" role="dialog" aria-label="More apps">
+      <div class="mobile-more-sheet-handle" aria-hidden="true"></div>
+      <h3 class="mobile-more-sheet-title">More</h3>
+      <div class="mobile-more-grid">
+        <button type="button" class="mobile-more-item" data-mobile-more="crossover">
+          <img src="assets/imgs/perf/dock/crossover.webp" alt="" width="52" height="52">
+          <span>CrossOver</span>
+        </button>
+        <button type="button" class="mobile-more-item" data-mobile-more="app-store">
+          <img src="assets/imgs/perf/dock/app-store.webp" alt="" width="52" height="52">
+          <span>App Store</span>
+        </button>
+        <button type="button" class="mobile-more-item" data-mobile-more="macos">
+          <img src="assets/imgs/perf/dock/macos.webp" alt="" width="52" height="52">
+          <span>macOS</span>
+        </button>
+        <button type="button" class="mobile-more-item" data-mobile-more="pwa-manager">
+          <img src="assets/imgs/perf/apps/pwa-manager.webp" alt="" width="52" height="52">
+          <span>PWA Manager</span>
+        </button>
+        <button type="button" class="mobile-more-item" data-mobile-more="settings">
+          <img src="assets/imgs/perf/dock/settings.webp" alt="" width="52" height="52">
+          <span>Settings</span>
+        </button>
+      </div>
+    </div>
+    <nav id="mobile-tab-bar" class="mobile-dock-bar hidden" aria-label="Dock">
+      <div id="mobile-dock" class="mobile-dock-shelf liquid-glass">
+        <div class="mobile-dock-item-wrapper active" data-mobile-tab="news" aria-current="page">
+          <div class="dock-tooltip">News</div>
+          <button type="button" class="mobile-dock-item" aria-label="News">
+            <img src="assets/imgs/perf/dock/news.webp" alt="" class="dock-icon" width="48" height="48">
+          </button>
+          <span class="dock-indicator active-dot"></span>
+        </div>
+        <div class="mobile-dock-item-wrapper" data-mobile-tab="games">
+          <div class="dock-tooltip">Games</div>
+          <button type="button" class="mobile-dock-item" aria-label="Games">
+            <img src="assets/imgs/perf/dock/steam.webp" alt="" class="dock-icon" width="48" height="48">
+          </button>
+          <span class="dock-indicator"></span>
+        </div>
+        <div class="mobile-dock-item-wrapper" data-mobile-tab="applications">
+          <div class="dock-tooltip">Applications</div>
+          <button type="button" class="mobile-dock-item" aria-label="Applications">
+            <img src="assets/imgs/perf/dock/applications.webp" alt="" class="dock-icon" width="48" height="48">
+          </button>
+          <span class="dock-indicator"></span>
+        </div>
+        <div class="mobile-dock-item-wrapper" data-mobile-tab="more">
+          <div class="dock-tooltip">More</div>
+          <button type="button" class="mobile-dock-item" aria-label="More">
+            <span class="mobile-dock-system-icon mobile-dock-system-icon-more" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
+                <circle cx="6" cy="12" r="1.8"></circle>
+                <circle cx="12" cy="12" r="1.8"></circle>
+                <circle cx="18" cy="12" r="1.8"></circle>
+              </svg>
+            </span>
+          </button>
+          <span class="dock-indicator"></span>
+        </div>
+      </div>
+    </nav>
+
     <!-- macOS System Dock (Magnified hover effects) -->
     <div id="dock-hotspot"></div>
     <nav id="dock-container">
@@ -3050,12 +3140,12 @@
 
   <!-- Client-side logic loader -->
   <script type="module" src="lib/macready-bootstrap.mjs"></script>
-  <script defer src="desktop-chrome.js?v=desktop-chrome-1"></script>
-  <script defer src="news-reader.js?v=refactor-1"></script>
-  <script defer src="window-manager.js?v=window-module-2"></script>
-  <script defer src="siri-assistant.js?v=siri-module-1"></script>
-  <script defer src="/data/games.generated.js?v=games-data-2"></script>
-  <script defer src="app.js?v=browser-games-23"></script>
+  <script defer src="desktop-chrome.js?v=lighthouse-perf-2"></script>
+  <script defer src="mobile-chrome.js?v=lighthouse-perf-2"></script>
+  <script defer src="news-reader.js?v=lighthouse-perf-2"></script>
+  <script defer src="window-manager.js?v=lighthouse-perf-2"></script>
+  <script defer src="siri-assistant.js?v=lighthouse-perf-2"></script>
+  <script defer src="app.js?v=lighthouse-perf-2"></script>
 
   <!-- SVG Color Vision Deficiency Matrices -->
   <svg style="position: absolute; height: 0; width: 0; pointer-events: none;" aria-hidden="true">

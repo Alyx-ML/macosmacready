@@ -1,11 +1,11 @@
 import { defineConfig } from "vite";
+import { transformSync } from "esbuild";
 import fs from "fs";
 import path from "path";
 import { lookupCrossoverCompatibility } from "./functions/api/crossover-compatibility.js";
 import { isAllowedFeedUrl } from "./functions/api/rss-proxy.js";
-
 const PROD_BASE = "/macosmacready/";
-const STYLESHEET_VERSION = "asset-paths-3";
+const STYLESHEET_VERSION = "lighthouse-perf-2";
 const ROOT_STYLESHEET = `<link rel="stylesheet" href="styles.css?v=${STYLESHEET_VERSION}">`;
 const BUNDLED_STYLESHEET_RE =
   /<link rel="stylesheet"[^>]*href="[^"]*\/assets\/index-[^"]+\.css"[^>]*>/;
@@ -29,7 +29,72 @@ function patchProductionIndexHtml(html) {
     /<link rel="stylesheet" href="styles\.css\?[^"]+">/,
     `<link rel="stylesheet" href="${PROD_BASE}styles.css?v=${STYLESHEET_VERSION}">`
   );
+  patched = patched.replace(
+    /\s*<script defer src="[^"]*data\/games\.generated\.js[^"]*"><\/script>/,
+    ""
+  );
   return patched;
+}
+
+function minifyJavaScript(source, sourcePath) {
+  const result = transformSync(source, {
+    loader: "js",
+    minify: true,
+    sourcemap: "external",
+    sourcesContent: false,
+    legalComments: "none",
+    sourcefile: sourcePath
+  });
+  return result;
+}
+
+function minifyStylesheet(css) {
+  const result = transformSync(css, {
+    loader: "css",
+    minify: true
+  });
+  return result.code;
+}
+
+function writeMinifiedAsset(destinationPath, code, map) {
+  let output = code;
+  if (map) {
+    const mapFile = `${path.basename(destinationPath)}.map`;
+    output += `\n//# sourceMappingURL=${mapFile}\n`;
+    fs.writeFileSync(`${destinationPath}.map`, map);
+  }
+  fs.writeFileSync(destinationPath, output);
+}
+
+const DEV_MINIFY_ASSETS = [
+  "styles.css",
+  "desktop-chrome.js",
+  "mobile-chrome.js",
+  "news-reader.js",
+  "window-manager.js",
+  "siri-assistant.js",
+  "app.js"
+];
+const devMinifiedCache = new Map();
+
+function getDevMinifiedAsset(fileName) {
+  if (devMinifiedCache.has(fileName)) {
+    return devMinifiedCache.get(fileName);
+  }
+
+  const sourcePath = path.resolve(process.cwd(), fileName);
+  if (!fs.existsSync(sourcePath)) return null;
+
+  const source = fs.readFileSync(sourcePath, "utf-8");
+  const payload = fileName.endsWith(".css")
+    ? { code: minifyStylesheet(source), contentType: "text/css; charset=utf-8" }
+    : {
+        code: minifyJavaScript(source, sourcePath).code,
+        contentType: "text/javascript; charset=utf-8"
+      };
+
+  devMinifiedCache.set(fileName, payload);
+  return payload;
 }
 
 export default defineConfig(({ command }) => ({
@@ -55,6 +120,7 @@ export default defineConfig(({ command }) => ({
         const files = [
           "styles.css",
           "desktop-chrome.js",
+          "mobile-chrome.js",
           "news-reader.js",
           "window-manager.js",
           "siri-assistant.js",
@@ -68,11 +134,21 @@ export default defineConfig(({ command }) => ({
 
           if (file === "styles.css") {
             const css = rewriteProductionCssAssetUrls(fs.readFileSync(sourcePath, "utf-8"));
-            fs.writeFileSync(destinationPath, css);
+            writeMinifiedAsset(destinationPath, minifyStylesheet(css));
           } else {
-            fs.copyFileSync(sourcePath, destinationPath);
+            const source = fs.readFileSync(sourcePath, "utf-8");
+            const minified = minifyJavaScript(source, sourcePath);
+            writeMinifiedAsset(destinationPath, minified.code, minified.map);
           }
           console.log(`Successfully copied ${file} to dist/${file}`);
+        }
+
+        const generatedGamesPath = path.resolve(distDir, "data/games.generated.js");
+        if (fs.existsSync(generatedGamesPath)) {
+          const source = fs.readFileSync(generatedGamesPath, "utf-8");
+          const minified = minifyJavaScript(source, generatedGamesPath);
+          writeMinifiedAsset(generatedGamesPath, minified.code, minified.map);
+          console.log("Successfully minified dist/data/games.generated.js");
         }
 
         const indexPath = path.resolve(distDir, "index.html");
@@ -85,6 +161,26 @@ export default defineConfig(({ command }) => ({
     {
       name: "macready-rss-proxy",
       configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          const requestUrl = new URL(req.url || "/", "http://localhost");
+          const fileName = path.basename(requestUrl.pathname);
+          if (!DEV_MINIFY_ASSETS.includes(fileName)) {
+            next();
+            return;
+          }
+
+          const payload = getDevMinifiedAsset(fileName);
+          if (!payload) {
+            next();
+            return;
+          }
+
+          res.statusCode = 200;
+          res.setHeader("content-type", payload.contentType);
+          res.setHeader("cache-control", "no-store");
+          res.end(payload.code);
+        });
+
         // RSS feed proxy
         server.middlewares.use("/rss", async (req, res) => {
           const requestUrl = new URL(req.url || "", "http://localhost");

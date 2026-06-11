@@ -197,7 +197,27 @@ function stopSiriWaveAnimation() {
 function positionSiriHud() {
   const siriHud = document.getElementById("siri-hud");
   const siriToggle = document.getElementById("menu-siri-toggle");
+  const menuBar = document.getElementById("menu-bar");
   if (!siriHud || !siriToggle) return;
+
+  const isMobile = window.matchMedia("(max-width: 1024px)").matches;
+  if (isMobile) {
+    const sidePad = 10;
+    const menuBottom = menuBar ? menuBar.getBoundingClientRect().bottom : 38;
+    const dockBar = document.getElementById("mobile-tab-bar");
+    const dockTop = dockBar && !dockBar.classList.contains("hidden")
+      ? dockBar.getBoundingClientRect().top
+      : window.innerHeight;
+    const maxHeight = Math.max(220, dockTop - menuBottom - 20);
+    const panelWidth = window.innerWidth - sidePad * 2;
+
+    siriHud.style.width = `${panelWidth}px`;
+    siriHud.style.maxHeight = `${maxHeight}px`;
+    siriHud.style.top = `${menuBottom + 8}px`;
+    siriHud.style.setProperty("left", `${sidePad}px`, "important");
+    siriHud.style.setProperty("right", "auto", "important");
+    return;
+  }
 
   const rect = siriToggle.getBoundingClientRect();
   const panelWidth = Math.min(320, window.innerWidth - 24);
@@ -208,6 +228,7 @@ function positionSiriHud() {
   const top = Math.max(34, rect.bottom + 8);
 
   siriHud.style.width = `${panelWidth}px`;
+  siriHud.style.maxHeight = "";
   siriHud.style.top = `${top}px`;
   siriHud.style.setProperty("left", `${left}px`, "important");
   siriHud.style.setProperty("right", "auto", "important");

@@ -184,6 +184,31 @@ async function fetchLiveNewsArticles() {
   return normalizeLoadedArticles(fetched);
 }
 
+function preloadLcpArticleCover(articleList) {
+  if (!Array.isArray(articleList) || articleList.length === 0) return;
+
+  const article = articleList[0];
+  if (!article?.cover || article.cover.startsWith("preset-")) return;
+
+  const coverUrl = typeof optimizeArticleImageUrl === "function"
+    ? optimizeArticleImageUrl(article.cover, true)
+    : article.cover;
+  if (!coverUrl) return;
+
+  let link = document.getElementById("macready-lcp-preload");
+  if (!link) {
+    link = document.createElement("link");
+    link.id = "macready-lcp-preload";
+    link.rel = "preload";
+    link.as = "image";
+    link.setAttribute("fetchpriority", "high");
+    document.head.appendChild(link);
+  }
+  if (link.getAttribute("href") !== coverUrl) {
+    link.setAttribute("href", coverUrl);
+  }
+}
+
 async function loadNewsFromRSS() {
   articles = [];
   renderFeed();
@@ -216,6 +241,7 @@ async function loadNewsFromRSS() {
         if (liveArticles.length > 0) {
           articles = liveArticles;
           await hydrateSourceArticleImages(articles);
+          preloadLcpArticleCover(articles);
           mergeCustomArticlesIntoFeed(customArticles);
           updateCounts();
           renderFeed();
@@ -227,6 +253,7 @@ async function loadNewsFromRSS() {
     }
 
     articles = normalizeLoadedArticles(generatedArticles);
+    preloadLcpArticleCover(articles);
     mergeCustomArticlesIntoFeed(customArticles);
   } catch (error) {
     console.error("Generated news data failed to load", error);
@@ -320,7 +347,11 @@ function renderFeed() {
     const coverUrl = optimizeArticleImageUrl(article.cover, isFeatured);
     const imagePriority = isFeatured ? `fetchpriority="high"` : `loading="lazy"`;
     const imageSource = index >= INITIAL_VISIBLE_ARTICLE_COUNT ? `data-src="${coverUrl}"` : `src="${coverUrl}"`;
-    const coverHtml = `<div class="card-cover"><img ${imageSource} alt="${escapeHTML(article.title)}" ${imagePriority} decoding="async" onerror="this.closest('.news-card').remove();"></div>`;
+    const imageSizes = isFeatured
+      ? `sizes="(max-width: 768px) 100vw, 66vw"`
+      : `sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"`;
+    const imageDims = isFeatured ? `width="900" height="506"` : `width="600" height="338"`;
+    const coverHtml = `<div class="card-cover"><img ${imageSource} alt="${escapeHTML(article.title)}" ${imagePriority} ${imageSizes} ${imageDims} decoding="async" onerror="this.closest('.news-card').remove();"></div>`;
 
     const safeTitle = escapeHTML(article.title);
     const safeSubtitle = escapeHTML(article.subtitle);
@@ -340,7 +371,7 @@ function renderFeed() {
             <span class="card-date">${safeDate}</span>
           </div>
           <a href="${safeSourceUrl}" target="_blank" rel="noopener" class="btn-read-more-glass" onclick="event.stopPropagation()">
-            <span>Read More</span>
+            <span>Read More<span class="sr-only">: ${safeTitle}</span></span>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.75; vertical-align: middle;"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
           </a>
         </div>
@@ -650,7 +681,13 @@ async function openArticle(id) {
   const originalLink = document.getElementById("reader-open-original");
   if (originalLink) originalLink.href = article.sourceUrl;
   const heroReadMore = document.getElementById("reader-hero-read-more");
-  if (heroReadMore) heroReadMore.href = article.sourceUrl;
+  if (heroReadMore) {
+    heroReadMore.href = article.sourceUrl;
+    heroReadMore.innerHTML = `
+      <span>Read Original Article<span class="sr-only">: ${escapeHTML(article.title)}</span></span>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.75; vertical-align: middle;"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+    `;
+  }
 
   // Reset font class
   const richtext = document.getElementById("reader-text");
