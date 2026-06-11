@@ -4,9 +4,27 @@ import path from "path";
 import { lookupCrossoverCompatibility } from "./functions/api/crossover-compatibility.js";
 import { isAllowedFeedUrl } from "./functions/api/rss-proxy.js";
 
+const ROOT_STYLESHEET = '<link rel="stylesheet" href="styles.css?v=asset-paths-2">';
+const BUNDLED_STYLESHEET_RE =
+  /<link rel="stylesheet"[^>]*href="[^"]*\/assets\/index-[^"]+\.css"[^>]*>/;
+
+function useRootStylesheet(html) {
+  if (!BUNDLED_STYLESHEET_RE.test(html)) return html;
+  return html.replace(BUNDLED_STYLESHEET_RE, ROOT_STYLESHEET);
+}
+
 export default defineConfig(({ command }) => ({
   base: command === "serve" ? "/" : "/macosmacready/",
   plugins: [
+    {
+      name: "macready-root-stylesheet",
+      transformIndexHtml: {
+        order: "post",
+        handler(html) {
+          return useRootStylesheet(html);
+        }
+      }
+    },
     {
       name: "macready-copy-public-scripts",
       closeBundle() {
@@ -31,6 +49,12 @@ export default defineConfig(({ command }) => ({
             fs.copyFileSync(sourcePath, destinationPath);
             console.log(`Successfully copied ${file} to dist/${file}`);
           }
+        }
+
+        const indexPath = path.resolve(distDir, "index.html");
+        if (fs.existsSync(indexPath)) {
+          const html = useRootStylesheet(fs.readFileSync(indexPath, "utf-8"));
+          fs.writeFileSync(indexPath, html);
         }
       }
     },
