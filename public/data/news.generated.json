@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-11T03:41:22.334674044+00:00",
+  "generatedAt": "2026-07-11T08:15:40.368499360+00:00",
   "sources": [
     {
       "name": "9to5Mac",
@@ -145,21 +145,21 @@
   ],
   "articles": [
     {
-      "id": "daring-fireball-1783735849000-3",
-      "title": "Mac OS 9’s Finder Had a ‘View as Buttons’ Mode",
-      "subtitle": "Cryan.com: The “View as Buttons” option was a distinctive feature of the Macintosh OS 9 Finder. It allowed users to view the contents of a folder as clickable buttons, each representing a file or application.",
+      "id": "the-eclectic-light-company-1783756800000-0",
+      "title": "Saturday Mac riddles 368",
+      "subtitle": "Here are this weekend’s Mac riddles to entertain you through family time, shopping and recreation. 1: Its actions speak louder in workflows until replaced by shortcuts. 2: Replacing a fictional detective, its indexes never really made it to iPhones.",
       "category": "technology",
-      "author": "Daring Fireball",
-      "avatar": "DF",
+      "author": "The Eclectic Light Company",
+      "avatar": "TE",
       "date": "Jul 11, 2026",
-      "timestamp": 1783735849000,
-      "cover": "https://www.cryan.com/daily/2024/macOS9About.jpg",
-      "sourceName": "Daring Fireball",
-      "sourceUrl": "https://www.cryan.com/blog/20240502.jsp",
+      "timestamp": 1783756800000,
+      "cover": "https://2.gravatar.com/avatar/87cc8acbb0b96b7d3b699e69cb1b0ce2bfa22c19f3737ddc73a81783fc2af50c?s=96&d=identicon&r=G",
+      "sourceName": "The Eclectic Light Company",
+      "sourceUrl": "https://eclecticlight.co/2026/07/11/saturday-mac-riddles-368/",
       "bookmarked": false,
       "queued": false,
       "custom": false,
-      "content": "<p>Cryan.com:</p><p>The “View as Buttons” option was a distinctive feature of the Macintosh OS 9 Finder. It allowed users to view the contents of a folder as clickable buttons, each representing a file or application. This view was particularly useful for quickly accessing frequently used programs and documents.</p><p>I totally forgot this view existed, despite using Mac OS 9 for many years, because I never used it myself. This didn’t just turn apps into buttons with tiled square backgrounds — it turned every item in the file system into a button. I was reminded of it by a reader who used it in theater class in school to turn a folder full of sound files into, effectively, a soundboard app. Cool.</p><p>So many of the best UI ideas are little things like this. Sure, most Mac users didn’t want or need this view. But for those who did, they could do something cool with it.</p>"
+      "content": "<p>Here are this weekend’s Mac riddles to entertain you through family time, shopping and recreation.</p><p>1: Its actions speak louder in workflows until replaced by shortcuts.</p><p>2: Replacing a fictional detective, its indexes never really made it to iPhones.</p><p>3: This instrument panel came in 14 widgets and vanished in 10.15.</p><p>To help you cross-check your solutions, or confuse you further, there’s a common factor between them.</p><p>I’ll post my solutions first thing on Monday morning.</p><p>Please don’t post your solutions as comments here: it spoils it for others.</p><p>Share on X (Opens in new window) X</p><p>Share on Facebook (Opens in new window) Facebook</p><p>Share on Reddit (Opens in new window) Reddit</p><p>Share on Pinterest (Opens in new window) Pinterest</p><p>Share on Threads (Opens in new window) Threads</p><p>Share on Mastodon (Opens in new window) Mastodon</p><p>Share on Bluesky (Opens in new window) Bluesky</p><p>Email a link to a friend (Opens in new window) Email</p><p>Print (Opens in new window) Print</p><h2>Related</h2><h2>i There are no comments</h2>"
     },
     {
       "id": "macrumors-1783692604000-6",
@@ -247,21 +247,21 @@
       "content": "<p>Call of Duty</p><p>Call of Duty: Black Ops 2</p><p>The new PlayStation ports have preserved a controversial feature of the originals.</p><p>When you purchase through links on our site, we may earn an affiliate commission. Here’s how it works.</p><p>Copy link</p><p>Facebook</p><p>X</p><p>Whatsapp</p><p>Reddit</p><p>Pinterest</p><p>Flipboard</p><p>Email</p><p>Amongst all the news of brutal layoffs, studio divestments, and ironic task force appointments at Microsoft this week, over in the Call of Duty corner of the megacorp, something kinda cool happened. Activision released updated ports of Call of Duty: Black Ops (2010) and Black Ops 2 (2012).</p><p>They come with caveats, of course: At $40 a pop, the Call of Duty tax is firmly affixed to these elderly shooters. They're also PlayStation only, sadly, so the millions of fans who originally played them on PC are cut off from the reinvigorated scene. But they are nearly complete updates of those original games, now upscaled to 1080p, with few exceptions. Players were especially surprised to learn that even the emblem editor—a beloved and somewhat controversial feature of Treyarch's early games—made the cut.</p><p>Because, well, people are making swastika emblems with it. And depictions of 9/11. And Charlie Kirk's assassination. And a KKK member. And that's just all that fit into this tweet from influencer JakeSucky.</p><p>As you can see, the emblem editor is surprisingly powerful—its stock of primitive shapes, symbols, colors, and layers let dedicated thumbstickers depict just about anything. Most often, custom emblems ended up looking like the trash bin of an early South Park animator, but it was a regular occurrence to glance at a profile and be treated to a remarkably convincing Mona Lisa, cartoon character, or yes, something naughty.</p><p>Black Ops 2 emblem editor going just about as expected pic.twitter.com/Hss1aO8SGh July 10, 2026</p><p>I'm also quite surprised the feature made the cut. Even with player moderation, there's no policing photoshop, so a tool that allows for high expression assumes that sometimes your killer will flash you with cartoon racism. There are normal, cool, creative emblems being made as well, but in keeping with the Call of Duty community, terrible behavior is more the norm.</p>"
     },
     {
-      "id": "iclarified-1783722038000-0",
-      "title": "Apple Sues OpenAI for Stealing Hardware Trade Secrets",
-      "subtitle": "Apple has filed a major lawsuit against OpenAI and its hardware chief, accusing the startup of orchestrating a coordinated campaign to steal trade secrets related to unreleased devices.",
+      "id": "the-eclectic-light-company-1783753200000-1",
+      "title": "Explainer: Language and locale",
+      "subtitle": "How many sections in System Settings do you need to set your Mac's primary language? If you use language-specific Accessibility features, where are they? And where to find Apple's list of supported languages for the many features in macOS?",
       "category": "technology",
-      "author": "iClarified",
-      "avatar": "I",
-      "date": "Jul 10, 2026",
-      "timestamp": 1783722038000,
-      "cover": "https://www.iclarified.com/images/news/101438/101438/101438-1280.jpg",
-      "sourceName": "iClarified",
-      "sourceUrl": "https://www.iClarified.com/101438/apple-sues-openai-for-stealing-hardware-trade-secrets",
+      "author": "The Eclectic Light Company",
+      "avatar": "TE",
+      "date": "Jul 11, 2026",
+      "timestamp": 1783753200000,
+      "cover": "https://2.gravatar.com/avatar/87cc8acbb0b96b7d3b699e69cb1b0ce2bfa22c19f3737ddc73a81783fc2af50c?s=96&d=identicon&r=G",
+      "sourceName": "The Eclectic Light Company",
+      "sourceUrl": "https://eclecticlight.co/2026/07/11/explainer-language-and-locale/",
       "bookmarked": false,
       "queued": false,
       "custom": false,
-      "content": ""
+      "content": "<p>In theory, there’s one central part of macOS that should handle all language and locale settings, in Foundation’s Locale, which even determines sorting order, currency and the characters used for quotations. In practice this is more complicated, and it can be easy to end up inadvertently setting the wrong keyboard when you need to enter your password, or mysteriously losing access to AI features. This article explains what you can set, where, and what to avoid.</p><p>This is the central group of settings that become your system’s defaults for most of the more specific settings elsewhere. Check carefully through these, because an error could pose more opaque problems. There some strangely prescient items here, for example if you’re in Greenland, you can set that through either the Americas or Europe regional listings.</p><p>Note the list of Preferred Languages here doesn’t have to be the same as the language-specific keyboards, although for those languages with more complex input methods, you may find matching them helpful.</p><p>This also gives you the option to set custom languages and locales for individual apps, which can help with some apps that don’t work well with specific localisations. macOS should run an app with its explicit localisation, use the current primary language, or default to English, in that order of precedence.</p><p>If you want to use AI, you must set the same language here as your current Primary Language in Language &amp; Region. Equally, if you change either you must remember to change the other or you may find that AI simply stops working.</p><p>Early in each release cycle, limits on the language availability of AI features may require you to compromise here by selecting a language you wouldn’t normally choose, to ensure fullest support for newer AI features. Again, if you do that you’ll also need to match that setting in Language &amp; Region. This can be a particular problem for beta-testers, who are trying to use what could be patchy and incomplete at that stage.</p><p>For those like me who don’t want to end up talking to your Mac, this also lets you effectively disable that by setting Listen for to Off, as I have done here. You then get to type to Siri instead.</p><p>Once you’ve set your primary language and synced that for AI and Siri, the next most important step is to ensure you have appropriate keyboard support.</p><p>There’s one significant catch here: don’t overdo the list of Input Sources if you allow the Globe key to change them. It can be easy to switch keyboard without being aware of it. If that changes the layout significantly, the next time you try to enter any password it’s likely to fail, leaving you wondering why, until you look up at the setting in the menu bar.</p><p>In the worst case, this can lead to failed attempts to enter your password when logging in, which could quickly end up in locking you out of your Mac. Thankfully Apple now provides access to a range of keyboard layouts from the menu bar for the login window, and again in Recovery mode.</p><p>Ensure the list of Input Sources is limited to those keyboard layouts you really need, and consider using the Globe key for something more innocuous like Show Emoji &amp; Symbols instead.</p><p>Click on the Edit button for Input Sources and select All Input Sources at the top left. This is where you set the global spelling dictionary. If you’re using one regional English and keep getting incorrect spellings suggested (color v colour), you can change that here. For those who make sufficient use of more than one language, Automatic by Language can work very well.</p><p>Other useful controls here are those for smart quotes, automatic capitalisation (upper case), and inline predictive text.</p><p>Of course, Macs using Location Services that set their time and date automatically don’t need their time zones set manually. If your Mac doesn’t do that, or in a macOS VM where Location Services isn’t supported, you’ll need to set the Time zone manually using the closest city, in Date &amp; Time settings.</p><p>If you use any of the language-specific features in Accessibility, you’re now only half way through. Among those you should check are:</p><p>Live Captions,</p><p>Voice Control,</p><p>Read &amp; Speak,</p>"
     },
     {
       "id": "9to5toys-mac-deals-1783686308000-0",
@@ -349,21 +349,21 @@
       "content": "<p>Matthew Ball was hired to help fix Xbox. Will gamers like what he prescribes?</p><p>When you purchase through links on our site, we may earn an affiliate commission. Here’s how it works.</p><p>Copy link</p><p>Facebook</p><p>X</p><p>Whatsapp</p><p>Reddit</p><p>Pinterest</p><p>Flipboard</p><p>Email</p><p>A star in the games business Twitter circuit, investor and analyst Matthew Ball has made waves in the industry over recent years with his \"State of Video Gaming\" slideshows, which in some corners have become doctrinal explanations for gaming's 2020s woes.</p><p>Now Ball has the chance to put his analysis directly to work at one of the biggest gaming companies on the planet: Xbox CEO Asha Sharma brought him on as chief strategy officer not long before initiating her \"Xbox reset, \" which will result in 3,200 layoffs and see multiple studios cut loose.</p><p>Speaking to The Game Business after he was hired (before this week's \"reset\"), Ball said that step one for Xbox is shoring up its console business. But new Gears of War games are unlikely to achieve Sharma's ambitious goal to entertain \"more than a billion people each day.\" So what's the plan?</p><p>The big-picture Xbox strategy hasn't been shared (and is surely still developing), but Ball's history suggests that Tim Sweeney and Roblox will be major inspirations.</p><p>Ball is a big believer in \"the metaverse.\" He authored a book on the idea, \"The Metaverse: Building The Spatial Internet,\" which was published in 2022 and revised in 2024, and co-founded the Roundhill Ball Metaverse ETF, an investment fund with stakes in Roblox, Microsoft, Nvidia, cryptocurrency exchange Coinbase, and a variety of major game publishers and tech firms.</p><p>Xbox's new chief strategy officer is still a big believer in in-game ads</p><p>'Our presence on PC isn't strong enough,' Xbox bosses admit</p><p>Xbox's latest tactics display 'a basic misunderstanding of how the interactive entertainment world moves', says former PlayStation exec</p>"
     },
     {
-      "id": "iclarified-1783714941000-1",
-      "title": "Apple Watch Captures 90% of Edge AI Smartwatch Shipments",
-      "subtitle": "Apple accounted for roughly 90 percent of Edge AI-capable smartwatch shipments in the first quarter of 2026, according to Counterpoint Research.",
+      "id": "daring-fireball-1783735849000-5",
+      "title": "Mac OS 9’s Finder Had a ‘View as Buttons’ Mode",
+      "subtitle": "Cryan.com: The “View as Buttons” option was a distinctive feature of the Macintosh OS 9 Finder. It allowed users to view the contents of a folder as clickable buttons, each representing a file or application.",
       "category": "technology",
-      "author": "iClarified",
-      "avatar": "I",
-      "date": "Jul 10, 2026",
-      "timestamp": 1783714941000,
-      "cover": "https://www.iclarified.com/images/news/101435/101435/101435-1280.jpg",
-      "sourceName": "iClarified",
-      "sourceUrl": "https://www.iClarified.com/101435/apple-watch-captures-90-of-edge-ai-smartwatch-shipments",
+      "author": "Daring Fireball",
+      "avatar": "DF",
+      "date": "Jul 11, 2026",
+      "timestamp": 1783735849000,
+      "cover": "https://www.cryan.com/daily/2024/macOS9About.jpg",
+      "sourceName": "Daring Fireball",
+      "sourceUrl": "https://www.cryan.com/blog/20240502.jsp",
       "bookmarked": false,
       "queued": false,
       "custom": false,
-      "content": ""
+      "content": "<p>Cryan.com:</p><p>The “View as Buttons” option was a distinctive feature of the Macintosh OS 9 Finder. It allowed users to view the contents of a folder as clickable buttons, each representing a file or application. This view was particularly useful for quickly accessing frequently used programs and documents.</p><p>I totally forgot this view existed, despite using Mac OS 9 for many years, because I never used it myself. This didn’t just turn apps into buttons with tiled square backgrounds — it turned every item in the file system into a button. I was reminded of it by a reader who used it in theater class in school to turn a folder full of sound files into, effectively, a soundboard app. Cool.</p><p>So many of the best UI ideas are little things like this. Sure, most Mac users didn’t want or need this view. But for those who did, they could do something cool with it.</p>"
     },
     {
       "id": "six-colors-1783540103000-3",
@@ -434,24 +434,24 @@
       "content": "<p>Bad timing, or the worst timing?</p><p>When you purchase through links on our site, we may earn an affiliate commission. Here’s how it works.</p><p>Copy link</p><p>Facebook</p><p>X</p><p>Whatsapp</p><p>Reddit</p><p>Pinterest</p><p>Flipboard</p><p>Email</p><p>For the first time ever, seasonal content is here for The Elder Scrolls Online. Return of the Thieves Guild, its inaugural season, has launched for the long-running MMO, something you'd expect fans would be all abuzz for—if not for the fact that ZeniMax Online Studios has been gutted as part of the mass layoffs at Xbox this week.</p><p>Yeah, the timing on this one ain't great. The developer of the MMO, which has reportedly generated over $2 billion in its lifetime, has been hit especially hard. We learned this week that ZeniMax Online lost 213 employees this week, which when combined with more layoffs over the past 12 months, means the studio has lost more than half of the development team of TESO.</p><p>So, it's not surprising that this massive content drop has been met with little discussion of the season itself. Instead, players have mostly been sending well-wishes to the affected development team members—occasionally with a bit of ire for Microsoft.</p><p>\"Surprised there was anyone left to post this,\" one commenter said in response to the Steam announcement of the season's launch. \"So sorry for you guys. Hope you can keep the game going. Or better yet, find independence from MS.\"</p><p>\"Heartbroken for all the developers who were laid off,\" said another. \"Wishing the best for everyone. ♥️Hopefully this vicious cycle will end one day\"</p><p>Former Elder Scrolls Online designer laments the destruction of layoffs: 'There’s really no one left and no changing it now'</p><p>Elder Scrolls Online developer left reeling by Xbox layoffs—with teams gutted, senior talent gone, and roadmaps 'shifting' as a result</p><p>Microsoft filing shows total ZeniMax layoffs at 379, with over half coming from Elder Scrolls Online studio that's lost at least 60% of its staff in the past year</p>"
     },
     {
-      "id": "iclarified-1783711956000-2",
-      "title": "Apple Mac Shipments Defy Global PC Slump With 10% Growth in Q2 2026",
-      "subtitle": "Global PC shipments fell for the first time after nine consecutive quarters of growth, declining 4.9 percent year over year to 68.2 million units in the second quarter of 2026.",
+      "id": "iclarified-1783722038000-0",
+      "title": "Apple Sues OpenAI for Stealing Hardware Trade Secrets",
+      "subtitle": "Apple has filed a major lawsuit against OpenAI and its hardware chief, accusing the startup of orchestrating a coordinated campaign to steal trade secrets related to unreleased devices.",
       "category": "technology",
       "author": "iClarified",
       "avatar": "I",
       "date": "Jul 10, 2026",
-      "timestamp": 1783711956000,
-      "cover": "https://www.iclarified.com/images/news/101437/101437/101437-1280.jpg",
+      "timestamp": 1783722038000,
+      "cover": "https://www.iclarified.com/images/news/101438/101438/101438-1280.jpg",
       "sourceName": "iClarified",
-      "sourceUrl": "https://www.iClarified.com/101437/apple-mac-shipments-defy-global-pc-slump-with-10-growth-in-q2-2026",
+      "sourceUrl": "https://www.iClarified.com/101438/apple-sues-openai-for-stealing-hardware-trade-secrets",
       "bookmarked": false,
       "queued": false,
       "custom": false,
       "content": ""
     },
     {
-      "id": "macworld-1783685551000-5",
+      "id": "macworld-1783685551000-7",
       "title": "Should you buy the MacBook Air now or wait?",
       "subtitle": "Macworld As of July 2026, it’s an excellent time to buy a MacBook Air, although not as good as if you were buying before June 25 when Apple increased prices by $200/£200 for each model. Apple refreshed the lineup in March 2026 with the new M5 chip.",
       "category": "deals",
@@ -536,24 +536,24 @@
       "content": "<p>Assassin's Creed</p><p>Assassin's Creed Black Flag Resynced</p><p>The kids love Kenway.</p><p>When you purchase through links on our site, we may earn an affiliate commission. Here’s how it works.</p><p>Copy link</p><p>Facebook</p><p>X</p><p>Whatsapp</p><p>Reddit</p><p>Pinterest</p><p>Flipboard</p><p>Email</p><p>I gotta hand this one to the suits: I thought gamers might find a $60 price tag on a rehash of a 13-year-old Assassin's Creed game to be a bit much, and apparently I was wrong. Assassin's Creed Black Flag Resynced sold more than two million copies in just one day, and has handily surpassed Steam player counts of newer games in the series, including Assassin's Creed Shadows.</p><p>\"Dash my Buttons... Assassin's Creed Black Flag Resynced has already passed 2 million copies sold!\" Ubisoft wrote on X the day after the overhauled Black Flag launched. \"Whether you're sailing with us again, or stepping aboard the Jackdaw for the first time: THANK YOU from the bottom of ARR hearts.\"</p><p>It's notable here that Ubisoft refers specifically to two million copies sold, as opposed to the \" one million players \" it used to characterize the success of Assassin's Creed Shadows in its first day of release. As Joshua Wolens noted at the time, it left us uncertain as to how Shadows was really doing compared to Valhalla, although Ubisoft later said Shadows had put up the \" second-highest day one sales revenues in Assassin's Creed franchise history.\"</p><p>A more straightforward comparison can be found in the concurrent player numbers on Steam, where Black Flag Resynced stands head and shoulders above the rest.</p><p>Here too, some differences need to be accounted for: Ubisoft had a years-long no Steam dalliance so Valhalla didn't arrive on that storefront until a couple years after its debut on the Epic Games Store, and Shadows was weighed down by coordinated culture war nonsense over the presence of the Black samurai Yasuke. Shadows also costs $10 more than Black Flag Resynced.</p><p>Still, it's about as close to apples-to-apples as we're going to get, and the numbers make it clear: Nostalgia is a hell of a drug.</p>"
     },
     {
-      "id": "the-mac-observer-1783710932000-0",
-      "title": "EU Warns Meta Over Facebook and Instagram’s Addictive Design",
-      "subtitle": "Apple Captures 90% of Edge AI Smartwatch Market in Q1 2026 Report Netflix Wants to Buy Letterboxd? Here’s What the New Report Says ChatGPT Atlas Is Shutting Down, But Here Are Some Popular Alternatives SK Hynix Launches A Massive Nasdaq Debut To Reach US...",
+      "id": "iclarified-1783714941000-1",
+      "title": "Apple Watch Captures 90% of Edge AI Smartwatch Shipments",
+      "subtitle": "Apple accounted for roughly 90 percent of Edge AI-capable smartwatch shipments in the first quarter of 2026, according to Counterpoint Research.",
       "category": "technology",
-      "author": "The Mac Observer",
-      "avatar": "TM",
+      "author": "iClarified",
+      "avatar": "I",
       "date": "Jul 10, 2026",
-      "timestamp": 1783710932000,
-      "cover": "https://secure.gravatar.com/avatar/af3ad2a0616d2bd3395946401bda50170caf00bc2596f9edf94343be6b700ed6?s=96&d=wavatar&r=g",
-      "sourceName": "The Mac Observer",
-      "sourceUrl": "https://www.macobserver.com/news/eu-warns-meta-over-facebook-and-instagrams-addictive-design/",
+      "timestamp": 1783714941000,
+      "cover": "https://www.iclarified.com/images/news/101435/101435/101435-1280.jpg",
+      "sourceName": "iClarified",
+      "sourceUrl": "https://www.iClarified.com/101435/apple-watch-captures-90-of-edge-ai-smartwatch-shipments",
       "bookmarked": false,
       "queued": false,
       "custom": false,
-      "content": "<h2>Apple Captures 90% of Edge AI Smartwatch Market in Q1 2026 Report</h2><h2>Netflix Wants to Buy Letterboxd? Here’s What the New Report Says</h2><h2>ChatGPT Atlas Is Shutting Down, But Here Are Some Popular Alternatives</h2><h2>SK Hynix Launches A Massive Nasdaq Debut To Reach US Investors</h2><h2>Japanese Chipmaker Rapidus Plans Cheap 2nm Wafers To Rival TSMC</h2><p>Home » News » EU Warns Meta Over Facebook and Instagram’s Addictive Design</p><p>The European Commission has warned that Meta’s design choices on Facebook and Instagram may violate the European Union’s Digital Services Act after a preliminary investigation found that several core features encourage excessive use and fail to protect users, especially minors and vulnerable adults.</p><p>The findings focus on features such as infinite scroll, autoplay, push notifications, and highly personalized recommendation systems that keep users engaged for long periods without meaningful limits.</p><p>The European Commission said its investigation found that Meta did not properly assess how these design choices affect users’ physical and mental well-being. Officials also said the company failed to fully consider evidence showing how teenagers spend long hours on Instagram and Facebook at night, while formats such as Reels and Stories encourage compulsive use through continuous recommendations.</p><p>“These features fuel the user’s urge to keep scrolling and shift the brain into ‘autopilot mode,’ contributing to unhealthy habits and compulsive use. Moreover, Meta disregarded available information about the time minors spend on Instagram or Facebook at night and how the optimisation of its different formats, such as reels and stories, could lead to excessive or compulsive use of the services.”</p><h2>Commission wants design changes</h2><p>The Commission also questioned whether Meta’s current safety measures actually reduce screen time. According to the preliminary findings, users can easily dismiss time management reminders, while parental controls require significant technical knowledge and continued effort from parents to work effectively. Officials also said that links to mental health resources do not sufficiently reduce the risks created by the platforms’ overall design.</p><p>The Commission believes Meta should disable features such as autoplay and infinite scroll by default, introduce more effective screen time breaks, and adjust its recommendation systems so they focus less on maximizing engagement.</p><p>Meta disagreed with the preliminary findings and said they do not reflect the steps the company has already taken to protect teenagers across its platforms. The company now has the opportunity to review the investigation documents and respond before the Commission reaches a final decision. If the preliminary conclusions are confirmed, Meta could face fines of up to 6 percent of its global annual turnover under the Digital Services Act.</p><h2>Leave a Reply Cancel reply</h2><p>Your email address will not be published. Required fields are marked *</p><p>Name *</p><p>Email *</p>"
+      "content": ""
     },
     {
-      "id": "macworld-1783678514000-8",
+      "id": "macworld-1783678514000-10",
       "title": "Best MacBook Neo deals: Where to buy Apple’s cheapest MacBook",
       "subtitle": "Macworld Best MacBook Neo deals July 2026 These are the MacBook Neo recommendations we would confidently give to our own friends and family. They are based on the best prices right now at hundreds of resellers of Apple products.",
       "category": "deals",
@@ -638,17 +638,17 @@
       "content": "<p>radiator forever robert yang stick shift</p><p>Indie game dev Robert Yang has a novel approach to re-releasing remastered versions of his queer experimental games. First spotted by PC Gamer, Radiator Forever is a project Yang calls “gay as a service,” a cheeky (heh!</p><p>) twist on “games as a service” where instead of releasing the updated games with their own individual store pages, he’s bundled the titles together and made them free with the promise to periodically update the package with new content.</p><p>The problem, though, as he writes on his blog, is that with Steam’s inconsistent and under-explained crackdown on adult games on its platform, hardly anyone interested in the kind of art Yang makes will be able to find it.</p><p>“Unfortunately, Valve has tagged my game as ‘frequent nudity and sexual content’ and now hides it from most Steam users,” Yang wrote on his blog. “While I was careful to avoid explicit nudity, compliance-in-advance is never enough to appease a zealous censor.”</p><p>If it were up to Yang, he’d bypass Steam altogether. But he wrote that with the way itch. io has stopped hosting adult games on its platform due to pressure from payment processors that was driven largely by anti-porn advocates, “it’s time for me to go crawling back to Steam. ” It’s the number-one platform for PC games, with a reach several times larger than itch. io. But just like itch.</p><p>io, Steam is beholden to its payment processors like Stripe and Paypal. Eager to avoid a scenario in which payment processors might yank their services, Steam implements an overly broad content review process that hides Yang’s games from the majority of Steam’s users. “Steam content reviewers have decided the game’s general ‘nature’ was just too gay, regardless of my good faith efforts,” Yang wrote.</p><p>Yang argues it’s an arbitrary and hypocritical system, one that punishes indie games with something to say like while more popular games (i.e. the AAA money-makers) don’t get such scrutiny. “Valve loves it when Cyberpunk 2077 and Baldur’s Gate 3 throw customizable genitals at you in the first five minutes,” Yang wrote. “But of course I can’t, because I actually have something to say about genitals!”</p><h2>🕹️ Level up your inbox</h2><p>Don’t miss the latest reviews, news and tips. Sign up for our free newsletter.</p><h2>You May Also Like</h2><p>Culture News IRL Rotta The Hutt Is Ready To Be The Hottest Halloween Costume Of The Year Everyone, please stop calling me Jabba the Hutt, okay? I spent like $80 on this thing By Zack Zwiezen Published July 10, 2026</p><h2>Rotta The Hutt Is Ready To Be The Hottest Halloween Costume Of The Year</h2><p>Everyone, please stop calling me Jabba the Hutt, okay? I spent like $80 on this thing</p><p>Culture News Ubisoft Says Assassin’s Creed Black Flag Resynced Is The ‘Full, Complete Experience’ As Negative Steam Reviews Pile Up Over Microtransactions The publisher claims content is not locked behind the paid add-ons By Ethan Gach Published July 10, 2026</p><h2>Ubisoft Says Assassin’s Creed Black Flag Resynced Is The ‘Full, Complete Experience’ As Negative Steam Reviews Pile Up Over Microtransactions</h2><p>The publisher claims content is not locked behind the paid add-ons</p><p>Culture News IRL It’s Not Just You, Everyone Is Mad At Roku’s Horrible Update Stop fucking things up just to shove more ads and algorithm nonsense into my face By Zack Zwiezen Published July 10, 2026</p>"
     },
     {
-      "id": "iclarified-1783710902000-3",
-      "title": "EU Issues Preliminary Findings Against Meta, Urges It to Disable Infinite Scroll and Autoplay",
-      "subtitle": "The European Commission has preliminarily concluded that Meta's design choices for Instagram and Facebook breach the Digital Services Act by fostering addictive behavior.",
+      "id": "iclarified-1783711956000-2",
+      "title": "Apple Mac Shipments Defy Global PC Slump With 10% Growth in Q2 2026",
+      "subtitle": "Global PC shipments fell for the first time after nine consecutive quarters of growth, declining 4.9 percent year over year to 68.2 million units in the second quarter of 2026.",
       "category": "technology",
       "author": "iClarified",
       "avatar": "I",
       "date": "Jul 10, 2026",
-      "timestamp": 1783710902000,
-      "cover": "https://www.iclarified.com/images/news/101433/101433/101433-1280.jpg",
+      "timestamp": 1783711956000,
+      "cover": "https://www.iclarified.com/images/news/101437/101437/101437-1280.jpg",
       "sourceName": "iClarified",
-      "sourceUrl": "https://www.iClarified.com/101433/eu-issues-preliminary-findings-against-meta-urges-it-to-disable-infinite-scroll-and-autoplay",
+      "sourceUrl": "https://www.iClarified.com/101437/apple-mac-shipments-defy-global-pc-slump-with-10-growth-in-q2-2026",
       "bookmarked": false,
       "queued": false,
       "custom": false,
@@ -740,21 +740,21 @@
       "content": "<p>Assassin's Creed Black Flag: Resynced Microtransactions Steam Ubisoft</p><p>Assassin’s Creed Black Flag Resynced is getting great reviews from critics and has already sold 2 million copies. But not everyone is raving on Steam. Some negative player reviews have flooded in over the Ubisoft remake’s long list of microtransactions. The French publisher has responded by saying none of those paid DLCs are needed to enjoy the “full, complete experience.”</p><p>Black Flag Resynced currently sits at a rating of 76-percent positive on Steam after players started dinging it for how it’s monetized. While aggressively priced at $60 compared to the $70 price tag of most day-one blockbuster games, the Steam page also lists $84. 91 worth of day-one DLC that players can purchase.</p><p>This includes stuff like costumes for protagonist Edward Kenway and decorations for his pirate ship, but also things that directly affect gameplay, like a $10 map pack that unlocks secret locations in the world to spare players having to hunt for them.</p><p>“When a game dev creates a entire map, it makes sense to add collectible items so the players will actually explore everything, it’s also fun to slowly tick these items off the map to truly give the feeling that you conquered the game,” wrote Steam user LittleFire131.</p><p>“But making it a paid DLC to be able to see them and not force the player to constantly search up a guide is just so annoying and money hungry, it shouldn’t cost money to toggle some minimap icons that’ll save the player a few hours of aimless wandering… in a single player game. ”</p><p>Someone else was more succinct: “I mean, I bought it. Am I the stupid one for enabling this behavior?” Ubisoft has now taken the unusual step of responding to the negative feedback.</p><p>“We’ve seen your feedback since launch, and we’re reading all of it,” a representative for the publisher wrote below one of the negative reviews. “Thank you for caring this much about Black Flag Resynced. We want to be clear on one point: the standard edition is the full, complete experience. Every mission, every island, the full story and the complete world are all there, with nothing held back.</p><p>The additional packs are entirely optional extras for players who want them, never a requirement to enjoy or complete the game. ”</p><p>That’s in contrast to a game like Grand Theft Auto VI, which came under fire for locking certain items and locations behind a $100 Deluxe Edition. Unlike Rockstar Games’ upcoming blockbuster, Ubisoft points out that nothing in the world of Assassin’s Creed Black Flag Resynced is gated behind paid upgrades.</p><p>Black Flag Resynced ‘s microtransactions are tame compared to those in other recent open-world RPG entries in the franchise. Those have in the past included everything from purchasable gear that effects combat to XP boosters to cut down on how grindy the game can feel. While Ubisoft’s monetization model for single-player games has retreated somewhat, players overall have also become more inured to paid add-ons and cosmetics in games more generally.</p><p>That hasn’t stopped a heated debate from ensuing on Steam. There are currently 497 comments below Ubisoft’s response.</p><h2>🕹️ Level up your inbox</h2><p>Don’t miss the latest reviews, news and tips. Sign up for our free newsletter.</p><h2>You May Also Like</h2><p>Culture News Assassin’s Creed Black Flag Resynced Unit Sales Figures Are The First Ubisoft Has Released In Many Years Is that even allowed? By Rebekah Valentine Published July 10, 2026</p><h2>Assassin’s Creed Black Flag Resynced Unit Sales Figures Are The First Ubisoft Has Released In Many Years</h2><p>Is that even allowed?</p>"
     },
     {
-      "id": "the-mac-observer-1783710520000-1",
-      "title": "Apple Captures 90% of Edge AI Smartwatch Market in Q1 2026 Report",
-      "subtitle": "Netflix Wants to Buy Letterboxd? Here’s What the New Report Says ChatGPT Atlas Is Shutting Down, But Here Are Some Popular Alternatives SK Hynix Launches A Massive Nasdaq Debut To Reach US Investors Japanese Chipmaker Rapidus Plans Cheap 2nm Wafers To Rival...",
+      "id": "iclarified-1783710902000-3",
+      "title": "EU Issues Preliminary Findings Against Meta, Urges It to Disable Infinite Scroll and Autoplay",
+      "subtitle": "The European Commission has preliminarily concluded that Meta's design choices for Instagram and Facebook breach the Digital Services Act by fostering addictive behavior.",
       "category": "technology",
-      "author": "The Mac Observer",
-      "avatar": "TM",
+      "author": "iClarified",
+      "avatar": "I",
       "date": "Jul 10, 2026",
-      "timestamp": 1783710520000,
-      "cover": "https://secure.gravatar.com/avatar/af3ad2a0616d2bd3395946401bda50170caf00bc2596f9edf94343be6b700ed6?s=96&d=wavatar&r=g",
-      "sourceName": "The Mac Observer",
-      "sourceUrl": "https://www.macobserver.com/news/apple-captures-90-of-edge-ai-smartwatch-market-in-q1-2026-report/",
+      "timestamp": 1783710902000,
+      "cover": "https://www.iclarified.com/images/news/101433/101433/101433-1280.jpg",
+      "sourceName": "iClarified",
+      "sourceUrl": "https://www.iClarified.com/101433/eu-issues-preliminary-findings-against-meta-urges-it-to-disable-infinite-scroll-and-autoplay",
       "bookmarked": false,
       "queued": false,
       "custom": false,
-      "content": "<h2>Netflix Wants to Buy Letterboxd? Here’s What the New Report Says</h2><h2>ChatGPT Atlas Is Shutting Down, But Here Are Some Popular Alternatives</h2><h2>SK Hynix Launches A Massive Nasdaq Debut To Reach US Investors</h2><h2>Japanese Chipmaker Rapidus Plans Cheap 2nm Wafers To Rival TSMC</h2><h2>Most Americans Have Tried AI But Over Half Think It Is Overhyped</h2><p>Home » News » Apple Captures 90% of Edge AI Smartwatch Market in Q1 2026 Report</p><p>Apple accounted for nearly 90% of all Edge AI-capable smartwatch shipments during the first quarter of 2026, giving the company a commanding lead in the growing wearable AI market.</p><p>Counterpoint Research reported that Edge AI adoption across the wider smartwatch industry rose 70% year over year and reached 25% of total shipments during the quarter.</p><p>Edge AI allows a smartwatch to process artificial intelligence tasks directly on its own chip instead of sending information to a smartphone or cloud server. Apple Watch models use this technology for features such as fall detection, irregular heartbeat alerts, health tracking, and faster on-device responses.</p><h2>Apple’s Chip Strategy Gives It a Major Lead</h2><p>Apple started building its advantage in 2023 when it introduced the S9 chip with a four-core Neural Engine designed for on-device machine learning. Huawei followed with its Kirin W80 chip in 2025, while Qualcomm plans to enter the market with its Snapdragon Wear Elite platform.</p><p>Health and fitness remain the main uses for Edge AI smartwatches. Shipments of watches with blood pressure monitoring doubled year over year, while sleep apnea detection shipments tripled during the same period.</p><p>Counterpoint Research only counts a smartwatch as Edge AI-capable when it includes a neural engine or NPU and uses that hardware to process at least one health, safety, or interaction feature directly on the device.</p><h2>Leave a Reply Cancel reply</h2><p>Your email address will not be published. Required fields are marked *</p><p>Name *</p><p>Email *</p><p>Website</p>"
+      "content": ""
     },
     {
       "id": "9to5toys-mac-deals-1783625446000-1",
@@ -825,7 +825,7 @@
       "content": "<p>There’s been an unusually large drop in the price of AAPL stock so far this week, losing roughly $25 per share in the two days since the WWDC keynote.</p><p>While some are inevitably speculating that investors weren’t impressed by Apple’s AI announcements, there are other factors at play …</p><p>Yahoo Finance was one of those to attribute the slide to the WWDC announcements.</p><p>Apple Inc shares were down 4% on Tuesday afternoon after the company’s annual developer conference left some investors questioning the pace of its artificial intelligence rollout, even as analysts broadly viewed the event as a step forward […] Despite the reported improvements, analysts flagged meaningful limitations.</p><p>Siri AI will launch in beta later this year for supported devices set to English and will not be available initially in the European Union on iOS or iPadOS. The feature is also excluded from China due to regulatory hurdles. That leaves two markets which, together, account for roughly 35% of trailing 12-month iPhone shipments, according to Morgan Stanley.</p><p>Apple Inc shares were down 4% on Tuesday afternoon after the company’s annual developer conference left some investors questioning the pace of its artificial intelligence rollout, even as analysts broadly viewed the event as a step forward […]</p><p>Despite the reported improvements, analysts flagged meaningful limitations. Siri AI will launch in beta later this year for supported devices set to English and will not be available initially in the European Union on iOS or iPadOS. The feature is also excluded from China due to regulatory hurdles. That leaves two markets which, together, account for roughly 35% of trailing 12-month iPhone shipments, according to Morgan Stanley.</p><p>Other commenters, however, pointed to broader macroeconomic factors affecting a range of stocks, not just AAPL.</p><p>US stock futures declined on Wednesday after the US launched “self-defense strikes” against Iran in response to the downing of an American helicopter, escalating tensions in the region. Investors also awaited the release of US inflation data for fresh signals on the Federal Reserve’s policy outlook, after stronger-than-expected jobs figures last week reinforced expectations of an interest rate hike before the end of the year.</p><p>There are also suggestions that investors are selling some existing holdings in order to participate in the SpaceX IPO.</p>"
     },
     {
-      "id": "polygon-1783716710000-1",
+      "id": "polygon-1783716710000-5",
       "title": "GTA Online's Kortz Center Heist gets release date, first details",
       "subtitle": "Luckily, you won't need to verify your paintings with Redd Related The next big heist coming to Grand Theft Auto Online will turn players into art collectors — and art thieves, as Rockstar Games has detailed the online multiplayer game's forthcoming Kortz...",
       "category": "design",
@@ -944,7 +944,7 @@
       "content": "<p>Houdah Software has released Photos Workbench 1. 7 with language localizations and a smattering of improvements. The organization and management companion utility for Apple’s Photos adds French and German, enables you to re-arrange albums between Photos library folders via drag and drop, adds Sentry for crash reporting, and now requires macOS 12 Monterey or later (with full support for macOS 26 Tahoe). Version 1.</p><p>7. 1 followed to fix a bug that could cause update checking to hang. ($29 new, free update, 6. 5 MB, release notes, macOS 12+)</p><p>Every week you’ll get tech tips, in-depth reviews, and insightful news analysis for discerning Apple users. For over 36 years, we’ve published professional, member-supported tech journalism that makes you smarter.</p><p>Registration confirmation will be emailed to you.</p><p>This site is protected by reCAPTCHA. The Google Privacy Policy and Terms of Service apply.</p><h2>Comments About Photos Workbench 1.7.1</h2><h2>Start the discussion in the TidBITS Discourse forum</h2>"
     },
     {
-      "id": "macworld-1783613680000-13",
+      "id": "macworld-1783613680000-15",
       "title": "MacBook Air deals: Compare latest offers and lowest prices online",
       "subtitle": "Macworld The best MacBook Air deals of July 2026 Best U.S. deals $150 off MacBook Air, 13-inch, M5, 1TB at Amazon $150 off MacBook Air, 15-inch, M5, 1TB at Amazon Best U.K.",
       "category": "deals",
@@ -1046,7 +1046,7 @@
       "content": "<p>Houdah Software has updated its HoudahGeo geotagging app to version 7. 2, with improved reverse geocoding that converts GPS coordinates into a city, region, or country name. The update brings support for BigDataCloud as a reverse geocoding service, which is more reliable in areas with no nearby towns, such as open water, mountains, and deserts.</p><p>BigDataCloud requires an API key, but it offers a generous free tier with 50,000 requests per month. HoudahGeo 7. 2 also adds an option to use your own API key with the OpenCage and GeoNames reverse geocoding services, adds more language options to the OpenCage, and improves the built-in HoudahGeo Offline service with better accuracy through feature-code ranking, population data, and an updated cities database.</p><p>The release also improves drag-and-drop so that files dropped onto the wrong tab are now routed automatically, fixes a UTF-8 encoding issue when writing multi-byte characters to IPTC, addresses several crashes (including when importing from Photos in macOS 26 Tahoe), implements a new crash reporting process, and updates in-app help with the latest reverse geocoding changes. Version 7. 2.</p><p>1 was subsequently released to fix a bug that caused the app to display map search suggestions immediately upon opening a project window. ($39 new with a 25% discount for TidBITS members, $24 upgrade, 41. 1 MB, release notes, 12. 4+)</p><p>Every week you’ll get tech tips, in-depth reviews, and insightful news analysis for discerning Apple users. For over 36 years, we’ve published professional, member-supported tech journalism that makes you smarter.</p><p>Registration confirmation will be emailed to you.</p><p>This site is protected by reCAPTCHA. The Google Privacy Policy and Terms of Service apply.</p><h2>Comments About HoudahGeo 7.2.1</h2><h2>Start the discussion in the TidBITS Discourse forum</h2>"
     },
     {
-      "id": "macworld-1783608787000-15",
+      "id": "macworld-1783608787000-17",
       "title": "Best MacBook Pro deals: Best prices for M5, M5 Pro & M5 Max",
       "subtitle": "Macworld The best MacBook Pro deals of July 2026 Best U.S. deal: $180.66 off 14-inch, MacBook Pro M5 Max, 2TB at Amazon $125 off 14-inch, MacBook Pro M5 Pro, 1TB at Amazon Best U.K.",
       "category": "deals",
